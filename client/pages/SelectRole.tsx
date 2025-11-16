@@ -38,8 +38,8 @@ export default function SelectRole() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto items-stretch">
             {/* Patient Card */}
             <Link to="/patient/login">
-              <Card className="p-8 hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-blue group">
-                <div className="text-center space-y-6">
+              <Card className="p-8 h-full flex flex-col hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-blue group">
+                <div className="text-center space-y-6 flex flex-col flex-1">
                   <div className="w-20 h-20 bg-lungsense-blue-light rounded-full flex items-center justify-center mx-auto group-hover:bg-lungsense-blue group-hover:scale-110 transition-all">
                     <User className="w-10 h-10 text-lungsense-blue group-hover:text-white transition-colors" />
                   </div>
@@ -64,8 +64,8 @@ export default function SelectRole() {
 
             {/* Healthcare Practitioner Card */}
             <Link to="/practitioner/login">
-              <Card className="p-8 hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-green group">
-                <div className="text-center space-y-6">
+              <Card className="p-8 h-full flex flex-col hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-green group">
+                <div className="text-center space-y-6 flex flex-col flex-1">
                   <div className="w-20 h-20 bg-lungsense-green/10 rounded-full flex items-center justify-center mx-auto group-hover:bg-lungsense-green group-hover:scale-110 transition-all">
                     <Stethoscope className="w-10 h-10 text-lungsense-green group-hover:text-white transition-colors" />
                   </div>
