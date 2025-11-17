@@ -47,21 +47,6 @@ export default function PractitionerLogin() {
             <form className="space-y-6">
               <div className="space-y-2">
                 <Label
-                  htmlFor="name"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  N A M E
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Jiara Martins"
-                  className="font-display"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
                   htmlFor="email"
                   className="text-xs uppercase tracking-wider text-gray-700 font-dm"
                 >
