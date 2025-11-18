@@ -1,4 +1,4 @@
-How to run this on local environment:
+How to run Frontend on local environment:
 
 Clone this repo
 
