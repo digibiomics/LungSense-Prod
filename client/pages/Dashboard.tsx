@@ -16,7 +16,7 @@ export default function LungDashboard() {
 
         {/* Page Title */}
         <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
-          Lung Health Dashboard
+          Your Lung Health Dashboard
         </h1>
 
 
@@ -58,11 +58,13 @@ export default function LungDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
           {/* Lung Placeholder */}
-          <Card className="md:col-span-2 backdrop-blur-xl bg-white/60 shadow-md h-80 flex items-center justify-center">
-            <div className="text-center">
-              <div className="w-48 h-48 bg-blue-200 rounded-xl mx-auto" />
-              <p className="text-gray-500 mt-4">Lung Model Placeholder</p>
-            </div>
+          <Card className="md:col-span-2 backdrop-blur-xl bg-white shadow-md h-80 flex items-center justify-center">
+            <img
+              src="/images/lung-dashboard.jpg"
+              alt="Healthy lungs illustration"
+              className="object-contain w-full h-full rounded-2xl shadow-lg"
+            />
+
           </Card>
 
           {/* Body Placeholder */}
