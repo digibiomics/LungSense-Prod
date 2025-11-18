@@ -220,7 +220,7 @@ export default function Recommendations() {
                 </p>
                 <Button
                   variant="outline"
-                  className="w-full border-gray-600 text-white hover:bg-gray-700 font-display font-medium"
+                  className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-medium"
                 >
                   Start Exercises
                 </Button>
@@ -230,7 +230,7 @@ export default function Recommendations() {
 
           {/* Regular Check-ups */}
           <div className="mt-12">
-            <Card className="p-6 bg-gray-800 border-gray-700">
+            <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Bell className="w-6 h-6 text-white" />
@@ -239,7 +239,7 @@ export default function Recommendations() {
                   <h3 className="text-xl font-semibold mb-2 font-display">
                     Regular Check-ups
                   </h3>
-                  <p className="text-gray-400 text-sm mb-4 font-dm">
+                  <p className="text-gray-900 text-sm mb-4 font-dm">
                     Maintain a schedule of regular medical check-ups to monitor
                     your lung health and detect any changes early.
                   </p>

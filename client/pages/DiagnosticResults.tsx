@@ -44,7 +44,7 @@ export default function DiagnosticResults() {
   const randomPercent = useMemo(() => Math.floor(Math.random() * 40) + 50, []);
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
       <Sidebar />
 
       <main className="flex-1 md:ml-64 bg-white-100 text-black">
@@ -83,7 +83,7 @@ export default function DiagnosticResults() {
                   {diagnosticData.map((diagnosis, index) => (
                     <Card
                       key={index}
-                      className={`p-5 bg-gray-800 border-l-4 ${
+                      className={`p-5 bg-blue/90 backdrop-blur-xl border-l-4 ${
                         diagnosis.severity === "high"
                           ? "border-red-500"
                           : diagnosis.severity === "medium"
@@ -264,7 +264,7 @@ export default function DiagnosticResults() {
                 </div>
               </Card>
 
-              <Card className="p-6 bg-gray-800 border-gray-700">
+              <Card className="p-6 bg-white-800 border-gray-700">
                 <h3 className="text-xl font-semibold mb-2 font-display">
                   Download Comprehensive Report
                 </h3>
@@ -279,10 +279,10 @@ export default function DiagnosticResults() {
                 <div className="flex items-start gap-3 mb-4">
                   <AlertTriangle className="w-6 h-6 text-yellow-400" />
                   <div>
-                    <h3 className="font-semibold text-white mb-2 font-display">
+                    <h3 className="font-semibold text-black mb-2 font-display">
                       Important Notice
                     </h3>
-                    <p className="text-gray-300 text-sm font-dm">
+                    <p className="text-black-300 text-sm font-dm">
                       This AI analysis is for informational purposes only.
                       Please consult a licensed healthcare professional for a
                       medical diagnosis.
@@ -291,8 +291,8 @@ export default function DiagnosticResults() {
                 </div>
 
                 <Link to="/patient/recommendations">
-                  <Button className="w-full bg-white text-gray-600 hover:bg-gray-100 font-display">
-                    View Personalized Recommendations
+                  <Button className="w-full bg-white text-gray-600 hover:bg-gray-900 font-display">
+                    View Recommendations
                   </Button>
                 </Link>
               </Card>

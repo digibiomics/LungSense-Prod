@@ -76,8 +76,12 @@ export default function PatientRecords() {
             <h1 className="text-3xl font-bold text-gray-900 font-display">
               Past Records
             </h1>
-            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold">
-              ©
+            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center">
+                <img
+                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
+                  alt="User"
+                  className="w-full h-full rounded-full"
+                />
             </div>
           </div>
 

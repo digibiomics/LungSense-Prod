@@ -112,8 +112,12 @@ export default function PatientDashboard() {
             <h1 className="text-3xl font-bold text-gray-900 font-display">
               Welcome Back
             </h1>
-            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold">
-              ©
+            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center">
+                <img
+                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
+                  alt="User"
+                  className="w-full h-full rounded-full"
+                />
             </div>
           </div>
 
@@ -263,62 +267,13 @@ export default function PatientDashboard() {
             {/* Demographics & Symptoms Section */}
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 h-fit">
               <h2 className="text-xl font-semibold text-gray-900 mb-6 font-display">
-                Demographics & Symptoms
+                Symptoms
               </h2>
 
               <form className="space-y-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="ethnicity"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
-                  >
-                    Ethnicity
-                  </Label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg font-display text-sm focus:ring-2 focus:ring-lungsense-blue focus:border-transparent">
-                    <option>Select Ethnicity</option>
-                    <option>Asian</option>
-                    <option>African</option>
-                    <option>Caucasian</option>
-                    <option>Other</option>
-                  </select>
-                </div>
 
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="age"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
-                  >
-                    Age
-                  </Label>
-                  <Input
-                    type="number"
-                    placeholder="25"
-                    className="font-display"
-                  />
-                </div>
 
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="sex"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
-                  >
-                    Sex
-                  </Label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg font-display text-sm focus:ring-2 focus:ring-lungsense-blue focus:border-transparent">
-                    <option>Select Sex</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="symptoms"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
-                  >
-                    Symptoms
-                  </Label>
                   <div className="space-y-2">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -332,7 +287,105 @@ export default function PatientDashboard() {
                         type="checkbox"
                         className="w-4 h-4 rounded border-gray-300"
                       />
+                      <span className="text-sm font-display">Shortness of Breath</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Weight Loss</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Night Sweats</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Hemoptysis</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
                       <span className="text-sm font-display">Fever</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Chills</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Sputum Change</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Confusion</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Headache</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Wheezing</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Anxiety</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Sleep Disturbance</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Duration Tracking</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Cyanosis</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="text-sm font-display">Duration/Activity Limitation</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
