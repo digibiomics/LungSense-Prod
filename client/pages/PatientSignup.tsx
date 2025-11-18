@@ -1,4 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,50 +72,10 @@ export default function PatientSignup() {
 
             {/* Signup Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="firstName"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
-                  >
-                    F I R S T&nbsp;N A M E
-                  </Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    placeholder="Jiara"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="font-display"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="lastName"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
-                  >
-                    L A S T&nbsp;N A M E
-                  </Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    placeholder="Smith"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="font-display"
-                    required
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
                 >
                   E M A I L
                 </Label>
@@ -132,20 +94,133 @@ export default function PatientSignup() {
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
                 >
-                  C R E A T E&nbsp;P A S S W O R D
+                  C R E A T E&nbsp; P A S S W O R D
                 </Label>
                 <Input
                   id="password"
                   name="password"
                   type="password"
-                  placeholder="••••••"
+                  placeholder="******"
                   value={formData.password}
                   onChange={handleChange}
                   className="font-display"
                   required
                 />
+              </div>
+
+              <h5 className="text-1xl font-bold text-lungsense-blue font-display">
+                Create your Candidate Profile
+              </h5>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="firstName"
+                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                  >
+                    F I R S T&nbsp; N A M E
+                  </Label>
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    type="text"
+                    placeholder="Jiara"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className="font-display"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="lastName"
+                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                  >
+                    L A S T&nbsp; N A M E
+                  </Label>
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    type="text"
+                    placeholder="Smith"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    className="font-display"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="practionerName"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                >
+                  Y O U R &nbsp; P R A C T I O N E R's &nbsp; N A M E
+                </Label>
+                <Input
+                  id="practionerName"
+                  name="practionerName"
+                  type="text"
+                  placeholder="Dr. Clara Smith"
+                  value={formData.practionerName}
+                  onChange={handleChange}
+                  className="font-display"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="birthdate"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                >
+                  D A T E &nbsp; O F &nbsp; B I R T H
+                </Label>
+                <Input
+                  id="birthdate"
+                  name="birthdate"
+                  type="date"
+                  placeholder="01/04/2001"
+                  value={formData.birthdate}
+                  onChange={handleChange}
+                  className="font-display"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                  <Label
+                    htmlFor="ethnicity"
+                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                  >
+                    E T H N I C I T Y
+                  </Label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg font-display text-sm focus:ring-2 focus:ring-lungsense-blue focus:border-transparent">
+                    <option>Select Ethnicity</option>
+                    <option>Asian</option>
+                    <option>African</option>
+                    <option>Caucasian</option>
+                    <option>Other</option>
+                  </select>
+              </div>
+
+              <div className="space-y-2">
+                  <Label
+                    htmlFor="sex"
+                    className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                  >
+                    S E X
+                  </Label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg font-display text-sm focus:ring-2 focus:ring-lungsense-blue focus:border-transparent">
+                    <option>Select Sex</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg text-xs text-gray-600 text-center">

@@ -134,7 +134,7 @@ export default function PractitionerSignup() {
                     htmlFor="practitionerId"
                     className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
                   >
-                    P R A C T I T I O N E R&nbsp;I D
+                    P R A C T I T I O N E R&nbsp; I D
                   </Label>
                   <Input
                     id="practitionerId"
@@ -166,6 +166,25 @@ export default function PractitionerSignup() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="institutionLocation"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium"
+                >
+                  I N S T I T U T I O N&nbsp; L O C A T I O N
+                </Label>
+                <Input
+                  id="institutionLocation"
+                  name="institutionLocation"
+                  type="text"
+                  placeholder="23 Simcoe St"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="font-display"
+                  required
+                />
               </div>
 
               <div className="space-y-2">

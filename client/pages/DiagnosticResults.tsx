@@ -4,10 +4,10 @@ import { Card } from "@/components/ui/card";
 import {
   Download,
   AlertCircle,
-  CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useMemo } from "react";
 
 export default function DiagnosticResults() {
   const diagnosticData = [
@@ -19,14 +19,14 @@ export default function DiagnosticResults() {
       severity: "high",
     },
     {
-      name: "Bacterial Pneumonia",
+      name: "Lung Cancer",
       description:
         "Indications of localized lung infection with fluid accumulation.",
       confidence: 65,
       severity: "medium",
     },
     {
-      name: "Early Stage Lung Nodules",
+      name: "Pneumonia",
       description:
         "Small, round-oss nodules identified; further investigation recommended.",
       confidence: 60,
@@ -40,13 +40,14 @@ export default function DiagnosticResults() {
     { name: "Nodules", value: 60 },
   ];
 
+  // infection % for glass card — consistent on each render
+  const randomPercent = useMemo(() => Math.floor(Math.random() * 40) + 50, []);
+
   return (
-    <div className="flex min-h-screen bg-gray-900">
-      {/* Sidebar */}
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
       <Sidebar />
 
-      {/* Main Content */}
-      <main className="flex-1 md:ml-64 bg-gray-900 text-white">
+      <main className="flex-1 md:ml-64 bg-white-100 text-black">
         <div className="p-4 md:p-8 space-y-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -54,10 +55,11 @@ export default function DiagnosticResults() {
               AI Diagnostic Results
             </h1>
             <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
+              <button className="p-2 hover:bg-white-800 rounded-lg transition-colors">
                 <AlertCircle className="w-6 h-6" />
               </button>
-              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center">
+
+              <div className="w-10 h-10 bg-white-700 rounded-full flex items-center justify-center">
                 <img
                   src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
                   alt="User"
@@ -68,8 +70,9 @@ export default function DiagnosticResults() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Diagnostic Summary */}
+            {/* LEFT COLUMN */}
             <div className="lg:col-span-2 space-y-6">
+
               {/* Diagnostic Summary */}
               <div>
                 <h2 className="text-2xl font-bold mb-6 font-display">
@@ -80,7 +83,7 @@ export default function DiagnosticResults() {
                   {diagnosticData.map((diagnosis, index) => (
                     <Card
                       key={index}
-                      className={`p-5 bg-gray-800 border-l-4 ${
+                      className={`p-5 bg-blue/90 backdrop-blur-xl border-l-4 ${
                         diagnosis.severity === "high"
                           ? "border-red-500"
                           : diagnosis.severity === "medium"
@@ -89,9 +92,10 @@ export default function DiagnosticResults() {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-white font-display text-lg">
+                        <h3 className="font-semibold text-black font-display text-lg">
                           {diagnosis.name}
                         </h3>
+
                         <span
                           className={`text-sm font-semibold ${
                             diagnosis.severity === "high"
@@ -104,6 +108,7 @@ export default function DiagnosticResults() {
                           Confidence: {diagnosis.confidence}%
                         </span>
                       </div>
+
                       <p className="text-gray-400 text-sm font-dm">
                         {diagnosis.description}
                       </p>
@@ -112,122 +117,126 @@ export default function DiagnosticResults() {
                 </div>
               </div>
 
-              {/* Lung Scan Viewer */}
-              <div className="mt-8">
+              {/*  LUNG SCAN WITH HIGHLIGHT + GLASS CARD SECTION   */}
+
+              <div>
                 <h2 className="text-2xl font-bold mb-6 font-display">
-                  Lung Scan Viewer with AI Annotations
+                  Lung Scan Analysis
                 </h2>
 
-                <div className="bg-black rounded-lg p-8 flex items-center justify-center min-h-[400px]">
+                <div className="relative w-[430px] mx-auto">
+                  {/* Lung Image */}
                   <img
-                    src="https://api.builder.io/api/v1/image/assets/TEMP/2663d6b18a88c3f4cf5642060ab24af797d7ef45?width=800"
-                    alt="Lung Scan with AI Annotations"
-                    className="max-w-full h-auto rounded-lg"
+                    src="/images/lung-xray.png"
+                    alt="Lung XRay"
+                    className="w-full rounded-xl opacity-90"
                   />
+
+                  {/* Red Highlight (random infection area mock) */}
+                  <div
+                    className="absolute rounded-full bg-red-500 opacity-40 blur-xl"
+                    style={{
+                      width: "130px",
+                      height: "130px",
+                      top: "150px",
+                      left: "140px",
+                    }}
+                  />
+
+                  {/* Connector Line */}
+                  <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+                    <line
+                      x1="205"
+                      y1="215"
+                      x2="345"
+                      y2="250"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeOpacity="0.7"
+                    />
+                    <circle cx="205" cy="215" r="6" fill="white" opacity="0.9" />
+                  </svg>
+
+                  {/* Glass Card */}
+                  <div
+                    className="
+                      absolute top-[240px] left-[360px]
+                      p-4 w-[170px]
+                      bg-white/90 backdrop-blur-xl
+                      rounded-xl shadow-lg
+                      border border-white/30
+                    "
+                  >
+                    <p className="text-sm text-black-100">Infection Level</p>
+
+                    <p className="text-xs text-black-200 mt-1">
+                      Status: <span className="font-semibold">Moderate</span>
+                    </p>
+
+                    <p className="mt-2 text-3xl font-bold text-black">
+                      {randomPercent}%
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* How AI Derived This Result */}
+              {/* AI Explanation */}
               <div className="mt-8">
                 <h2 className="text-2xl font-bold mb-6 font-display">
                   How the AI Derived This Result
                 </h2>
 
-                <Card className="p-6 bg-gray-800 border-gray-700">
-                  <p className="text-gray-300 mb-6 font-dm">
+                <Card className="p-6 bg-gray-100 border-white-700">
+                  <p className="text-gray-900 mb-6 font-dm">
                     Our advanced AI models analyze a multimodal dataset
-                    including high-resolution lung CT scans, acoustic patterns
-                    from cough and breath sounds, and various clinical and
-                    environmental parameters. This integrated approach allows
-                    for a holistic understanding of your lung health.
+                    including high-resolution lung CT scans, acoustic patterns,
+                    and clinical parameters. This enables deep insight into lung
+                    function and structural health.
                   </p>
 
                   <div className="space-y-6">
                     <div>
-                      <h3 className="font-semibold text-white mb-2 font-display">
+                      <h3 className="font-semibold text-black mb-2 font-display">
                         Scan Analysis
                       </h3>
-                      <p className="text-gray-400 text-sm font-dm">
-                        For lung scans, the AI utilizes deep learning algorithms
-                        to identify subtle abnormalities, such as nodules,
-                        infiltrates, and structural changes indicative of
-                        chronic conditions like COPD or fibrosis. Color-coded
-                        overlays highlight these areas, with different colors
-                        representing varying levels of concern or specific
-                        pathological patterns.
+                      <p className="text-white-400 text-sm font-dm">
+                        Deep learning models detect abnormalities such as
+                        nodules, infiltrates, and structural deformities. Areas
+                        with potential concern are highlighted using overlays.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-white mb-2 font-display">
+                      <h3 className="font-semibold text-black mb-2 font-display">
                         Acoustic Biomarkers
                       </h3>
-                      <p className="text-gray-400 text-sm font-dm">
-                        Cough and breath sounds are processed using spectral
-                        analysis to detect specific acoustic biomarkers
-                        associated with respiratory diseases. For instance, the
-                        frequency, duration, and timbre of coughs can
-                        differentiate between asthma, bronchitis, and pneumonia.
+                      <p className="text-gray-900 text-sm font-dm">
+                        AI analyzes cough and breath spectral signatures to
+                        differentiate between respiratory diseases.
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="font-semibold text-white mb-2 font-display">
+                      <h3 className="font-semibold text-black mb-2 font-display">
                         Clinical Data Integration
                       </h3>
-                      <p className="text-gray-400 text-sm font-dm">
-                        Finally, clinical inputs such as age, medical history,
-                        and environmental exposures are integrated to refine the
-                        diagnostic probabilities, ensuring personalized and
-                        contextually relevant results. The confidence scores
-                        reflect the model's certainty based on the totality of
-                        the analyzed data.
+                      <p className="text-gray-900 text-sm font-dm">
+                        Clinical history and environmental exposure data improve
+                        accuracy and contextual relevance of diagnostic output.
                       </p>
-
-                      <ul className="mt-4 space-y-2 text-sm text-gray-400">
-                        <li className="flex items-start gap-2">
-                          <span className="text-lungsense-blue">•</span>
-                          <span>
-                            <strong>"Feature Extraction:"</strong> Automated
-                            identification of key patterns from each data
-                            modality.
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-lungsense-blue">•</span>
-                          <span>
-                            <strong>"Ensemble Modeling:"</strong> Combination of
-                            multiple AI models for robust and accurate
-                            predictions.
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-lungsense-blue">•</span>
-                          <span>
-                            <strong>"Cross-Referencing:"</strong> Validation of
-                            findings across different data types to enhance
-                            diagnostic precision.
-                          </span>
-                        </li>
-                      </ul>
                     </div>
                   </div>
                 </Card>
               </div>
             </div>
 
-            {/* Right Column - Distribution & Download */}
+            {/* RIGHT COLUMN */}
             <div className="space-y-6">
-              {/* Disease Probability Distribution */}
-              <Card className="p-6 bg-gray-800 border-gray-700">
+              <Card className="p-6 bg-white-800 border-gray-700">
                 <h3 className="text-xl font-semibold mb-2 font-display">
                   Disease Probability Distribution
                 </h3>
-                <p className="text-gray-400 text-sm mb-6 font-dm">
-                  AI-generated probabilities for potential lung conditions.
-                </p>
 
-                {/* Bar Chart */}
                 <div className="space-y-4">
                   {probabilityData.map((item, index) => (
                     <div key={index}>
@@ -239,9 +248,10 @@ export default function DiagnosticResults() {
                           {item.value}%
                         </span>
                       </div>
+
                       <div className="w-full bg-gray-700 rounded-full h-8">
                         <div
-                          className="bg-lungsense-blue h-8 rounded-full transition-all flex items-center justify-end pr-2"
+                          className="bg-lungsense-blue h-8 rounded-full flex items-center justify-end pr-2"
                           style={{ width: `${item.value}%` }}
                         >
                           <span className="text-xs text-white font-semibold">
@@ -252,54 +262,45 @@ export default function DiagnosticResults() {
                     </div>
                   ))}
                 </div>
-
-                <div className="mt-6 text-xs text-gray-500 text-center font-dm">
-                  Probability
-                </div>
               </Card>
 
-              {/* Download Report */}
-              <Card className="p-6 bg-gray-800 border-gray-700">
+              <Card className="p-6 bg-white-800 border-gray-700">
                 <h3 className="text-xl font-semibold mb-2 font-display">
                   Download Comprehensive Report
                 </h3>
-                <p className="text-gray-400 text-sm mb-6 font-dm">
-                  Access your full AI diagnostic report in PDF format.
-                </p>
 
-                <Button className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-semibold py-6">
+                <Button className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90">
                   <Download className="w-5 h-5 mr-2" />
                   Download Report
                 </Button>
               </Card>
 
-              {/* Next Steps */}
-              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
+              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 border-lungsense-blue">
                 <div className="flex items-start gap-3 mb-4">
-                  <AlertTriangle className="w-6 h-6 text-yellow-400 flex-shrink-0" />
+                  <AlertTriangle className="w-6 h-6 text-yellow-400" />
                   <div>
-                    <h3 className="font-semibold text-white mb-2 font-display">
+                    <h3 className="font-semibold text-black mb-2 font-display">
                       Important Notice
                     </h3>
-                    <p className="text-gray-300 text-sm font-dm">
+                    <p className="text-black-300 text-sm font-dm">
                       This AI analysis is for informational purposes only.
-                      Please consult with a healthcare professional for proper
-                      medical diagnosis and treatment.
+                      Please consult a licensed healthcare professional for a
+                      medical diagnosis.
                     </p>
                   </div>
                 </div>
+
                 <Link to="/patient/recommendations">
-                  <Button className="w-full bg-white text-gray-900 hover:bg-gray-100 font-display font-semibold mt-4">
-                    View Personalized Recommendations
+                  <Button className="w-full bg-white text-gray-600 hover:bg-gray-900 font-display">
+                    View Recommendations
                   </Button>
                 </Link>
               </Card>
             </div>
           </div>
 
-          {/* Footer */}
           <footer className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
-            <p>© 2025 Lung Sense. All rights reserved. DigiRomics.</p>
+            © 2025 Lung Sense. DigiRomics.
           </footer>
         </div>
       </main>

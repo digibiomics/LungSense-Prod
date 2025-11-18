@@ -18,6 +18,7 @@ import PractitionerLogin from "./pages/PractitionerLogin";
 import PractitionerSignup from "./pages/PractitionerSignup";
 import PractitionerPatients from "./pages/PractitionerPatients";
 import PractitionerPatientDetail from "./pages/PractitionerPatientDetail";
+import LungDashboard from "./pages/Dashboard"
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +34,8 @@ const App = () => (
           <Route path="/select-role" element={<SelectRole />} />
           <Route path="/patient/login" element={<PatientLogin />} />
           <Route path="/patient/signup" element={<PatientSignup />} />
-          <Route path="/patient/dashboard" element={<PatientDashboard />} />
+          <Route path="/patient/dashboard" element={<LungDashboard />} />
+          <Route path="/patient/upload" element={<PatientDashboard />} />
           <Route path="/patient/records" element={<PatientRecords />} />
           <Route path="/patient/results" element={<DiagnosticResults />} />
           <Route

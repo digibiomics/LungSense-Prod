@@ -78,16 +78,16 @@ export default function Recommendations() {
                 </div>
               </Card>
 
-              <Card className="p-6 bg-gray-800 border-gray-700 hover:border-lungsense-blue transition-colors">
+              <Card className="p-6 bg-white border-gray-200 hover:border-lungsense-blue transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-lungsense-blue-light rounded-lg flex items-center justify-center flex-shrink-0">
                     <Maximize2 className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2 font-display">
+                    <h3 className="text-lg font-semibold mb-2 font-display text-gray-900">
                       Consider Additional Imaging
                     </h3>
-                    <p className="text-gray-400 text-sm mb-4 font-dm">
+                    <p className="text-gray-600 text-sm mb-4 font-dm">
                       Based on the initial analysis, additional high-resolution
                       CT scans or MRI may provide more detailed insights.
                       Discuss this option with your doctor to determine
@@ -95,7 +95,7 @@ export default function Recommendations() {
                     </p>
                     <Button
                       variant="outline"
-                      className="border-gray-600 text-white hover:bg-gray-700 font-display font-medium"
+                      className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium"
                     >
                       Learn More
                     </Button>
@@ -112,23 +112,23 @@ export default function Recommendations() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6 bg-gray-800 border-gray-700">
+              <Card className="p-6 bg-white border-gray-200 hover:border-lungsense-blue transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-lungsense-blue rounded-lg flex items-center justify-center flex-shrink-0">
                     <HeartPulse className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2 font-display">
+                    <h3 className="text-lg font-semibold mb-2 font-display text-gray-900">
                       Monitor Symptoms Daily
                     </h3>
-                    <p className="text-gray-400 text-sm mb-4 font-dm">
+                    <p className="text-gray-600 text-sm mb-4 font-dm">
                       Pay close attention to any changes in your breathing,
                       cough frequency, or chest discomfort. Log observations in
                       your personal health journal for your doctor.
                     </p>
                     <Button
                       variant="outline"
-                      className="border-gray-600 text-white hover:bg-gray-700 font-display font-medium"
+                      className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium"
                     >
                       Track Symptoms
                     </Button>
@@ -136,7 +136,7 @@ export default function Recommendations() {
                 </div>
               </Card>
 
-              <Card className="p-6 bg-gray-800 border-gray-700">
+              <Card className="p-6 bg-white border-gray-200 hover:border-red-900 transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-red-900/30 rounded-lg flex items-center justify-center flex-shrink-0 border border-red-500">
                     <Phone className="w-6 h-6 text-red-400" />
@@ -145,7 +145,7 @@ export default function Recommendations() {
                     <h3 className="text-lg font-semibold mb-2 font-display">
                       Emergency Contact Information
                     </h3>
-                    <p className="text-gray-400 text-sm mb-4 font-dm">
+                    <p className="text-gray-600 text-sm mb-4 font-dm">
                       Keep emergency contacts and the nearest urgent care
                       facility details readily available. Be aware of warning
                       signs that require immediate medical attention.
@@ -186,9 +186,9 @@ export default function Recommendations() {
                 </Button>
               </Card>
 
-              <Card className="p-6 bg-gray-800 border-gray-700">
-                <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center mb-4">
-                  <Pill className="w-6 h-6 text-white" />
+              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
+                <div className="w-12 h-12 bg-lungsense-blue/30 rounded-lg flex items-center justify-center mb-4">
+                  <Pill className="w-6 h-6 text-lungsense-blue" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 font-display">
                   Medication Adherence
@@ -200,13 +200,13 @@ export default function Recommendations() {
                 </p>
                 <Button
                   variant="outline"
-                  className="w-full border-gray-600 text-white hover:bg-gray-700 font-display font-medium"
+                  className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-medium"
                 >
                   Set Reminders
                 </Button>
               </Card>
 
-              <Card className="p-6 bg-gray-800 border-gray-700">
+              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
                 <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center mb-4">
                   <Wind className="w-6 h-6 text-white" />
                 </div>
@@ -220,7 +220,7 @@ export default function Recommendations() {
                 </p>
                 <Button
                   variant="outline"
-                  className="w-full border-gray-600 text-white hover:bg-gray-700 font-display font-medium"
+                  className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-medium"
                 >
                   Start Exercises
                 </Button>
@@ -230,7 +230,7 @@ export default function Recommendations() {
 
           {/* Regular Check-ups */}
           <div className="mt-12">
-            <Card className="p-6 bg-gray-800 border-gray-700">
+            <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Bell className="w-6 h-6 text-white" />
@@ -239,7 +239,7 @@ export default function Recommendations() {
                   <h3 className="text-xl font-semibold mb-2 font-display">
                     Regular Check-ups
                   </h3>
-                  <p className="text-gray-400 text-sm mb-4 font-dm">
+                  <p className="text-gray-900 text-sm mb-4 font-dm">
                     Maintain a schedule of regular medical check-ups to monitor
                     your lung health and detect any changes early.
                   </p>

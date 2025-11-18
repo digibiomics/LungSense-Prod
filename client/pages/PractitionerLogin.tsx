@@ -47,21 +47,6 @@ export default function PractitionerLogin() {
             <form className="space-y-6">
               <div className="space-y-2">
                 <Label
-                  htmlFor="name"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  N A M E
-                </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Jiara Martins"
-                  className="font-display"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
                   htmlFor="email"
                   className="text-xs uppercase tracking-wider text-gray-700 font-dm"
                 >
@@ -75,21 +60,7 @@ export default function PractitionerLogin() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label
-                  htmlFor="practitioner-id"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  H E A L T H C A R E&nbsp;&nbsp;P R A C T I O N E
-                  R&nbsp;&nbsp;I D
-                </Label>
-                <Input
-                  id="practitioner-id"
-                  type="text"
-                  placeholder="100385"
-                  className="font-display"
-                />
-              </div>
+
 
               <div className="space-y-2">
                 <Label
