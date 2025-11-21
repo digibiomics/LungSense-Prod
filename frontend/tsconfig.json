@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* keep linting relaxed or enable strict if you want stronger checks */
+    "strict": false,
+
+    /* Path mapping (keep if you actually use these aliases) */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./client/*"],
+      "@shared/*": ["./shared/*"]
+    },
+
+    /* helpful for Vite */
+    "types": ["vite/client"]
+  },
+  "include": ["client/**/*", "shared/**/*", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}
