@@ -1,3 +1,6 @@
+// frontend/src/pages/PractitionerSignup.tsx
+// screenshot (if you need it): /mnt/data/3ad10541-ded0-49be-9798-f971b5a10aca.png
+
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +10,15 @@ import { Activity } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 
 /**
- * Update this to your FastAPI practitioners signup endpoint.
+ * If you want to demo UI/navigation without backend,
+ * set USE_DUMMY = true. When ready to re-enable backend,
+ * set it to false and ensure PRACTITIONER_SIGNUP_URL is reachable.
+ *
+ * NOTE: your backend earlier used /auth/signup/practitioner.
+ * The constant below uses the '/api/practitioners/signup' value you provided —
+ * change it to match your backend when USE_DUMMY = false.
  */
+const USE_DUMMY = true;
 const PRACTITIONER_SIGNUP_URL = "http://localhost:8000/api/practitioners/signup";
 
 type PractitionerFormData = {
@@ -41,24 +51,23 @@ export default function PractitionerSignup() {
 
   // unified handler (works for inputs/selects/checkboxes)
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-  const target = e.target;
+    const target = e.target;
 
-  // Case 1: Input element (text/password/checkbox/date/etc.)
-  if (target instanceof HTMLInputElement) {
-    const { name, type, value, checked } = target;
-    const newValue = type === "checkbox" ? checked : value;
+    // Input element (text/password/checkbox/date/etc.)
+    if (target instanceof HTMLInputElement) {
+      const { name, type, value, checked } = target;
+      const newValue = type === "checkbox" ? checked : value;
+      setFormData(prev => ({ ...prev, [name]: newValue }));
+      return;
+    }
 
-    setFormData(prev => ({ ...prev, [name]: newValue }));
-    return;
-  }
-
-  // Case 2: Select element
-  if (target instanceof HTMLSelectElement) {
-    const { name, value } = target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    return;
-  }
-};
+    // Select element
+    if (target instanceof HTMLSelectElement) {
+      const { name, value } = target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+      return;
+    }
+  };
 
   const validate = (d: PractitionerFormData) => {
     if (!d.email) return "Email is required.";
@@ -95,6 +104,14 @@ export default function PractitionerSignup() {
         consent: formData.consent,
       };
 
+      if (USE_DUMMY) {
+        // Dummy success flow for demo/approval: wait then navigate to login
+        await new Promise((res) => setTimeout(res, 500));
+        navigate("/practitioner/login");
+        return;
+      }
+
+      // Real backend call (only when USE_DUMMY === false)
       const res = await fetch(PRACTITIONER_SIGNUP_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -106,13 +123,14 @@ export default function PractitionerSignup() {
         try {
           const json = await res.json();
           if (json?.detail) msg = json.detail;
+          else if (json?.message) msg = json.message;
         } catch {
           /* ignore parse error */
         }
         throw new Error(msg);
       }
 
-      // On success, send to login (or change to dashboard per your flow)
+      // On success, send to login (or dashboard per your flow)
       navigate("/practitioner/login");
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Please try again.");
@@ -146,7 +164,7 @@ export default function PractitionerSignup() {
 
             {error && <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3">{error}</div>}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName" className="text-xs uppercase tracking-wider text-gray-700 font-dm">F I R S T&nbsp;N A M E</Label>

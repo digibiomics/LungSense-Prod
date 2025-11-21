@@ -1,4 +1,6 @@
 // frontend/src/pages/PatientSignup.tsx
+// screenshot (if you need it): /mnt/data/3ad10541-ded0-49be-9798-f971b5a10aca.png
+
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +10,11 @@ import { Activity } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 
 /**
- * Backend signup endpoint (matches app/routers/auth.py)
+ * If you want to demo UI/navigation without backend,
+ * set USE_DUMMY = true. When ready to re-enable backend,
+ * set it to false and ensure PATIENT_SIGNUP_URL is reachable.
  */
+const USE_DUMMY = true;
 const PATIENT_SIGNUP_URL = "http://localhost:8000/auth/signup/patient";
 
 type PatientFormData = {
@@ -93,6 +98,7 @@ export default function PatientSignup() {
 
     setIsSubmitting(true);
     try {
+      // Build payload with snake_case keys for backend compatibility
       const payload = {
         role: "patient",
         first_name: formData.firstName,
@@ -100,7 +106,6 @@ export default function PatientSignup() {
         email: formData.email,
         password: formData.password,
         practitioner_name: formData.practitionerName || undefined,
-        // send dd-mm-yyyy as requested by backend
         birthdate: formData.birthdate
           ? formatDateToDDMMYYYY(formData.birthdate)
           : undefined,
@@ -109,6 +114,15 @@ export default function PatientSignup() {
         consent: formData.consent,
       };
 
+      if (USE_DUMMY) {
+        // Dummy success flow for demo/approval: wait a moment then navigate
+        await new Promise((res) => setTimeout(res, 600));
+        // Optionally you could store a dummy auth token in localStorage here
+        navigate("/patient/login");
+        return;
+      }
+
+      // Real backend call (only when USE_DUMMY === false)
       const res = await fetch(PATIENT_SIGNUP_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -127,8 +141,10 @@ export default function PatientSignup() {
         throw new Error(msg);
       }
 
+      // On success, navigate to login page
       navigate("/patient/login");
     } catch (err: any) {
+      // keep error user-friendly
       setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
@@ -175,7 +191,7 @@ export default function PatientSignup() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
@@ -374,7 +390,7 @@ export default function PatientSignup() {
           <div className="text-center mt-6">
             <Link
               to="/select-role"
-              className="text-sm text-gray-600 hover:text-lungsense-blue"
+                  className="text-sm text-gray-600 hover:text-lungsense-blue"
             >
               ← Back to role selection
             </Link>

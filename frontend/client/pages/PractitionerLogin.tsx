@@ -1,3 +1,4 @@
+// frontend/src/pages/PractitionerLogin.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,11 @@ import { Card } from "@/components/ui/card";
 import { Activity } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 
-const PRACTITIONER_LOGIN_URL = "http://localhost:8000/api/practitioners/login"; // <- change to real endpoint
+/**
+ * Toggle dummy mode: set true to skip backend calls for demo/approval.
+ */
+const USE_DUMMY = true;
+const PRACTITIONER_LOGIN_URL = "http://localhost:8000/api/practitioners/login";
 
 export default function PractitionerLogin() {
   const navigate = useNavigate();
@@ -36,11 +41,17 @@ export default function PractitionerLogin() {
 
     setIsSubmitting(true);
     try {
+      if (USE_DUMMY) {
+        await new Promise((res) => setTimeout(res, 500));
+        navigate("/practitioner/dashboard");
+        return;
+      }
+
       const res = await fetch(PRACTITIONER_LOGIN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: form.email, password: form.password }),
-        credentials: "include", // remove if not needed
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -52,8 +63,6 @@ export default function PractitionerLogin() {
         throw new Error(msg);
       }
 
-      // handle response (token/session) as your backend expects
-      // example: const data = await res.json();
       navigate("/practitioner/dashboard");
     } catch (err: any) {
       setError(err?.message || "Something went wrong. Please try again.");
@@ -64,7 +73,6 @@ export default function PractitionerLogin() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 md:py-6">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -74,11 +82,9 @@ export default function PractitionerLogin() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-12 md:py-20">
         <div className="max-w-md mx-auto">
           <Card className="p-8 shadow-lg">
-            {/* Title */}
             <div className="text-center mb-8">
               <h2 className="text-3xl font-semibold text-gray-900 mb-2 font-display">User Login</h2>
               <p className="text-sm text-gray-600 font-dm">
@@ -93,8 +99,7 @@ export default function PractitionerLogin() {
               </div>
             )}
 
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-6" aria-describedby={error ? "login-error" : undefined}>
+            <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-xs uppercase tracking-wider text-gray-700 font-dm">E M A I L</Label>
                 <Input
@@ -137,7 +142,6 @@ export default function PractitionerLogin() {
             </form>
           </Card>
 
-          {/* Back Link */}
           <div className="text-center mt-6">
             <Link to="/select-role" className="text-sm text-gray-600 hover:text-lungsense-blue transition-colors">
               ← Back to role selection

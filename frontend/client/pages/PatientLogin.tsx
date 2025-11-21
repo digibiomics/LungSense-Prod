@@ -1,3 +1,4 @@
+// frontend/src/pages/PatientLogin.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,13 @@ import { Card } from "@/components/ui/card";
 import { Activity } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 
-const PATIENT_LOGIN_URL = "http://localhost:8000/api/patients/login"; // ← change to your backend
+/**
+ * Toggle dummy mode: when true the page will NOT call backend and will
+ * immediately navigate to the dashboard (useful for demos/approval).
+ * Set to false to enable real backend calls.
+ */
+const USE_DUMMY = true;
+const PATIENT_LOGIN_URL = "http://localhost:8000/api/patients/login"; // real endpoint (used when USE_DUMMY = false)
 
 type LoginForm = {
   email: string;
@@ -42,11 +49,19 @@ export default function PatientLogin() {
 
     setIsSubmitting(true);
     try {
+      if (USE_DUMMY) {
+        // simulate network latency then navigate
+        await new Promise((res) => setTimeout(res, 500));
+        // optionally set a dummy token: localStorage.setItem("token", "dummy");
+        navigate("/patient/dashboard");
+        return;
+      }
+
       const res = await fetch(PATIENT_LOGIN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: formData.email, password: formData.password }),
-        credentials: "include", // keep if backend uses cookies; remove for token-only flows
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -54,13 +69,10 @@ export default function PatientLogin() {
         try {
           const json = await res.json();
           msg = json?.detail || json?.message || msg;
-        } catch {
-          /* ignore parse error */
-        }
+        } catch {}
         throw new Error(msg);
       }
 
-      // optionally handle response (token/session) here
       // const data = await res.json();
       navigate("/patient/dashboard");
     } catch (err: any) {
@@ -72,7 +84,6 @@ export default function PatientLogin() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 md:py-6">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -82,11 +93,9 @@ export default function PatientLogin() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-12 md:py-20">
         <div className="max-w-md mx-auto">
           <Card className="p-8 shadow-lg">
-            {/* Title */}
             <div className="text-center mb-8">
               <h2 className="text-3xl font-semibold text-gray-900 mb-2 font-display">User Login</h2>
               <p className="text-sm text-gray-600 font-dm">
@@ -101,7 +110,6 @@ export default function PatientLogin() {
               </div>
             )}
 
-            {/* Login Form */}
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-xs uppercase tracking-wider text-gray-700 font-dm">E M A I L</Label>
@@ -145,7 +153,6 @@ export default function PatientLogin() {
             </form>
           </Card>
 
-          {/* Back Link */}
           <div className="text-center mt-6">
             <Link to="/select-role" className="text-sm text-gray-600 hover:text-lungsense-blue transition-colors">
               ← Back to role selection
