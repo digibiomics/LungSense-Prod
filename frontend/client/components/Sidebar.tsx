@@ -8,11 +8,10 @@ export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = [
-    { icon: Home, label: "Dashboard", href: "/patient/dashboard" },
     { icon: Upload, label: "Upload Data", href: "/patient/upload" },
-    { icon: Activity, label: "Past Records", href: "/patient/records" },
-    { icon: FileText, label: "AI Analysis", href: "/patient/results" },
+    { icon: FileText, label: "Reporting", href: "/patient/results" },
     { icon: Heart, label: "Recommendations", href: "/patient/recommendations" },
+    { icon: Activity, label: "Past Records", href: "/patient/records" }
   ];
 
   return (
@@ -38,9 +37,13 @@ export default function Sidebar() {
             to="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-10 h-10 bg-lungsense-blue rounded-lg flex items-center justify-center">
-              <Activity className="w-6 h-6 text-white" />
-            </div>
+            <img
+                src="/logo-full-white.png"
+                alt="LungSense Logo"
+                className="w-32"src="/images/logo-new.png"
+                alt="Lungsense logo"
+                className="w-11 h-11 object-contain"
+            />
             <span className="text-xl font-bold font-display">LungSense</span>
           </Link>
 
