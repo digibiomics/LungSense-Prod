@@ -64,7 +64,7 @@ export default function PatientRecords() {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       {/* Sidebar */}
       <Sidebar />
 
@@ -180,3 +180,4 @@ export default function PatientRecords() {
     </div>
   );
 }
+
