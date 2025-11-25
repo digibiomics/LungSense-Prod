@@ -12,15 +12,18 @@ import {
   Bell,
   UserPlus,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Recommendations() {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       {/* Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64 bg-gray-50">
+      <main className="flex-1 md:ml-64 bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
         <div className="p-4 md:p-8 space-y-8 max-w-7xl">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
@@ -56,6 +59,7 @@ export default function Recommendations() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* ---- SCHEDULE APPOINTMENT CARD ---- */}
               <Card className="p-6 bg-white border-gray-200 hover:border-lungsense-blue transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-lungsense-blue-light rounded-lg flex items-center justify-center flex-shrink-0">
@@ -71,13 +75,19 @@ export default function Recommendations() {
                       primary physician or a pulmonologist to discuss the
                       findings.
                     </p>
-                    <Button className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium">
+
+                    {/* UPDATED BUTTON */}
+                    <Button
+                      onClick={() => navigate("/schedule-appointment")}
+                      className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium"
+                    >
                       Schedule Now
                     </Button>
                   </div>
                 </div>
               </Card>
 
+              {/* ---- ADDITIONAL IMAGING CARD ---- */}
               <Card className="p-6 bg-white border-gray-200 hover:border-lungsense-blue transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-lungsense-blue-light rounded-lg flex items-center justify-center flex-shrink-0">
@@ -230,7 +240,9 @@ export default function Recommendations() {
 
           {/* Regular Check-ups */}
           <div className="mt-12">
-            <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
+            <Card className="p-6 bg-white/90 backdrop-blur-xl
+                      rounded-xl shadow-lg
+                      border border-white/30">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Bell className="w-6 h-6 text-white" />
@@ -253,7 +265,7 @@ export default function Recommendations() {
 
           {/* Connect with Specialist */}
           <div className="mt-12">
-            <Card className="p-8 bg-gradient-to-r from-lungsense-blue to-lungsense-blue/80 border-lungsense-blue text-center">
+            <Card className="p-8 bg-lungsense-blue-light text-center">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="w-8 h-8 text-white" />
               </div>
