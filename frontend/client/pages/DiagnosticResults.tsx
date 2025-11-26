@@ -19,14 +19,14 @@ export default function DiagnosticResults() {
       severity: "high",
     },
     {
-      name: "Lung Cancer",
+      name: "Pneumonia",
       description:
         "Indications of localized lung infection with fluid accumulation.",
       confidence: 65,
       severity: "medium",
     },
     {
-      name: "Pneumonia",
+      name: "Lung Cancer",
       description:
         "Small, round-oss nodules identified; further investigation recommended.",
       confidence: 60,
@@ -36,15 +36,15 @@ export default function DiagnosticResults() {
 
   const probabilityData = [
     { name: "COPD", value: 85 },
-    { name: "Asthma", value: 78 },
-    { name: "Nodules", value: 60 },
+    { name: "Pneumonia", value: 78 },
+    { name: "Lung Cancer", value: 60 },
   ];
 
   // infection % for glass card — consistent on each render
   const randomPercent = useMemo(() => Math.floor(Math.random() * 40) + 50, []);
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100">
+    <div className="flex min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       <Sidebar />
 
       <main className="flex-1 md:ml-64 bg-white-100 text-black">
@@ -52,7 +52,7 @@ export default function DiagnosticResults() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl md:text-4xl font-bold font-display">
-              AI Diagnostic Results
+              Diagnostic Results
             </h1>
             <div className="flex items-center gap-4">
               <button className="p-2 hover:bg-white-800 rounded-lg transition-colors">
@@ -76,14 +76,14 @@ export default function DiagnosticResults() {
               {/* Diagnostic Summary */}
               <div>
                 <h2 className="text-2xl font-bold mb-6 font-display">
-                  Diagnostic Summary
+                  Summary
                 </h2>
 
                 <div className="space-y-4">
                   {diagnosticData.map((diagnosis, index) => (
                     <Card
                       key={index}
-                      className={`p-5 bg-blue/90 backdrop-blur-xl border-l-4 ${
+                      className={`p-5 bg-gray-100 backdrop-blur-xl border-l-4 ${
                         diagnosis.severity === "high"
                           ? "border-red-500"
                           : diagnosis.severity === "medium"
@@ -91,7 +91,7 @@ export default function DiagnosticResults() {
                             : "border-green-500"
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start justify-between mb-2 ">
                         <h3 className="font-semibold text-black font-display text-lg">
                           {diagnosis.name}
                         </h3>
@@ -109,7 +109,7 @@ export default function DiagnosticResults() {
                         </span>
                       </div>
 
-                      <p className="text-gray-400 text-sm font-dm">
+                      <p className="text-gray-900 text-sm font-dm">
                         {diagnosis.description}
                       </p>
                     </Card>
@@ -232,7 +232,9 @@ export default function DiagnosticResults() {
 
             {/* RIGHT COLUMN */}
             <div className="space-y-6">
-              <Card className="p-6 bg-white-800 border-gray-700">
+              <Card className="p-6 bg-gray-100 backdrop-blur-xl
+                      rounded-xl shadow-lg
+                      border border-white/30">
                 <h3 className="text-xl font-semibold mb-2 font-display">
                   Disease Probability Distribution
                 </h3>
@@ -241,17 +243,17 @@ export default function DiagnosticResults() {
                   {probabilityData.map((item, index) => (
                     <div key={index}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm text-gray-300 font-dm">
+                        <span className="text-sm text-gray-900 font-dm">
                           {item.name}
                         </span>
-                        <span className="text-sm font-semibold text-lungsense-blue">
+                        <span className="text-sm font-semibold text-indigo-950">
                           {item.value}%
                         </span>
                       </div>
 
-                      <div className="w-full bg-gray-700 rounded-full h-8">
+                      <div className="w-full bg-gray-500 rounded-full h-8">
                         <div
-                          className="bg-lungsense-blue h-8 rounded-full flex items-center justify-end pr-2"
+                          className="bg-indigo-950 h-8 rounded-full flex items-center justify-end pr-2"
                           style={{ width: `${item.value}%` }}
                         >
                           <span className="text-xs text-white font-semibold">
@@ -264,18 +266,16 @@ export default function DiagnosticResults() {
                 </div>
               </Card>
 
-              <Card className="p-6 bg-white-800 border-gray-700">
-                <h3 className="text-xl font-semibold mb-2 font-display">
-                  Download Comprehensive Report
-                </h3>
-
-                <Button className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90">
+              <Card className="p-6 bg-gray-100 backdrop-blur-xl
+                      rounded-xl shadow-lg
+                      border border-white/30">
+                <Button className="w-full bg-indigo-950 hover:bg-indigo-800">
                   <Download className="w-5 h-5 mr-2" />
                   Download Report
                 </Button>
               </Card>
 
-              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 border-lungsense-blue">
+              <Card className="p-6 bg-white/90 backdrop-blur-xl rounded-xl shadow-lg border border-white/30">
                 <div className="flex items-start gap-3 mb-4">
                   <AlertTriangle className="w-6 h-6 text-yellow-400" />
                   <div>
@@ -291,7 +291,7 @@ export default function DiagnosticResults() {
                 </div>
 
                 <Link to="/patient/recommendations">
-                  <Button className="w-full bg-white text-gray-600 hover:bg-gray-900 font-display">
+                  <Button className="w-full bg-indigo-950 text-white hover:bg-indigo-800">
                     View Recommendations
                   </Button>
                 </Link>
@@ -307,3 +307,4 @@ export default function DiagnosticResults() {
     </div>
   );
 }
+
