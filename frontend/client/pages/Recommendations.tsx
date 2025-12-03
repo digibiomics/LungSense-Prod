@@ -46,10 +46,7 @@ export default function Recommendations() {
 
           {/* Introduction */}
           <p className="text-gray-600 font-dm mb-8">
-            Following your AI diagnostic report, here are tailored
-            recommendations to guide your next steps towards optimal lung
-            health. These suggestions are designed to support your recovery and
-            long-term well-being.
+            Based on the analyzed data, the following general suggestions may help guide your next actions. These are not medical instructions. Please seek clinical evaluation from a healthcare provider for personalized medical advice
           </p>
 
           {/* Next Steps */}
@@ -63,31 +60,25 @@ export default function Recommendations() {
               <Card className="p-6 bg-white border-gray-200 hover:border-lungsense-blue transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-lungsense-blue-light rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-6 h-6 text-lungsense-blue" />
+                    <Calendar className="w-6 h-6 text-lungsense-blue text-white" />
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold mb-2 font-display text-gray-900">
                       Schedule Follow-up Appointment
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                      Your AI diagnostic report indicates a need for further
-                      medical review. Please schedule a follow-up with your
-                      primary physician or a pulmonologist to discuss the
-                      findings.
+                      For further medical review, please schedule a follow-up with your
+                      primary physician or a pulmonologist.
                     </p>
 
-                    {/* UPDATED BUTTON */}
-                    <Button
-                      onClick={() => navigate("/schedule-appointment")}
-                      className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium"
-                    >
-                      Schedule Now
-                    </Button>
+                     <Button className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium">
+                       Schedule Now
+                     </Button>
                   </div>
                 </div>
               </Card>
 
-              {/* ---- ADDITIONAL IMAGING CARD ---- */}
+              {/* Consider Additional Imaging*/}
               <Card className="p-6 bg-white border-gray-200 hover:border-lungsense-blue transition-colors shadow-sm">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-lungsense-blue-light rounded-lg flex items-center justify-center flex-shrink-0">
@@ -98,14 +89,12 @@ export default function Recommendations() {
                       Consider Additional Imaging
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                      Based on the initial analysis, additional high-resolution
-                      CT scans or MRI may provide more detailed insights.
                       Discuss this option with your doctor to determine
                       suitability.
                     </p>
                     <Button
-                      variant="outline"
-                      className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium"
+
+                      className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium"
                     >
                       Learn More
                     </Button>
@@ -132,13 +121,11 @@ export default function Recommendations() {
                       Monitor Symptoms Daily
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                      Pay close attention to any changes in your breathing,
-                      cough frequency, or chest discomfort. Log observations in
-                      your personal health journal for your doctor.
+                      Log changes in your breathing,
+                      cough frequency, or chest discomfort for your doctor.
                     </p>
                     <Button
-                      variant="outline"
-                      className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium"
+                      className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium"
                     >
                       Track Symptoms
                     </Button>
@@ -156,13 +143,10 @@ export default function Recommendations() {
                       Emergency Contact Information
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                      Keep emergency contacts and the nearest urgent care
-                      facility details readily available. Be aware of warning
-                      signs that require immediate medical attention.
+                     Please call 911 in case of emergencies. Keep emergency contacts handy.
                     </p>
                     <Button
-                      variant="outline"
-                      className="border-red-500 text-red-400 hover:bg-red-900/20 font-display font-medium"
+                      className="bg-red-200 border-red-500 text-red-400 hover:bg-red-900/20 font-display font-medium"
                     >
                       View Details
                     </Button>
@@ -179,58 +163,55 @@ export default function Recommendations() {
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
+              <Card className="p-6 bg-gradient-to-br from-lungsense-blue-light/20 to-transparent border-lungsense-blue">
                 <div className="w-12 h-12 bg-lungsense-blue/30 rounded-lg flex items-center justify-center mb-4">
                   <Dumbbell className="w-6 h-6 text-lungsense-blue" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 font-display">
                   Lifestyle Adjustments
                 </h3>
-                <p className="text-gray-400 text-sm mb-4 font-dm">
-                  Adopt a healthier diet rich in antioxidants, engage in
-                  moderate physical activity, and prioritize adequate rest to
-                  support your body's healing process.
+                <p className="text-black text-sm mb-4 font-dm">
+                  Adopt a healthier diet, engage in
+                  moderate physical activity, and prioritize rest to
+                  support your healing.
                 </p>
-                <Button className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-medium">
+                <Button className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue/90 font-display font-medium">
                   Explore Wellness
                 </Button>
               </Card>
 
-              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
+              <Card className="p-6 bg-gradient-to-br from-lungsense-blue-light/20 to-transparent border-lungsense-blue">
                 <div className="w-12 h-12 bg-lungsense-blue/30 rounded-lg flex items-center justify-center mb-4">
                   <Pill className="w-6 h-6 text-lungsense-blue" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 font-display">
                   Medication Adherence
                 </h3>
-                <p className="text-gray-400 text-sm mb-4 font-dm">
-                  If prescribed, ensure consistent and correct intake of all
-                  medications. Set reminders and understand potential side
-                  effects to maximize treatment effectiveness.
+                <p className="text-black text-sm mb-4 font-dm">
+                  Ensure consistent and correct intake of all
+                  medications.
                 </p>
                 <Button
-                  variant="outline"
-                  className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-medium"
+                  className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue text-white font-display font-medium"
                 >
                   Set Reminders
                 </Button>
               </Card>
 
-              <Card className="p-6 bg-gradient-to-br from-lungsense-blue/20 to-transparent border-lungsense-blue">
+              <Card className="p-6 bg-gradient-to-br from-lungsense-blue-light/20 to-transparent border-lungsense-blue">
                 <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center mb-4">
                   <Wind className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2 font-display">
                   Breathing Exercises
                 </h3>
-                <p className="text-gray-400 text-sm mb-4 font-dm">
+                <p className="text-black text-sm mb-4 font-dm">
                   Incorporate targeted breathing exercises to improve lung
-                  capacity and efficiency. Consult with a respiratory therapist
-                  for personalized techniques.
+                  capacity and efficiency. Consult with a respiratory therapist.
+
                 </p>
                 <Button
-                  variant="outline"
-                  className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display font-medium"
+                  className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue text-white font-display font-medium"
                 >
                   Start Exercises
                 </Button>
@@ -263,13 +244,13 @@ export default function Recommendations() {
             </Card>
           </div>
 
-          {/* Connect with Specialist */}
+          {/* Book Tele-Consultation feature */}
           <div className="mt-12">
             <Card className="p-8 bg-lungsense-blue-light text-center">
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <UserPlus className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-bold mb-3 font-display">
+              <h2 className="text-2xl text-white font-bold mb-3 font-display">
                 Connect with a Specialist
               </h2>
               <p className="text-white/90 mb-6 max-w-2xl mx-auto font-dm">
@@ -292,3 +273,4 @@ export default function Recommendations() {
     </div>
   );
 }
+
