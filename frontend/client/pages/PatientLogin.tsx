@@ -53,7 +53,7 @@ export default function PatientLogin() {
         // simulate network latency then navigate
         await new Promise((res) => setTimeout(res, 500));
         // optionally set a dummy token: localStorage.setItem("token", "dummy");
-        navigate("/patient/dashboard");
+        navigate("/patient/upload");
         return;
       }
 
@@ -83,24 +83,39 @@ export default function PatientLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
+      {/* Header */}
+      <header className="bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)] border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 md:py-6">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Activity className="w-8 h-8 text-lungsense-blue" />
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">LungSense</h1>
+          <Link
+            to="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <img src="/images/logo-new.png" alt="LungSense Logo" className="h-10 w-auto" />
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">
+              LungSense
+            </h1>
           </Link>
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="container mx-auto px-4 py-12 md:py-20">
         <div className="max-w-md mx-auto">
           <Card className="p-8 shadow-lg">
+            {/* Title */}
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-semibold text-gray-900 mb-2 font-display">User Login</h2>
+              <h2 className="text-3xl font-semibold text-gray-900 mb-2 font-display">
+                User Login
+              </h2>
               <p className="text-sm text-gray-600 font-dm">
                 Don't have an account?{" "}
-                <Link to="/patient/signup" className="text-lungsense-blue hover:underline font-medium">Sign Up here</Link>
+                <Link
+                  to="/patient/signup"
+                  className="text-lungsense-blue hover:underline font-medium"
+                >
+                  Sign Up here
+                </Link>
               </p>
             </div>
 
@@ -153,13 +168,24 @@ export default function PatientLogin() {
             </form>
           </Card>
 
+          {/* Back Link */}
           <div className="text-center mt-6">
-            <Link to="/select-role" className="text-sm text-gray-600 hover:text-lungsense-blue transition-colors">
+            <Link
+              to="/select-role"
+              className="text-sm text-gray-600 hover:text-lungsense-blue transition-colors"
+            >
               ← Back to role selection
             </Link>
           </div>
         </div>
       </main>
+      
+      {/* Footer */}
+        <footer className="w-full text-center py-4 mt-auto border-t border-white/20 bg-white/10 backdrop-blur-sm z-20">
+          <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+            © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+          </p>
+        </footer>
     </div>
   );
 }
