@@ -74,7 +74,7 @@ export default function PatientLogin() {
       }
 
       // const data = await res.json();
-      navigate("/patient/dashboard");
+      navigate("/patient/upload");
     } catch (err: any) {
       setError(err?.message || "Something went wrong — please try again.");
     } finally {
