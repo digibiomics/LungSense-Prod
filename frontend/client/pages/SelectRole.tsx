@@ -5,18 +5,18 @@ import { Activity, User, Stethoscope } from "lucide-react";
 
 export default function SelectRole() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       {/* Header */}
       <header className="border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4 md:py-6">
+        <div className="container mx-auto px-4 py-3 md:py-6">
           <Link
             to="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <Activity className="w-8 h-8 text-lungsense-blue" />
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">
+            <img src="/images/logo-new.png" alt="LungSense Logo" className="h-10 w-auto" />
+            <h3 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">
               LungSense
-            </h1>
+            </h3>
           </Link>
         </div>
       </header>
@@ -53,7 +53,7 @@ export default function SelectRole() {
                     </p>
                   </div>
                   <Button
-                    className="w-full bg-lungsense-blue hover:bg-lungsense-blue/90 font-display"
+                    className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue/90 font-display"
                     size="lg"
                   >
                     Continue as Patient
@@ -100,6 +100,12 @@ export default function SelectRole() {
           </div>
         </div>
       </main>
+      {/* Footer */}
+        <footer className="w-full text-center py-4 mt-auto border-t border-white/20 bg-white/10 backdrop-blur-sm z-20">
+          <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+            © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+          </p>
+        </footer>
     </div>
   );
 }
