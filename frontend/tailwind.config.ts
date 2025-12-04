@@ -60,9 +60,9 @@ export default {
         // LungSense brand colors
         lungsense: {
           blue: {
-            DEFAULT: "#005EB4",
-            light: "#D4ECFF",
-            medium: "#035DB4",
+            DEFAULT: "#0F0F2E",
+            light: "#3730A3",
+            medium: "#3730A3",
           },
           red: {
             DEFAULT: "#E7191F",
@@ -80,6 +80,7 @@ export default {
         },
       },
       fontFamily: {
+        oswald: ['"Oswald"', 'sans-serif'],
         sans: [
           "Inter",
           "DM Sans",
@@ -133,3 +134,4 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+
