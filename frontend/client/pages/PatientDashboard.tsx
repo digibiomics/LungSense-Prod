@@ -220,7 +220,7 @@ export default function PatientDashboard() {
               {/* UPLOAD DATA SECTION */}
               <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2 mb-6">
-                <img src="/images/Screenshot 2025-12-02 094841.png" alt="feature 1" className="h-12 w-auto" />
+                <img src="/images/upload.png" alt="feature 1" className="h-12 w-auto" />
                     <h2 className="text-xl font-semibold text-gray-900 font-display">
                        UPLOAD X-RAY DATA
                     </h2>
@@ -257,7 +257,7 @@ export default function PatientDashboard() {
                            <div className="flex flex-col items-center justify-center text-lungsense-blue/50 group-hover:text-lungsense-blue/70 transition-colors">
                                {/* Placeholder Image */}
                                <img
-                                 src="/images/Screenshot 2025-12-02 095357.png"
+                                 src="/images/chest-xray-clipart.png"
                                  alt="Upload Placeholder"
                                  className="w-25 h-25 mb-3 opacity-40 mix-blend-multiply"
                                />
@@ -299,7 +299,7 @@ export default function PatientDashboard() {
               {/* RECORD SOUNDS SECTION */}
               <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2 mb-6">
-                    <img src="/images/Screenshot 2025-12-02 094744.png" alt="feature 1" className="h-12 w-auto" />
+                    <img src="/images/record-sound.png" alt="feature 1" className="h-12 w-auto" />
                     <h2 className="text-xl font-semibold text-gray-900 font-display">
                        RECORD SOUNDS
                     </h2>
