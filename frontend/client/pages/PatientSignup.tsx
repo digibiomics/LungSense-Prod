@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Activity } from "lucide-react";
+import { Activity, X, ShieldCheck } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
 
 /**
@@ -43,7 +43,8 @@ export default function PatientSignup() {
     sex: "",
     consent: false,
   });
-
+  
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,11 +153,14 @@ export default function PatientSignup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lungsense-blue-light to-white">
-      <header className="bg-white border-b border-gray-200">
+    <div className="min-h-screen flex flex-col bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
+      <header className="bg-transparent border-b border-gray-200/50">
         <div className="container mx-auto px-4 py-4 md:py-6">
-          <Link to="/" className="flex items-center gap-2 hover:opacity-80">
-            <Activity className="w-8 h-8 text-lungsense-blue" />
+          <Link
+            to="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <img src="/images/logo-new.png" alt="LungSense Logo" className="h-10 w-auto" />
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">
               LungSense
             </h1>
@@ -164,9 +168,10 @@ export default function PatientSignup() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 md:py-20">
+      <main className="flex-1 container mx-auto px-4 py-12 md:py-20">
         <div className="max-w-md mx-auto">
-          <Card className="p-8 shadow-xl">
+          <Card className="p-8 shadow-xl bg-white/90 backdrop-blur-sm">
+            {/*Title*/}
             <div className="text-center mb-8">
               <h2 className="text-3xl font-semibold text-gray-900 mb-2 font-display">
                 Hi! Welcome to
@@ -228,127 +233,45 @@ export default function PatientSignup() {
                 />
               </div>
 
-              <h5 className="text-1xl font-bold text-lungsense-blue font-display">
-                Create your Candidate Profile
-              </h5>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label
-                    htmlFor="firstName"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                  >
-                    F I R S T&nbsp; N A M E
-                  </Label>
-                  <Input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    placeholder="Jiara"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="lastName"
-                    className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                  >
-                    L A S T&nbsp; N A M E
-                  </Label>
-                  <Input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    placeholder="Smith"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
+              <div className="pt-2">
+                <h5 className="text-lg font-bold text-lungsense-blue font-display">
+                  Create your Candidate Profile
+                </h5>
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="practitionerName"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  Y O U R &nbsp; P R A C T I T I O N E R&apos; S &nbsp; N A M E
+                <Label htmlFor="practionerName" className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium">
+                  Y O U R &nbsp; P R A C T I O N E R's &nbsp; N A M E
                 </Label>
                 <Input
-                  id="practitionerName"
-                  name="practitionerName"
+                  id="practionerName"
+                  name="practionerName"
                   type="text"
                   placeholder="Dr. Clara Smith"
-                  value={formData.practitionerName}
+                  value={formData.practionerName}
                   onChange={handleChange}
+                  className="font-display bg-white"
+                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="birthdate"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  D A T E &nbsp; O F &nbsp; B I R T H
+                <Label htmlFor="location" className="text-xs uppercase tracking-wider text-gray-700 font-dm font-medium">
+                  L O C A T I O N
                 </Label>
                 <Input
-                  id="birthdate"
-                  name="birthdate"
-                  type="date"
-                  value={formData.birthdate}
+                  id="location"
+                  name="location"
+                  type="text"
+                  placeholder="Canada"
+                  value={formData.location}
                   onChange={handleChange}
+                  className="font-display bg-white"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label
-                  htmlFor="ethnicity"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  E T H N I C I T Y
-                </Label>
-                <select
-                  id="ethnicity"
-                  name="ethnicity"
-                  value={formData.ethnicity}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="">Select Ethnicity</option>
-                  <option value="asian">Asian</option>
-                  <option value="african">African</option>
-                  <option value="caucasian">Caucasian</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="sex"
-                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
-                >
-                  S E X
-                </Label>
-                <select
-                  id="sex"
-                  name="sex"
-                  value={formData.sex}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-3 py-2 border rounded-lg"
-                >
-                  <option value="">Select Sex</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2">
                 <input
                   id="consent"
                   name="consent"
@@ -363,23 +286,28 @@ export default function PatientSignup() {
                 </Label>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg text-xs text-gray-600 text-center">
+              {/* Privacy Notice with Modal Trigger */}
+              <div className="bg-gray-50 p-4 rounded-lg text-xs text-gray-600 text-center border border-gray-100">
                 <p className="font-dm">
-                  By Signing Up, you agree to consent to our data collection for
-                  research purposes.
+                  By Signing Up, You agree to consent to our data collection for
                   <br />
-                  <a
-                    href="#"
-                    className="text-lungsense-blue hover:underline font-medium"
+                  research purposes.{" "}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsPrivacyOpen(true);
+                    }}
+                    className="text-lungsense-blue hover:underline font-medium bg-transparent border-none cursor-pointer p-0 inline"
                   >
                     Read our privacy policy here
-                  </a>
+                  </button>
                 </p>
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-lungsense-blue text-white py-6 rounded-lg"
+                className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue/90 text-white font-bold font-display py-6 rounded-lg shadow-md transition-all hover:translate-y-[-1px]"
+                size="lg"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Signing up..." : "Sign Up"}
@@ -397,6 +325,63 @@ export default function PatientSignup() {
           </div>
         </div>
       </main>
+      
+      {/*Footer*/}
+      <footer className="w-full text-center py-4 border-t border-white/20 bg-white/10 backdrop-blur-sm z-20">
+        <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+          © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+        </p>
+      </footer>
+      
+      {/* PRIVACY MODAL (Rendered conditionally at root level of component) */}
+      {isPrivacyOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl overflow-hidden text-left">
+
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b bg-gray-50">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-lungsense-blue/10 rounded-full flex items-center justify-center">
+                             <ShieldCheck className="w-6 h-6 text-lungsense-blue" />
+                        </div>
+                        <div>
+                            <h3 className="font-display font-bold text-xl text-gray-900">Privacy Policy</h3>
+                            <p className="text-xs text-gray-500">Last updated: 2 December 2025</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => setIsPrivacyOpen(false)}
+                        className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    >
+                        <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="flex-1 p-6 overflow-y-auto space-y-4 text-sm text-gray-600 font-dm leading-relaxed">
+                    <p> This Privacy Policy explains how we collect, use, disclose, and protect your information when you use our medical AI diagnostic application (“Service”). The Service analyzes health information—including symptoms, medical images, and audio—to provide diagnostic insights or decision support to consumers and healthcare professionals.
+
+We are committed to complying with applicable privacy, data protection, and medical device regulations, including the GDPR, UK GDPR, CCPA/CPRA, PIPEDA, LGPD, Australia Privacy Act, Singapore PDPA, and applicable U.S. laws such as HIPAA (when used by covered entities).
+
+If you do not agree with this Policy, please do not use the Service.</p>
+                    <p><strong>1. Data Collection & Usage:</strong> We collect respiratory data (audio/images) solely for the purpose of providing AI-generated diagnostic insights. Your data is anonymized before processing.</p>
+                    <p><strong>2. HIPAA & GDPR Compliance:</strong> LungSense adheres to strict international standards for medical data protection. Your personal identifiers are encrypted at rest and in transit.</p>
+                    <p><strong>3. Data Retention:</strong> Uploaded files are temporarily stored for analysis and are and used for further model re-training and development.</p>
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-blue-800 text-xs mt-4">
+                        <strong>Note:</strong> By proceeding, you acknowledge that this AI tool is for screening purposes only, that you are minimum 18 years of age and consent to the above mentioned terms.
+                    </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-4 border-t bg-gray-50 flex justify-end">
+                    <Button onClick={() => setIsPrivacyOpen(false)} className="bg-lungsense-blue text-white hover:bg-lungsense-blue/90">
+                        I Understand
+                    </Button>
+                </div>
+            </div>
+        </div>
+      )}
+      
     </div>
   );
 }
