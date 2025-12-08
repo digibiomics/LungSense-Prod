@@ -36,7 +36,7 @@ const Index: React.FC = () => {
         }`}
       >
         <img
-          src="/images/logo-new.png"
+          src="/public/images/logo-new.png"
           alt="Loading..."
           className="w-24 h-24 object-contain animate-pulse"
         />
@@ -55,7 +55,7 @@ const Index: React.FC = () => {
                 className="inline-block hover:opacity-80 transition-opacity"
               >
 
-                <img src="/images/digibiomics_logo.png" alt="Partner Logo" className="h-20 w-auto" />
+                <img src="/public/images/digibiomics_logo.png" alt="Partner Logo" className="h-20 w-auto" />
               </Link>
             </div>
         </header>
