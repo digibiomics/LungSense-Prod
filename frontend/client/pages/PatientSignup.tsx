@@ -70,10 +70,6 @@ export default function PatientSignup() {
     if (!data.email) return "Email is required.";
     if (!data.password || data.password.length < 6)
       return "Password should be at least 6 characters.";
-    if (!data.firstName || !data.lastName) return "Full name is required.";
-    if (!data.birthdate) return "Birthdate is required.";
-    if (!data.ethnicity) return "Please select ethnicity.";
-    if (!data.sex) return "Please select sex.";
     if (!data.consent) return "You must agree to the privacy policy.";
     return null;
   };
@@ -279,8 +275,9 @@ export default function PatientSignup() {
                   checked={formData.consent}
                   onChange={handleChange}
                   className="h-4 w-4"
+                  class = "mr-2"
                 />
-                <Label htmlFor="consent" className="text-xs text-gray-600">
+                <Label htmlFor="consent" className="text-xs text-gray-600" >
                   I agree to the privacy policy and data collection for research
                   purposes.
                 </Label>
