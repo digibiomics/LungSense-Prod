@@ -74,7 +74,7 @@ const Index: React.FC = () => {
                 {/* Logo Circle */}
                 <div className="w-40 h-40 rounded-full border-[4px] border-white flex items-center justify-center shadow-xl p-6 bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
                   <img
-                      src="/images/logo-new.png"
+                      src="/public/images/logo-new.png"
                       alt="LungSense Logo"
                       className="w-full h-full object-contain drop-shadow-md"
                   />
