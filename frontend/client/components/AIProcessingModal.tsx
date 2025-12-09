@@ -135,7 +135,7 @@ export default function AIProcessingModal({
               </div>
 
               {/* Quick Summary */}
-              <div className="bg-lungsense-blue-light rounded-lg p-4 text-left">
+              <div className="bg-gray-100 rounded-lg p-4 text-left">
                 <h3 className="font-semibold text-gray-900 mb-3 font-display text-sm">
                   Top Findings:
                 </h3>
