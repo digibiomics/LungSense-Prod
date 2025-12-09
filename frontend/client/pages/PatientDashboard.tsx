@@ -60,7 +60,7 @@ export default function PatientDashboard() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setUploadedFile(file);
+      processFile(file);
     }
   };
 
@@ -68,7 +68,7 @@ export default function PatientDashboard() {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      setUploadedFile(file);
+      processFile(file);
     }
   };
 
