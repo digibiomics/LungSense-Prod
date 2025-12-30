@@ -53,7 +53,7 @@ export default function PatientLogin() {
         // simulate network latency then navigate
         await new Promise((res) => setTimeout(res, 500));
         // optionally set a dummy token: localStorage.setItem("token", "dummy");
-        navigate("/patient/upload");
+        navigate("/patient/select-profile");
         return;
       }
 
@@ -158,7 +158,7 @@ export default function PatientLogin() {
 
               <Button
                 type="submit"
-                className="w-full bg-black hover:bg-gray-800 text-white font-bold font-display"
+                className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white font-display"
                 size="lg"
                 disabled={isSubmitting}
                 aria-disabled={isSubmitting}
