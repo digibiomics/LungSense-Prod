@@ -71,9 +71,13 @@ export default function Recommendations() {
                       primary physician or a pulmonologist.
                     </p>
 
-                     <Button className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium">
-                       Schedule Now
-                     </Button>
+
+                    <Button
+                    onClick={() => navigate('/patient/scheduleAppointment')}
+                    className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium">
+                        Schedule Now
+                    </Button>
+
                   </div>
                 </div>
               </Card>
@@ -89,8 +93,8 @@ export default function Recommendations() {
                       Consider Additional Imaging
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                      Discuss this option with your doctor to determine
-                      suitability.
+                      For further medical review, please schedule a follow-up with your
+                      primary physician or a pulmonologist.
                     </p>
                     <Button
 
@@ -121,8 +125,8 @@ export default function Recommendations() {
                       Monitor Symptoms Daily
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                      Log changes in your breathing,
-                      cough frequency, or chest discomfort for your doctor.
+                      For further medical review, please schedule a follow-up with your
+                      primary physician or a pulmonologist.
                     </p>
                     <Button
                       className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium"
@@ -143,10 +147,11 @@ export default function Recommendations() {
                       Emergency Contact Information
                     </h3>
                     <p className="text-gray-600 text-sm mb-4 font-dm">
-                     Please call 911 in case of emergencies. Keep emergency contacts handy.
+                     For further medical review, please schedule a follow-up with your
+                      primary physician or a pulmonologist.
                     </p>
                     <Button
-                      className="bg-red-200 border-red-500 text-red-400 hover:bg-red-900/20 font-display font-medium"
+                      className="bg-red-700 border-red-500 text-white hover:bg-red-900 font-display font-medium"
                     >
                       View Details
                     </Button>
@@ -188,8 +193,9 @@ export default function Recommendations() {
                   Medication Adherence
                 </h3>
                 <p className="text-black text-sm mb-4 font-dm">
-                  Ensure consistent and correct intake of all
-                  medications.
+                  Adopt a healthier diet, engage in
+                  moderate physical activity, and prioritize rest to
+                  support your healing.
                 </p>
                 <Button
                   className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue text-white font-display font-medium"
@@ -206,8 +212,9 @@ export default function Recommendations() {
                   Breathing Exercises
                 </h3>
                 <p className="text-black text-sm mb-4 font-dm">
-                  Incorporate targeted breathing exercises to improve lung
-                  capacity and efficiency. Consult with a respiratory therapist.
+                  Adopt a healthier diet, engage in
+                  moderate physical activity, and prioritize rest to
+                  support your healing.
 
                 </p>
                 <Button
@@ -236,7 +243,7 @@ export default function Recommendations() {
                     Maintain a schedule of regular medical check-ups to monitor
                     your lung health and detect any changes early.
                   </p>
-                  <Button className="bg-white text-gray-900 hover:bg-gray-100 font-display font-medium">
+                  <Button className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium">
                     Plan Check-ups
                   </Button>
                 </div>
