@@ -6,10 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-<<<<<<< HEAD
-=======
-import { Textarea } from "@/components/ui/textarea";
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
 import { CheckCircle2, ChevronLeft, Plus, Trash2, ShieldCheck, X } from "lucide-react";
 import { useState, ChangeEvent } from "react";
 
@@ -30,7 +26,6 @@ type ProfileData = {
   ethnicity: string;
   country: string;
   province: string;
-<<<<<<< HEAD
   // Updated fields
   isSmoker: boolean;
   workExposure: boolean; // e.g. Mines, construction
@@ -38,10 +33,6 @@ type ProfileData = {
   historyCF: boolean;
   historyTB: boolean;
   historyAsthma: boolean;
-=======
-  occupationalHistory: string;
-  medicalHistory: string;
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
 };
 
 export default function PatientSignup() {
@@ -57,13 +48,9 @@ export default function PatientSignup() {
     confirmPassword: "",
     profiles: [{
       firstName: "", lastName: "", age: "", sex: "", ethnicity: "",
-<<<<<<< HEAD
       country: "", province: "",
       isSmoker: false, workExposure: false, historyCOPD: false,
       historyCF: false, historyTB: false, historyAsthma: false
-=======
-      country: "", province: "", occupationalHistory: "", medicalHistory: ""
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
     } as ProfileData],
     consent: false,
   });
@@ -73,7 +60,6 @@ export default function PatientSignup() {
   const buttonDesign = "w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white font-display py-6 rounded-lg shadow-md";
 
   const handleProfileChange = (index: number, e: any) => {
-<<<<<<< HEAD
     const { name, value, type, checked } = e.target;
     if (name === "age" && value !== "" && parseInt(value) < 0) return;
 
@@ -82,12 +68,6 @@ export default function PatientSignup() {
         ...updatedProfiles[index],
         [name]: type === 'checkbox' ? checked : value
     };
-=======
-    const { name, value } = e.target;
-    if (name === "age" && value !== "" && parseInt(value) < 0) return;
-    const updatedProfiles = [...formData.profiles];
-    updatedProfiles[index] = { ...updatedProfiles[index], [name]: value };
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
     setFormData({ ...formData, profiles: updatedProfiles });
   };
 
@@ -96,13 +76,9 @@ export default function PatientSignup() {
       ...prev,
       profiles: [...prev.profiles, {
         firstName: "", lastName: "", age: "", sex: "", ethnicity: "",
-<<<<<<< HEAD
         country: "", province: "",
         isSmoker: false, workExposure: false, historyCOPD: false,
         historyCF: false, historyTB: false, historyAsthma: false
-=======
-        country: "", province: "", occupationalHistory: "", medicalHistory: ""
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
       }]
     }));
     setActiveProfileIndex(formData.profiles.length);
@@ -132,19 +108,11 @@ export default function PatientSignup() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
-<<<<<<< HEAD
       <header className="bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)] border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 md:py-6">
           <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <img src="/images/logo-new.png" alt="LungSense Logo" className="h-10 w-auto" />
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">LungSense</h1>
-=======
-      <header className="bg-transparent border-b border-gray-200/50">
-        <div className="container mx-auto px-4 py-6">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <img src="/images/logo-new.png" alt="Logo" className="h-10 w-auto" />
-            <h1 className="text-2xl font-bold text-gray-900 font-display">LungSense</h1>
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
           </Link>
         </div>
       </header>
@@ -176,10 +144,6 @@ export default function PatientSignup() {
                 {currentStep === 2 && (
                   <div className="space-y-4 animate-in fade-in">
                     <h3 className="text-2xl font-bold font-display">{activeProfileIndex === 0 ? "Primary Profile" : "Additional Profile"}</h3>
-<<<<<<< HEAD
-=======
-                    {activeProfileIndex === 0 && <p className="text-sm text-gray-600 italic">This is the profile of the primary person. You can add other family members in Step 4.</p>}
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2"><Label className={labelStyle}>First Name</Label><Input name="firstName" placeholder="e.g. John" value={formData.profiles[activeProfileIndex].firstName} onChange={(e) => handleProfileChange(activeProfileIndex, e)} /></div>
                       <div className="space-y-2"><Label className={labelStyle}>Last Name</Label><Input name="lastName" placeholder="e.g. Doe" value={formData.profiles[activeProfileIndex].lastName} onChange={(e) => handleProfileChange(activeProfileIndex, e)} /></div>
@@ -196,7 +160,6 @@ export default function PatientSignup() {
                   </div>
                 )}
 
-<<<<<<< HEAD
                 {/* STEP 3: RESPIRATORY HISTORY (UPDATED) */}
                 {currentStep === 3 && (
                   <div className="space-y-6 animate-in fade-in">
@@ -229,14 +192,6 @@ export default function PatientSignup() {
                             ))}
                         </div>
                     </div>
-=======
-                {/* STEP 3: HISTORY */}
-                {currentStep === 3 && (
-                  <div className="space-y-4 animate-in fade-in">
-                    <h3 className="text-2xl font-bold font-display">Respiratory History</h3>
-                    <div className="space-y-2"><Label className={labelStyle}>Occupational History</Label><Textarea name="occupationalHistory" placeholder="e.g. 5 years in industrial mining..." value={formData.profiles[activeProfileIndex].occupationalHistory} onChange={(e) => handleProfileChange(activeProfileIndex, e)} className="min-h-[100px]" /></div>
-                    <div className="space-y-2"><Label className={labelStyle}>Medical History</Label><Textarea name="medicalHistory" placeholder="e.g. Diagnosed with Asthma..." value={formData.profiles[activeProfileIndex].medicalHistory} onChange={(e) => handleProfileChange(activeProfileIndex, e)} className="min-h-[100px]" /></div>
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
                   </div>
                 )}
 
@@ -328,15 +283,12 @@ export default function PatientSignup() {
           </Card>
         </div>
       )}
-<<<<<<< HEAD
 
       <footer className="w-full text-center py-4 mt-auto border-t border-white/20 bg-white/10 backdrop-blur-sm z-20">
           <p className="text-[10px] text-slate-500 font-medium tracking-wide">
             © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
           </p>
       </footer>
-=======
->>>>>>> 3a0baffa1f6518024aa5936acdfab8dab48ca7a3
     </div>
   );
 }
