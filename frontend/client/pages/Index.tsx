@@ -82,10 +82,10 @@ const Index: React.FC = () => {
 
                 {/* Text Branding */}
                 <div className="space-y-4">
-                  <h1 className="text-5xl md:text-7xl font-SF Pro Display Semibold font-bold tracking-tight text-lungsense-blue">
+                  <h1 className="text-4xl md:text-7xl font-SF Pro Display Semibold font-bold tracking-tight text-lungsense-blue">
                     LungSense
                   </h1>
-                  <p className="text-xl md:text-3xl text-black font-SF Pro Text Regular leading-relaxed">
+                  <p className="text-xl md:text-3xl text-black font-SF Pro Text Regular tracking-tight leading-tight">
                     Your First Line of <br className="hidden md:block" />
                     Lung Health
                   </p>
@@ -102,6 +102,7 @@ const Index: React.FC = () => {
                       py-8 px-20
                       rounded-2xl
                       shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all
+                      hover:opacity-90 transition-opacity
                     "
                   >
                     Get Started
