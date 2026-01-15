@@ -1,35 +1,42 @@
 from __future__ import annotations
-
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-
-from app.config.redis_config import get_redis_pool
+from datetime import datetime, timedelta, timezone
 
 MAX_REQUESTS = 10000
-TIME_WINDOW = 60
+TIME_WINDOW = 60  # seconds
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
+    """High-throughput in-memory rate limiting based on IP + time window"""
+    _request_log: dict[str, list[datetime]] = {}
+
     async def dispatch(self, request: Request, call_next):
         client_ip = request.client.host
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(seconds=TIME_WINDOW)
 
-        redis = await get_redis_pool()
-        try:
-            request_count = await redis.get(client_ip)
-            request_count = int(request_count) if request_count else 0
+        # Initialize if IP not seen before
+        if client_ip not in self._request_log:
+            self._request_log[client_ip] = []
 
-            if request_count >= MAX_REQUESTS:
-                ttl = await redis.ttl(client_ip)
-                detail = {"error": "Too Many Requests", "message": f"Rate limit exceeded. Try again in {ttl} seconds."}
-                return JSONResponse(status_code=429, content=detail)
+        # Remove outdated timestamps outside the time window
+        self._request_log[client_ip] = [
+            ts for ts in self._request_log[client_ip] if ts > window_start
+        ]
 
-            pipe = redis.pipeline()
-            pipe.incr(client_ip)
-            pipe.expire(client_ip, TIME_WINDOW)
-            await pipe.execute()
-        finally:
-            print("Finally Block in Rate Limit exceeded")
+        # Check current count
+        if len(self._request_log[client_ip]) >= MAX_REQUESTS:
+            retry_in = int((self._request_log[client_ip][0] - window_start).total_seconds())
+            detail = {
+                "error": "Too Many Requests",
+                "message": f"Rate limit exceeded. Try again in {retry_in} seconds."
+            }
+            return JSONResponse(status_code=429, content=detail)
+
+        # Log the new request timestamp
+        self._request_log[client_ip].append(now)
 
         response = await call_next(request)
         return response

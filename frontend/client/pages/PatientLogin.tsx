@@ -1,19 +1,10 @@
-// frontend/src/pages/PatientLogin.tsx
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Activity } from "lucide-react";
 import { useState, ChangeEvent, FormEvent } from "react";
-
-/**
- * Toggle dummy mode: when true the page will NOT call backend and will
- * immediately navigate to the dashboard (useful for demos/approval).
- * Set to false to enable real backend calls.
- */
-const USE_DUMMY = true;
-const PATIENT_LOGIN_URL = "http://localhost:8000/api/patients/login"; // real endpoint (used when USE_DUMMY = false)
+import { loginPatient } from "../../src/api"; // ✅ real backend API
 
 type LoginForm = {
   email: string;
@@ -22,66 +13,57 @@ type LoginForm = {
 
 export default function PatientLogin() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<LoginForm>({ email: "", password: "" });
+
+  const [formData, setFormData] = useState<LoginForm>({
+    email: "",
+    password: "",
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /* ============================
+     INPUT HANDLER
+  ============================ */
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const validate = (data: LoginForm) => {
-    if (!data.email) return "Email is required.";
-    if (!data.password) return "Password is required.";
-    return null;
-  };
-
+  /* ============================
+     SUBMIT
+  ============================ */
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    const v = validate(formData);
-    if (v) {
-      setError(v);
+    if (!formData.email || !formData.password) {
+      setError("Email and password are required.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      if (USE_DUMMY) {
-        // simulate network latency then navigate
-        await new Promise((res) => setTimeout(res, 500));
-        // optionally set a dummy token: localStorage.setItem("token", "dummy");
-        navigate("/patient/select-profile");
-        return;
-      }
+      // ✅ REAL BACKEND LOGIN
+      const res = await loginPatient(formData);
 
-      const res = await fetch(PATIENT_LOGIN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
-        credentials: "include",
-      });
+      // 🔐 STORE AUTH DETAILS
+      localStorage.setItem("token", res.access_token);
+      localStorage.setItem("user_id", String(res.user_id));
+      localStorage.setItem("role", res.role);
 
-      if (!res.ok) {
-        let msg = `Login failed (${res.status})`;
-        try {
-          const json = await res.json();
-          msg = json?.detail || json?.message || msg;
-        } catch {}
-        throw new Error(msg);
-      }
-
-      // const data = await res.json();
-      navigate("/patient/upload");
+      // ✅ NAVIGATE
+      navigate("/patient/select-profile");
     } catch (err: any) {
-      setError(err?.message || "Something went wrong — please try again.");
+      setError(err?.detail || err?.message || "Login failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /* ============================
+     UI (UNCHANGED STYLING)
+  ============================ */
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       {/* Header */}
@@ -91,7 +73,11 @@ export default function PatientLogin() {
             to="/"
             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <img src="/images/logo-new.png" alt="LungSense Logo" className="h-10 w-auto" />
+            <img
+              src="/images/logo-new.png"
+              alt="LungSense Logo"
+              className="h-10 w-auto"
+            />
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">
               LungSense
             </h1>
@@ -120,14 +106,22 @@ export default function PatientLogin() {
             </div>
 
             {error && (
-              <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3" role="alert">
+              <div
+                className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3"
+                role="alert"
+              >
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-xs uppercase tracking-wider text-gray-700 font-dm">E M A I L</Label>
+                <Label
+                  htmlFor="email"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
+                >
+                  E M A I L
+                </Label>
                 <Input
                   id="email"
                   name="email"
@@ -142,7 +136,12 @@ export default function PatientLogin() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-xs uppercase tracking-wider text-gray-700 font-dm">P A S S W O R D</Label>
+                <Label
+                  htmlFor="password"
+                  className="text-xs uppercase tracking-wider text-gray-700 font-dm"
+                >
+                  P A S S W O R D
+                </Label>
                 <Input
                   id="password"
                   name="password"
@@ -179,13 +178,13 @@ export default function PatientLogin() {
           </div>
         </div>
       </main>
-      
+
       {/* Footer */}
-        <footer className="w-full text-center py-4 mt-auto border-t border-white/20 bg-white/10 backdrop-blur-sm z-20">
-          <p className="text-[10px] text-slate-500 font-medium tracking-wide">
-            © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
-          </p>
-        </footer>
+      <footer className="w-full text-center py-4 mt-auto border-t border-white/20 bg-white/10 backdrop-blur-sm z-20">
+        <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+          © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+        </p>
+      </footer>
     </div>
   );
 }

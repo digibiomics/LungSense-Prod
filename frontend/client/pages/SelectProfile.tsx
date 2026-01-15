@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 const LOCATION_DATA: Record<string, string[]> = {
   "Canada": ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba"],
@@ -34,7 +33,7 @@ export default function SelectProfile() {
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // New Profile Form State (Full set of fields from Signup)
+  // New Profile Form State (Updated to handle checkboxes)
   const [newProfile, setNewProfile] = useState({
     firstName: "",
     lastName: "",
@@ -44,8 +43,12 @@ export default function SelectProfile() {
     country: "",
     province: "",
     relation: "Family Member",
-    occupationalHistory: "",
-    medicalHistory: ""
+    historyCOPD: false,
+    historyAsthma: false,
+    historyTB: false,
+    historyCF: false,
+    isSmoker: false,
+    workExposure: false
   });
 
   // --- STYLING CONSTANTS ---
@@ -54,16 +57,19 @@ export default function SelectProfile() {
 
   // --- HANDLERS ---
   const handleInputChange = (e: any) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     if (name === "age" && value !== "" && parseInt(value) < 0) return;
-    setNewProfile(prev => ({ ...prev, [name]: value }));
+
+    setNewProfile(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
   };
 
   const handleCreateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation logic from Signup
     const ageNum = parseInt(newProfile.age);
     if (!newProfile.firstName || !newProfile.lastName) return setError("First and Last name are required.");
     if (isNaN(ageNum) || ageNum < 18) {
@@ -84,8 +90,12 @@ export default function SelectProfile() {
 
     setProfiles([...profiles, profileEntry]);
     setIsAdding(false);
+
     // Reset form
-    setNewProfile({ firstName: "", lastName: "", age: "", sex: "", ethnicity: "", country: "", province: "", relation: "Family Member", occupationalHistory: "", medicalHistory: "" });
+    setNewProfile({
+      firstName: "", lastName: "", age: "", sex: "", ethnicity: "", country: "", province: "", relation: "Family Member",
+      historyCOPD: false, historyAsthma: false, historyTB: false, historyCF: false, isSmoker: false, workExposure: false
+    });
   };
 
   return (
@@ -143,7 +153,7 @@ export default function SelectProfile() {
         </div>
       </main>
 
-      {/* FULL ADD PROFILE MODAL (Signup-Style) */}
+      {/* FULL ADD PROFILE MODAL */}
       {isAdding && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
           <Card className="w-full max-w-2xl p-8 bg-white shadow-2xl relative my-8">
@@ -176,9 +186,33 @@ export default function SelectProfile() {
                 <div className="space-y-2"><Label className={labelStyle}>Relationship</Label><select name="relation" className="w-full text-sm border rounded-md p-2 h-10" value={newProfile.relation} onChange={handleInputChange}><option>Parent</option><option>Child</option><option>Spouse</option><option>Other Family</option><option>Caregiver</option></select></div>
               </div>
 
-              <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2"><Label className={labelStyle}>Occupational History</Label><Textarea name="occupationalHistory" placeholder="e.g. Industrial work history..." value={newProfile.occupationalHistory} onChange={handleInputChange} /></div>
-                <div className="space-y-2"><Label className={labelStyle}>Medical Conditions</Label><Textarea name="medicalHistory" placeholder="e.g. Asthma, allergies..." value={newProfile.medicalHistory} onChange={handleInputChange} /></div>
+              {/* REPLACED MEDICAL & OCCUPATIONAL HISTORY WITH CHECKBOXES */}
+              <div className="space-y-3 pt-4 border-t">
+                <Label className={labelStyle}>Medical & Family History</Label>
+                <p className="text-[10px] text-gray-500 -mt-2">Check all that apply to you or your immediate family.</p>
+
+                <div className="grid grid-cols-1 gap-2">
+                    {[
+                        { id: "historyCOPD", label: "COPD" },
+                        { id: "historyAsthma", label: "Asthma" },
+                        { id: "historyTB", label: "Tuberculosis (TB)" },
+                        { id: "historyCF", label: "Cystic Fibrosis (CF)" },
+                        { id: "isSmoker", label: "Current or Former Smoker" },
+                        { id: "workExposure", label: "Occupational Exposure (e.g., Mines, Mining, Industrial Dust)" }
+                    ].map((item) => (
+                        <div key={item.id} className="flex items-center space-x-3 p-3 rounded-lg border bg-white/50 hover:bg-white transition-colors">
+                            <input
+                                type="checkbox"
+                                id={item.id}
+                                name={item.id}
+                                checked={(newProfile as any)[item.id]}
+                                onChange={handleInputChange}
+                                className="h-4 w-4 rounded border-gray-300 text-lungsense-blue focus:ring-lungsense-blue"
+                            />
+                            <Label htmlFor={item.id} className="text-sm font-medium cursor-pointer leading-none">{item.label}</Label>
+                        </div>
+                    ))}
+                </div>
               </div>
 
               <Button type="submit" className={buttonDesign}>Create Profile</Button>

@@ -20,6 +20,7 @@ import PractitionerPatients from "./pages/PractitionerPatients";
 import PractitionerPatientDetail from "./pages/PractitionerPatientDetail";
 import NotFound from "./pages/NotFound";
 import ScheduleAppointment from "./pages/scheduleAppointment";
+import SelectProfile from "./pages/SelectProfile";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
             path="/practitioner/patient/:id"
             element={<PractitionerPatientDetail />}
           />
+          <Route path="/patient/select-profile" element={<SelectProfile />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

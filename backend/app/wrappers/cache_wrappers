@@ -1,0 +1,26 @@
+from __future__ import annotations
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Any
+
+
+class CacheWrapper:
+    """Simple in-memory cache wrapper"""
+    _cache_store: dict[str, tuple[Any, datetime]] = {}
+
+    @classmethod
+    async def create_cache(cls, resp: Any, key: str, ex: int = 60) -> None:
+        expire = datetime.now(timezone.utc) + timedelta(seconds=ex)
+        cls._cache_store[key] = (resp, expire)
+
+    @classmethod
+    async def retrieve_cache(cls, key: str) -> tuple[Optional[Any], Optional[int]]:
+        data = cls._cache_store.get(key)
+        if not data:
+            return None, None
+        resp, exp = data
+        ttl = int((exp - datetime.now(timezone.utc)).total_seconds())
+        return resp, max(ttl, 0)
+
+    @classmethod
+    async def invalidate_cache(cls, key: str) -> None:
+        cls._cache_store.pop(key, None)

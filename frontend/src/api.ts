@@ -1,10 +1,10 @@
 // frontend/src/api.ts
-export const PATIENT_SIGNUP_URL       = "http://localhost:8000/auth/signup/patient";
-export const PRACTITIONER_SIGNUP_URL = "http://localhost:8000/auth/signup/practitioner";
+export const PATIENT_SIGNUP_URL       = "http://localhost:8000/api/patient";
+export const PRACTITIONER_SIGNUP_URL = "http://localhost:8000/api/practitioner";
 
 // You said you want these exact endpoints:
-export const PATIENT_LOGIN_URL       = "http://localhost:8000/api/patients/login";
-export const PRACTITIONER_LOGIN_URL = "http://localhost:8000/api/practitioners/login";
+export const PATIENT_LOGIN_URL       = "http://localhost:8000/api/auth/login";
+export const PRACTITIONER_LOGIN_URL = "http://localhost:8000/api/auth/login";
 
 // Helper to POST JSON and return parsed JSON or throw.
 async function postJson(url: string, body: any, opts: RequestInit = {}) {
@@ -29,4 +29,20 @@ export async function loginPatient(payload: any) {
 }
 export async function loginPractitioner(payload: any) {
   return postJson(PRACTITIONER_LOGIN_URL, payload);
+}
+
+export const CREATE_SUB_USER_URL = (ownerId: number) =>
+  `http://localhost:8000/api/patient/${ownerId}/sub-user`;
+
+export async function createSubUser(ownerId: number, payload: any) {
+  const token = localStorage.getItem("token");
+
+  return fetch(CREATE_SUB_USER_URL(ownerId), {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  }).then(res => res.json());
 }

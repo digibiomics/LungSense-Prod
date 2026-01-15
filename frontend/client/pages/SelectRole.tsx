@@ -40,7 +40,7 @@ export default function SelectRole() {
             <Link to="/patient/login">
               <Card className="p-8 h-full flex flex-col hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-blue group">
                 <div className="text-center space-y-6 flex flex-col flex-1">
-                  <div className="w-20 h-20 bg-lungsense-blue-light rounded-full flex items-center justify-center mx-auto group-hover:bg-lungsense-blue group-hover:scale-110 transition-all">
+                  <div className="w-20 h-20 bg-lungsense-blue-light rounded-full flex items-center justify-center mx-auto group-hover:bg-lungsense-blue-light group-hover:scale-110 transition-all">
                     <User className="w-10 h-10 text-lungsense-blue group-hover:text-white transition-colors" />
                   </div>
                   <div>
@@ -53,7 +53,7 @@ export default function SelectRole() {
                     </p>
                   </div>
                   <Button
-                    className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue/90 font-display"
+                    className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity font-display"
                     size="lg"
                   >
                     Continue as Patient
@@ -75,7 +75,7 @@ export default function SelectRole() {
                     </h3>
                     <p className="text-gray-600 text-sm">
                       Access advanced diagnostic tools and manage patient
-                      records with professional-grade features
+                      records.
                     </p>
                   </div>
                   <Button
