@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
  
  
-from app.routes import assignments, sub_users, users
+from app.routes import assignments, sub_users, users, profiles, symptoms, cases
 
 
 def create_app() -> FastAPI:
@@ -23,6 +23,9 @@ def create_app() -> FastAPI:
     app.include_router(users.router, prefix="/api", tags=["users"])
     app.include_router(sub_users.router, prefix="/api", tags=["sub-users"])
     app.include_router(assignments.router, prefix="/api", tags=["assignments"])
+    app.include_router(profiles.router, prefix="/api", tags=["profiles"])
+    app.include_router(symptoms.router, prefix="/api", tags=["symptoms"])
+    app.include_router(cases.router, prefix="/api", tags=["cases"])
     return app
 
 

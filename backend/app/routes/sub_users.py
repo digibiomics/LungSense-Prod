@@ -19,7 +19,7 @@ from app.sessions.db import create_local_session
 from app.constants.enums import ResponseStatus
 from app.utils.exception_handler import raise_bad_request, raise_forbidden
 from app.schemas.common import APIResponse
-from app.schemas.sub_user import SubUserCreateRequest, SubUserResponse, SubUserUpdateRequest
+from app.schemas.sub_user import SubUserCreateRequest, SubUserDashboardUpdateRequest, SubUserResponse, SubUserUpdateRequest
 from app.repository.sub_user_repo import SubUserRepository
 
 router = APIRouter()
@@ -137,6 +137,35 @@ async def update_sub_user(
         return APIResponse(
             status=ResponseStatus.SUCCESS,
             message="Sub-user updated successfully",
+            data=response_data.dict()
+        )
+    except Exception as e:
+        raise_bad_request(str(e))
+
+
+@router.put("/patient/sub-user/{sub_user_id}/dashboard", response_model=APIResponse)
+async def update_sub_user_dashboard(
+    sub_user_id: int,
+    request: SubUserDashboardUpdateRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(create_local_session)
+):
+    """Update sub-user demographics from patient dashboard (age, sex, ethnicity only)."""
+    sub_user = SubUserRepository.get_sub_user_by_id(db, sub_user_id)
+    
+    # Only owner or admin can update
+    if current_user.user_id != sub_user.owner_user_id and not current_user.is_admin:
+        raise_forbidden("Access denied")
+    
+    try:
+        updated_sub_user = SubUserRepository.update_sub_user_dashboard(
+            db, sub_user_id, request.age, request.sex, request.ethnicity
+        )
+        response_data = SubUserRepository.to_response(updated_sub_user)
+        
+        return APIResponse(
+            status=ResponseStatus.SUCCESS,
+            message="Sub-user demographics updated successfully",
             data=response_data.dict()
         )
     except Exception as e:

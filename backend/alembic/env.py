@@ -11,9 +11,15 @@ from sqlalchemy.orm import sessionmaker
 sys.path.insert(0, os.path.abspath(os.getcwd()))
 
 #  Import all your ORM models so metadata gets filled
-from app.models.user import User  # your user model file
+from app.models.user import User
 from app.models.practitioner_assignment import PractitionerAssignment
 from app.models.sub_user import SubUser
+from app.models.symptom import SymptomsMaster
+from app.models.case import Case
+from app.models.case_symptom import CaseSymptom
+from app.models.case_file import CaseFile
+from app.models.case_review import CaseReview
+from app.models.data_consent import DataConsent
 
 # Import DB engine and Base
 from app.sessions.db import engine as target_engine

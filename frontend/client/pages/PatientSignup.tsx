@@ -270,20 +270,50 @@ function buildRespiratoryHistory(p: ProfileData): string[] {
         const p = formData.profiles[i];
         const subResp = buildRespiratoryHistory(p);
 
+        // Province should already be in ISO-3166-2 format (e.g., "US-CA") from the dropdown
+        const provinceCode = p.province.toUpperCase();
 
         const subUserPayload = {
-        email: `${formData.email.split("@")[0]}+profile${i}@temp.com`,
-        first_name: p.firstName,
-        last_name: p.lastName,
-        age: Number(p.age),
-        sex: p.sex.toUpperCase(),
-        ethnicity: p.ethnicity,
-        country: p.country.toUpperCase(),
-        province: p.province.toUpperCase(),
-        respiratory_history: subResp, // ✅ ALWAYS ARRAY
-      };
+          email: `${formData.email.split("@")[0]}+profile${i}@temp.com`,
+          first_name: p.firstName,
+          last_name: p.lastName,
+          age: Number(p.age),
+          sex: p.sex.toUpperCase() as "F" | "M" | "O",
+          ethnicity: p.ethnicity.toUpperCase(), // Ensure uppercase to match enum values (AFR, ASN, etc.)
+          country: p.country.toUpperCase(),
+          province: provinceCode,
+          respiratory_history: subResp, // ✅ ALWAYS ARRAY of strings matching enum values
+        };
 
-        await createSubUser(signupRes.user_id, subUserPayload);
+        // Validate sub-user payload before sending
+        if (!subUserPayload.first_name || !subUserPayload.last_name) {
+          setError(`Sub-user ${i}: First and last name are required.`);
+          return;
+        }
+        if (!subUserPayload.age || subUserPayload.age <= 0) {
+          setError(`Sub-user ${i}: Valid age is required.`);
+          return;
+        }
+        if (!subUserPayload.sex || !["F", "M", "O"].includes(subUserPayload.sex)) {
+          setError(`Sub-user ${i}: Valid sex (F/M/O) is required.`);
+          return;
+        }
+        if (!subUserPayload.ethnicity || !["AFR", "ASN", "CAU", "HIS", "MDE", "MIX", "UND"].includes(subUserPayload.ethnicity)) {
+          setError(`Sub-user ${i}: Valid ethnicity is required.`);
+          return;
+        }
+        if (!subUserPayload.respiratory_history || subUserPayload.respiratory_history.length === 0) {
+          setError(`Sub-user ${i}: At least one respiratory history option is required.`);
+          return;
+        }
+
+        try {
+          await createSubUser(signupRes.user_id, subUserPayload);
+        } catch (err: any) {
+          console.error(`Failed to create sub-user ${i}:`, err);
+          setError(`Failed to create sub-user ${i}: ${err.message || "Unknown error"}`);
+          return;
+        }
       }
     }
 
@@ -513,8 +543,7 @@ const addAnotherProfile = () => {
   value={formData.profiles[activeProfileIndex].ethnicity ?? ""}
   onChange={(e) => handleProfileChange(activeProfileIndex, e)}
 >
-<option value="">Select</option>
-   <option value="">Select</option>
+  <option value="">Select</option>
   <option value="AFR">African</option>
   <option value="ASN">Asian</option>
   <option value="CAU">Caucasian</option>

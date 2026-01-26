@@ -141,6 +141,13 @@ class UserUpdateRequest(BaseModel):
     institution_location_province: Optional[str]
 
 
+class PatientDashboardUpdateRequest(BaseModel):
+    """Simplified update request for patient dashboard - only age, ethnicity, and sex."""
+    age: Optional[int] = Field(None, gt=18)
+    sex: Optional[Sex]
+    ethnicity: Optional[Ethnicity]
+
+
 class UserListResponse(BaseModel):
     """User list response schema."""
     users: List[UserResponse]

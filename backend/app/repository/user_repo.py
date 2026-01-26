@@ -216,6 +216,23 @@ class UserRepository:
         return user
     
     @staticmethod
+    def update_user_dashboard(db: Session, user_id: int, age: Optional[int], sex: Optional[str], ethnicity: Optional[str]) -> User:
+        """Update user demographics for dashboard (age, sex, ethnicity only)."""
+        user = UserRepository.get_user_by_id(db, user_id)
+        
+        # Update only the provided fields
+        if age is not None:
+            user.age = age
+        if sex is not None:
+            user.sex = sex
+        if ethnicity is not None:
+            user.ethnicity = ethnicity
+        
+        db.commit()
+        db.refresh(user)
+        return user
+    
+    @staticmethod
     def soft_delete_user(db: Session, user_id: int) -> User:
         """Soft delete a user."""
         user = UserRepository.get_user_by_id(db, user_id)

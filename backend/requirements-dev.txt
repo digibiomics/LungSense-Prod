@@ -12,3 +12,6 @@ python-dotenv
 pydantic
 pydantic-settings
 boto3
+python-jose[cryptography]
+requests
+email-validator

@@ -3,83 +3,147 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Sidebar from "@/components/Sidebar";
-import AIProcessingModal from "@/components/AIProcessingModal";
 import { Upload, Play, Pause, X, AlertCircle, FileText, Mic, Users, ShieldCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { createCase, getProfileDetails, updateUser, updateUserDashboard, updateSubUser, updateSubUserDashboard } from "../../src/api";
+import { useToast } from "@/hooks/use-toast";
 
 const SYMPTOMS_LIST = [
-  "Cough",
-  "Shortness of Breath",
-  "Flu Symptoms",
-  "Chest Pain/ tightness/ Congestion",
-  "Fever",
-  "Chills or rigors",
-  "Fatigue/Weakness",
-  "Sputum Change",
-  "Wheezing",
-  "Night Sweats",
-  "Abnormal/Unexpected Weight Loss",
-  "Difficulty sleeping due to breathing",
-  "Activity Limitation (stairs, walking etc)",
-  "Recent Infection or cold before onset",
-  "Known Exposure (TB/COVID/flu)",
-  "Smoking habits",
+  { id: 1, name: "Cough" },
+  { id: 2, name: "Shortness of Breath" },
+  { id: 3, name: "Flu Symptoms" },
+  { id: 4, name: "Chest Pain/ tightness/ Congestion" },
+  { id: 5, name: "Fever" },
+  { id: 6, name: "Chills or rigors" },
+  { id: 7, name: "Fatigue/Weakness" },
+  { id: 8, name: "Sputum Change" },
+  { id: 9, name: "Wheezing" },
+  { id: 10, name: "Night Sweats" },
+  { id: 11, name: "Abnormal/Unexpected Weight Loss" },
+  { id: 12, name: "Difficulty sleeping due to breathing" },
+  { id: 13, name: "Activity Limitation (stairs, walking etc)" },
+  { id: 14, name: "Recent Infection or cold before onset" },
+  { id: 15, name: "Known Exposure (TB/COVID/flu)" },
+  { id: 16, name: "Smoking habits" },
 ];
 
-const PROFILES = [
-  { id: "1", name: "Myself", age: "34", ethnicity: "Caucasian", sex: "Male" },
-  { id: "2", name: "Mom (Sarah)", age: "65", ethnicity: "Caucasian", sex: "Female" },
-  { id: "3", name: "Dad (Robert)", age: "68", ethnicity: "Caucasian", sex: "Male" },
-  { id: "4", name: "Child (Timmy)", age: "8", ethnicity: "Asian", sex: "Male" },
-];
+
 
 export default function PatientDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+  
+  // Get selected user from navigation state
+  const selectedUserId = location.state?.userId;
+  const selectedUserType = location.state?.userType || 'self';
+  const selectedUserName = location.state?.userName || "";
+  
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
+  const [coughAudio, setCoughAudio] = useState<Blob | null>(null);
   const [audioType, setAudioType] = useState<"chest" | "cough">("chest");
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [uploadedCoughAudio, setUploadedCoughAudio] = useState<File | null>(null);
+  const [uploadedChestAudio, setUploadedChestAudio] = useState<File | null>(null);
+  const coughAudioInputRef = useRef<HTMLInputElement>(null);
+  const chestAudioInputRef = useRef<HTMLInputElement>(null);
+  const [selectedSymptoms, setSelectedSymptoms] = useState<Array<{id: number, severity: number, duration_days: number}>>([]);
   const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [audioUrls, setAudioUrls] = useState<{chest?: string, cough?: string}>({});
 
-  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState(selectedUserId || "");
   const [demographics, setDemographics] = useState({
     age: "",
     ethnicity: "",
     sex: ""
   });
+  const [isEditingDemographics, setIsEditingDemographics] = useState(false);
+  const [originalDemographics, setOriginalDemographics] = useState({
+    age: "",
+    ethnicity: "",
+    sex: ""
+  });
+  const [isSavingDemographics, setIsSavingDemographics] = useState(false);
 
-  const handleProfileChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const profileId = e.target.value;
-    setSelectedProfileId(profileId);
+  // Fetch demographics for selected user on mount
+  useEffect(() => {
+    const fetchUserDemographics = async () => {
+      if (!selectedUserId) {
+        console.log("No userId provided");
+        return;
+      }
+      
+      console.log("Fetching demographics for userId:", selectedUserId, "type:", selectedUserType);
+      
+      try {
+        // Use profile API instead of user API to avoid 403
+        const profileType = selectedUserType === 'self' ? 'user' : 'sub_user';
+        const response = await getProfileDetails(profileType, selectedUserId);
+        console.log("API Response:", response);
+        
+        // Handle response structure: { status, message, data: {...} }
+        const profile = response?.data || response;
+        console.log("Profile data:", profile);
+        
+        if (profile) {
+          const demographicsData = {
+            age: String(profile.age || ""),
+            ethnicity: String(profile.ethnicity || ""),
+            sex: String(profile.sex || "")
+          };
+          setDemographics(demographicsData);
+          setOriginalDemographics(demographicsData);
+          console.log("Demographics set:", { age: profile.age, ethnicity: profile.ethnicity, sex: profile.sex });
+        }
+      } catch (error: any) {
+        console.error("Error fetching demographics:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load user demographics",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    fetchUserDemographics();
+  }, [selectedUserId, selectedUserType]);
 
-    const profile = PROFILES.find((p) => p.id === profileId);
-    if (profile) {
-      setDemographics({
-        age: profile.age,
-        ethnicity: profile.ethnicity,
-        sex: profile.sex
-      });
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording) {
+      interval = setInterval(() => {
+        setRecordingTime(prev => {
+          if (prev >= 10) {
+            stopRecording();
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
     } else {
-      setDemographics({ age: "", ethnicity: "", sex: "" });
+      setRecordingTime(0);
     }
-  };
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [aiResults, setAiResults] = useState<any>(null);
+    return () => clearInterval(interval);
+  }, [isRecording]);
 
   useEffect(() => {
     return () => {
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
+      // Cleanup audio URLs
+      Object.values(audioUrls).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
     };
-  }, [previewUrl]);
+  }, [previewUrl, audioUrls]);
 
   const processFile = (file: File) => {
     setUploadedFile(file);
@@ -108,77 +172,223 @@ export default function PatientDashboard() {
     setPreviewUrl(null);
     setAudioType("chest");
     setSelectedSymptoms([]);
+    setRecordedAudio(null);
+    setCoughAudio(null);
+    setUploadedCoughAudio(null);
+    setUploadedChestAudio(null);
+    setRecordingTime(0);
+    // Clear audio URLs
+    Object.values(audioUrls).forEach(url => {
+      if (url) URL.revokeObjectURL(url);
+    });
+    setAudioUrls({});
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/wav' });
+        const audioUrl = URL.createObjectURL(blob);
+        
+        if (audioType === "chest") {
+          setRecordedAudio(blob);
+          setAudioUrls(prev => ({ ...prev, chest: audioUrl }));
+        } else {
+          setCoughAudio(blob);
+          setAudioUrls(prev => ({ ...prev, cough: audioUrl }));
+        }
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+      setIsRecording(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Microphone access denied",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== "inactive") {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setRecordingTime(0);
+    }
+  };
+
+  const deleteRecording = (type: "chest" | "cough") => {
+    if (type === "chest") {
+      setRecordedAudio(null);
+      if (audioUrls.chest) {
+        URL.revokeObjectURL(audioUrls.chest);
+        setAudioUrls(prev => ({ ...prev, chest: undefined }));
+      }
+    } else {
+      setCoughAudio(null);
+      if (audioUrls.cough) {
+        URL.revokeObjectURL(audioUrls.cough);
+        setAudioUrls(prev => ({ ...prev, cough: undefined }));
+      }
+    }
   };
 
   const toggleRecording = () => {
-    setIsRecording(!isRecording);
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
-  const toggleSymptom = (symptom: string) => {
-    if (selectedSymptoms.includes(symptom)) {
-      setSelectedSymptoms(selectedSymptoms.filter((s) => s !== symptom));
+  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>, type: "chest" | "cough") => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (type === "cough") {
+        setUploadedCoughAudio(file);
+      } else {
+        setUploadedChestAudio(file);
+      }
+    }
+  };
+
+  const toggleSymptom = (symptomId: number) => {
+    const exists = selectedSymptoms.find(s => s.id === symptomId);
+    if (exists) {
+      setSelectedSymptoms(selectedSymptoms.filter((s) => s.id !== symptomId));
     } else {
-      setSelectedSymptoms([...selectedSymptoms, symptom]);
+      setSelectedSymptoms([...selectedSymptoms, { id: symptomId, severity: 3, duration_days: 3 }]);
     }
   };
 
   const handleSubmit = async () => {
-    setIsModalOpen(true);
-    setIsProcessing(true);
+    try {
+      const formData = new FormData();
+      
+      formData.append("profile_type", selectedUserType);
+      formData.append("profile_id", String(selectedUserId));
+      
+      // Format symptoms as required by backend
+      const symptomsData = selectedSymptoms.map(s => ({
+        symptom_id: s.id,
+        severity: s.severity,
+        duration_days: s.duration_days
+      }));
+      formData.append("symptoms", JSON.stringify(symptomsData));
+      
+      // Add files
+      if (uploadedFile) {
+        formData.append("xray", uploadedFile);
+      }
+      
+      // Recorded or uploaded cough audio
+      if (coughAudio) {
+        formData.append("cough_audio", coughAudio, "cough_recorded.wav");
+      } else if (uploadedCoughAudio) {
+        formData.append("cough_audio", uploadedCoughAudio);
+      }
+      
+      // Recorded or uploaded chest audio
+      if (recordedAudio) {
+        formData.append("breath_audio", recordedAudio, "breath_recorded.wav");
+      } else if (uploadedChestAudio) {
+        formData.append("breath_audio", uploadedChestAudio);
+      }
 
-    setTimeout(() => {
-      setAiResults({
-        diagnostics: [
-          {
-            name: "Chronic Obstructive Pulmonary Disease (COPD)",
-            description: "AI detected significant airflow limitation and inflammation.",
-            confidence: 85,
-            severity: "high",
-          },
-          {
-            name: "Bacterial Pneumonia",
-            description: "Indications of localized lung infection with fluid accumulation.",
-            confidence: 65,
-            severity: "medium",
-          },
-          {
-            name: "Early Stage Lung Nodules",
-            description: "Small, round nodules identified; further investigation recommended.",
-            confidence: 60,
-            severity: "medium",
-          },
-        ],
-        probabilities: [
-          { name: "COPD", value: 85 },
-          { name: "Asthma", value: 78 },
-          { name: "Nodules", value: 60 },
-        ],
+      const response = await createCase(formData);
+      
+      toast({
+        title: "Data Uploaded Successfully",
+        description: `Case assigned to practitioner. Please wait for the reports...`,
       });
-      setIsProcessing(false);
-    }, 4000);
+
+      // Clear form after successful submission
+      handleClear();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create case",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleViewResults = () => {
-    setIsModalOpen(false);
     navigate("/patient/results");
+  };
+
+  const saveDemographics = async () => {
+    try {
+      setIsSavingDemographics(true);
+      
+      const updateData: any = {};
+      
+      // Include fields that have values (for patient dashboard, we only update age, ethnicity, and sex)
+      if (demographics.age) {
+        updateData.age = parseInt(demographics.age);
+      }
+      if (demographics.ethnicity) {
+        updateData.ethnicity = demographics.ethnicity;
+      }
+      if (demographics.sex) {
+        updateData.sex = demographics.sex;
+      }
+      
+      // Only make API call if there are actual changes
+      if (Object.keys(updateData).length === 0) {
+        toast({
+          title: "Info",
+          description: "No changes to save",
+        });
+        setIsEditingDemographics(false);
+        return;
+      }
+      
+      if (selectedUserType === 'self') {
+        await updateUserDashboard(selectedUserId, updateData);
+      } else {
+        await updateSubUserDashboard(selectedUserId, updateData);
+      }
+      
+      setOriginalDemographics(demographics);
+      setIsEditingDemographics(false);
+      
+      toast({
+        title: "Success",
+        description: "Demographics updated successfully",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update demographics",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingDemographics(false);
+    }
+  };
+
+  const cancelEditDemographics = () => {
+    setDemographics(originalDemographics);
+    setIsEditingDemographics(false);
+  };
+
+  const hasUnsavedChanges = () => {
+    return JSON.stringify(demographics) !== JSON.stringify(originalDemographics);
   };
 
   return (
     <div className="flex min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       <Sidebar />
-
-      <AIProcessingModal
-        isOpen={isModalOpen}
-        isProcessing={isProcessing}
-        results={aiResults}
-        onClose={() => {
-          setIsModalOpen(false);
-          handleClear();
-          setUploadedFile(null);
-          setAudioType("chest");
-        }}
-        onViewResults={handleViewResults}
-      />
 
       {isPreviewOpen && previewUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -240,7 +450,9 @@ export default function PatientDashboard() {
       <main className="flex-1 md:ml-64">
         <div className="p-4 md:p-8 space-y-8">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 font-display">Welcome Back, Ayesha</h1>
+            <h1 className="text-3xl font-bold text-gray-900 font-display">
+              Upload Data for {selectedUserName || "User"}
+            </h1>
             <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="User" className="w-full h-full rounded-full" />
             </div>
@@ -299,27 +511,99 @@ export default function PatientDashboard() {
                     <img src="/images/record-sound.png" alt="record" className="h-12 w-auto" />
                     <h2 className="text-xl font-semibold text-gray-900 font-display">RECORD SOUNDS</h2>
                 </div>
-                <p className="text-xs text-gray-900 mb-4 ml-1">Select sound type and record yourself breathing or coughing for AI analysis.</p>
+                <p className="text-xs text-gray-900 mb-4 ml-1">Select sound type and record (10 sec max) or upload audio file.</p>
 
                 <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 flex flex-col items-center gap-6">
+                    {/* Audio Type Selection */}
+                    <div className="w-full">
+                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 ml-1">Choose Audio Type</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setAudioType("chest")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${audioType === "chest" ? "bg-lungsense-blue-light text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Chest Sounds</button>
+                            <button onClick={() => setAudioType("cough")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${audioType === "cough" ? "bg-lungsense-blue-light text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Cough Sounds</button>
+                        </div>
+                    </div>
+
+                    {/* Waveform */}
                     <div className="flex items-center justify-center gap-1 h-12 w-full max-w-md">
                       {[...Array(25)].map((_, i) => (
                         <div key={i} className="w-1.5 rounded-full bg-black transition-all duration-100" style={{ height: isRecording ? `${Math.random() * 40 + 8}px` : `${[10, 15, 25, 15, 10, 20, 15, 10, 10, 20, 30, 20, 10, 10, 15, 25, 15, 10, 25, 15, 10, 10, 20, 15, 10][i]}px`}} />
                       ))}
                     </div>
-                    <div className="flex items-center justify-center gap-6">
-                        <button className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"><Play className="w-4 h-4 text-gray-700" /></button>
-                        <button onClick={toggleRecording} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isRecording ? "bg-red-500 hover:bg-red-600 scale-105" : "bg-red-500 hover:bg-red-600"}`}>
-                          {isRecording ? <div className="w-5 h-5 bg-white rounded-sm" /> : <div className="w-5 h-5 bg-white rounded-full" />}
-                        </button>
-                        <button className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"><Pause className="w-4 h-4 text-gray-700" /></button>
-                    </div>
-                    <div className="w-full">
-                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 ml-1">Choose Audio Type</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setAudioType("chest")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${audioType === "chest" ? "w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white font-display" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Chest Sounds</button>
-                            <button onClick={() => setAudioType("cough")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${audioType === "cough" ? "w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white font-display" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Cough Sounds</button>
+
+                    {/* Recording Timer */}
+                    {isRecording && (
+                      <div className="text-red-500 font-bold text-lg">
+                        Recording: {recordingTime}s / 10s
+                      </div>
+                    )}
+
+                    {/* Recording Status & Preview */}
+                    {audioType === "chest" && recordedAudio && (
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-green-600 text-sm font-medium">✓ Chest audio recorded</span>
+                          <button
+                            onClick={() => deleteRecording("chest")}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Delete
+                          </button>
                         </div>
+                        {audioUrls.chest && (
+                          <audio controls className="w-full h-8">
+                            <source src={audioUrls.chest} type="audio/wav" />
+                          </audio>
+                        )}
+                      </div>
+                    )}
+                    {audioType === "cough" && coughAudio && (
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-green-600 text-sm font-medium">✓ Cough audio recorded</span>
+                          <button
+                            onClick={() => deleteRecording("cough")}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        {audioUrls.cough && (
+                          <audio controls className="w-full h-8">
+                            <source src={audioUrls.cough} type="audio/wav" />
+                          </audio>
+                        )}
+                      </div>
+                    )}
+                    {audioType === "chest" && uploadedChestAudio && (
+                      <div className="text-green-600 text-sm font-medium">✓ Chest audio uploaded: {uploadedChestAudio.name}</div>
+                    )}
+                    {audioType === "cough" && uploadedCoughAudio && (
+                      <div className="text-green-600 text-sm font-medium">✓ Cough audio uploaded: {uploadedCoughAudio.name}</div>
+                    )}
+
+                    {/* Recording Controls */}
+                    <div className="flex items-center justify-center gap-6">
+                        <button onClick={toggleRecording} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isRecording ? "bg-red-500 hover:bg-red-600 scale-105" : "bg-red-500 hover:bg-red-600"}`}>
+                          {isRecording ? <div className="w-5 h-5 bg-white rounded-sm" /> : <Mic className="w-6 h-6 text-white" />}
+                        </button>
+                    </div>
+
+                    {/* Upload Audio File */}
+                    <div className="w-full border-t pt-4">
+                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 text-center">Or Upload Audio File</p>
+                        <input 
+                          ref={audioType === "cough" ? coughAudioInputRef : chestAudioInputRef}
+                          type="file" 
+                          accept="audio/*,.wav,.mp3,.m4a" 
+                          onChange={(e) => handleAudioUpload(e, audioType)} 
+                          className="hidden" 
+                        />
+                        <Button 
+                          onClick={() => audioType === "cough" ? coughAudioInputRef.current?.click() : chestAudioInputRef.current?.click()} 
+                          className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white font-display"
+                        >
+                          Upload {audioType === "chest" ? "Chest" : "Cough"} Audio
+                        </Button>
                     </div>
                 </div>
               </div>
@@ -337,36 +621,81 @@ export default function PatientDashboard() {
                 <div className="space-y-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
                     <div className="space-y-1.5 mb-4">
                         <Label className="text-xs uppercase tracking-wider text-lungsense-blue font-dm font-bold flex items-center gap-1">
-                            <Users className="w-3 h-3" /> Select Patient Profile
+                            <Users className="w-3 h-3" /> Patient Profile
                         </Label>
-                        <select
-                            value={selectedProfileId}
-                            onChange={handleProfileChange}
-                            className="w-full px-3 py-2.5 border border-lungsense-blue/30 bg-lungsense-blue/5 rounded-md font-display text-sm font-medium text-gray-900 focus:ring-2 focus:ring-lungsense-blue cursor-pointer"
-                        >
-                            <option value="">-- Select or Enter Manually --</option>
-                            {PROFILES.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
+                        <div className="w-full px-3 py-2.5 border border-lungsense-blue/30 bg-lungsense-blue/5 rounded-md font-display text-sm font-medium text-gray-900">
+                            {selectedUserName || "User"}
+                        </div>
                     </div>
 
                     <div className="h-px bg-gray-200 my-2" />
 
+                    <div className="flex items-center justify-between mb-2">
+                        <Label className="text-xs uppercase tracking-wider text-gray-500 font-dm font-bold">Demographics</Label>
+                        <div className="flex gap-2">
+                            {isEditingDemographics ? (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={cancelEditDemographics}
+                                        className="text-xs text-gray-500 hover:underline font-medium"
+                                        disabled={isSavingDemographics}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={saveDemographics}
+                                        className={`text-xs font-medium px-2 py-1 rounded ${
+                                            hasUnsavedChanges() && !isSavingDemographics
+                                                ? "text-white bg-lungsense-blue hover:bg-lungsense-blue/90"
+                                                : "text-gray-400 bg-gray-200 cursor-not-allowed"
+                                        }`}
+                                        disabled={!hasUnsavedChanges() || isSavingDemographics}
+                                    >
+                                        {isSavingDemographics ? "Saving..." : "Save"}
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditingDemographics(true)}
+                                    className="text-xs text-lungsense-blue hover:underline font-medium"
+                                >
+                                    Edit
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="space-y-1.5">
                         <Label htmlFor="age" className="text-xs uppercase tracking-wider text-gray-500 font-dm font-bold">Age</Label>
-                        <Input id="Age" className="bg-white" placeholder="ex: 34" value={demographics.age} onChange={(e) => setDemographics({...demographics, age: e.target.value})} />
+                        <Input 
+                            id="Age" 
+                            className="bg-white" 
+                            placeholder="ex: 34" 
+                            value={demographics.age} 
+                            onChange={(e) => setDemographics({...demographics, age: e.target.value})} 
+                            disabled={!isEditingDemographics}
+                        />
                     </div>
                     <div className="space-y-1.5">
                         <Label htmlFor="ethnicity" className="text-xs uppercase tracking-wider text-gray-500 font-dm font-bold">Ethnicity</Label>
                         <select
-                            className="w-full px-3 py-2 border border-gray-200 bg-white rounded-md font-display text-sm focus:ring-2 focus:ring-lungsense-blue"
-                            value={demographics.ethnicity}
+                            name="ethnicity"
+                            className="w-full text-sm border rounded-md p-2 h-10"
+                            value={demographics.ethnicity ?? ""}
                             onChange={(e) => setDemographics({...demographics, ethnicity: e.target.value})}
+                            disabled={!isEditingDemographics}
                         >
-                            <option value="">Select Ethnicity</option>
-                            <option value="Asian">Asian</option>
-                            <option value="African">African</option>
-                            <option value="Caucasian">Caucasian</option>
-                            <option value="Other">Other</option>
+                            <option value="">Select</option>
+                            <option value="AFR">African</option>
+                            <option value="ASN">Asian</option>
+                            <option value="CAU">Caucasian</option>
+                            <option value="HIS">Hispanic</option>
+                            <option value="MDE">Middle Eastern</option>
+                            <option value="MIX">Mixed</option>
+                            <option value="UND">Prefer not to say</option>
                         </select>
                     </div>
                     <div className="space-y-1.5">
@@ -375,11 +704,12 @@ export default function PatientDashboard() {
                             className="w-full px-3 py-2 border border-gray-200 bg-white rounded-md font-display text-sm focus:ring-2 focus:ring-lungsense-blue"
                             value={demographics.sex}
                             onChange={(e) => setDemographics({...demographics, sex: e.target.value})}
+                            disabled={!isEditingDemographics}
                         >
                             <option value="">Select Sex</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                            <option value="O">Other</option>
                         </select>
                     </div>
                 </div>
@@ -390,11 +720,11 @@ export default function PatientDashboard() {
                     <Label className="text-sm font-semibold text-gray-700 font-display">Symptoms</Label>
                     <div className="flex flex-wrap gap-2">
                         {SYMPTOMS_LIST.map((symptom) => {
-                            const isSelected = selectedSymptoms.includes(symptom);
+                            const isSelected = selectedSymptoms.some(s => s.id === symptom.id);
                             return (
                                 <button
-                                    key={symptom}
-                                    onClick={() => toggleSymptom(symptom)}
+                                    key={symptom.id}
+                                    onClick={() => toggleSymptom(symptom.id)}
                                     className={`px-4 py-2 rounded-full text-xs font-medium transition-all shadow-sm border
                                         ${isSelected
                                             ? "bg-lungsense-blue-light text-white text-bold border-lungsense-blue-light hover:bg-lungsense-blue-light"
@@ -402,7 +732,7 @@ export default function PatientDashboard() {
                                         }
                                     `}
                                 >
-                                    {symptom}
+                                    {symptom.name}
                                 </button>
                             );
                         })}

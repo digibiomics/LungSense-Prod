@@ -24,6 +24,7 @@ from app.schemas.auth.auth_response import  TokenResponse
 from app.schemas.common import APIResponse, PaginatedResponse
 from app.schemas.user import (
     AdminUserCreateRequest,
+    PatientDashboardUpdateRequest,
     PatientSignupRequest,
     PractitionerSignupRequest,
     UserListResponse,
@@ -106,6 +107,33 @@ async def update_user(
         return APIResponse(
             status=ResponseStatus.SUCCESS,
             message="User updated successfully",
+            data=response_data.dict()
+        )
+    except Exception as e:
+        raise_bad_request(str(e))
+
+
+@router.put("/user/{user_id}/dashboard", response_model=APIResponse)
+async def update_user_dashboard(
+    user_id: int,
+    request: PatientDashboardUpdateRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(create_local_session)
+):
+    """Update user demographics from patient dashboard (age, sex, ethnicity only)."""
+    # Users can update themselves, admins can update anyone
+    if current_user.user_id != user_id and not current_user.is_admin:
+        raise_forbidden("Access denied")
+    
+    try:
+        user = UserRepository.update_user_dashboard(
+            db, user_id, request.age, request.sex, request.ethnicity
+        )
+        response_data = UserRepository.to_response(user)
+        
+        return APIResponse(
+            status=ResponseStatus.SUCCESS,
+            message="User demographics updated successfully",
             data=response_data.dict()
         )
     except Exception as e:
@@ -244,6 +272,9 @@ async def signup_patient(
             role=user.role
         )
     except Exception as e:
+        import traceback
+        print(f"Patient signup error: {str(e)}")
+        print(traceback.format_exc())
         raise_bad_request(str(e))
 
 

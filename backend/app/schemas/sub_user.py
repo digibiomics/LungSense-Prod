@@ -59,6 +59,13 @@ class SubUserUpdateRequest(BaseModel):
     respiratory_history: Optional[List[RespiratoryHistory]]
 
 
+class SubUserDashboardUpdateRequest(BaseModel):
+    """Simplified update request for sub-user dashboard - only age, ethnicity, and sex."""
+    age: Optional[int] = Field(None, gt=0)
+    sex: Optional[Sex]
+    ethnicity: Optional[Ethnicity]
+
+
 class SubUserResponse(BaseModel):
     """Sub-user response schema."""
     id: int

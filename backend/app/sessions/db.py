@@ -39,14 +39,14 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base(metadata=metadata)
 target_metadata = Base.metadata  # used by Alembic
 
-# Test DB connection
-try:
-    with engine.connect() as conn:
-        print("\n-------------------------- Database connected ----------------------------")
-        print(f"DB URI: {database_uri}")
-        print("-----------------------------------------------------------------------\n")
-except Exception as e:
-    raise DatabaseConnectionException(f"Failed to connect to database: {e}")
+# Test DB connection (commented out to allow imports without connection)
+# try:
+#     with engine.connect() as conn:
+#         print("\n-------------------------- Database connected ----------------------------")
+#         print(f"DB URI: {database_uri}")
+#         print("-----------------------------------------------------------------------\n")
+# except Exception as e:
+#     raise DatabaseConnectionException(f"Failed to connect to database: {e}")
 
 def create_local_session() -> Generator[Session, None, None]:
     db = SessionLocal()

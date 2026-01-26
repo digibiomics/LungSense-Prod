@@ -126,6 +126,23 @@ class SubUserRepository:
         return sub_user
     
     @staticmethod
+    def update_sub_user_dashboard(db: Session, sub_user_id: int, age: Optional[int], sex: Optional[str], ethnicity: Optional[str]) -> SubUser:
+        """Update sub-user demographics for dashboard (age, sex, ethnicity only)."""
+        sub_user = SubUserRepository.get_sub_user_by_id(db, sub_user_id)
+        
+        # Update only the provided fields
+        if age is not None:
+            sub_user.age = age
+        if sex is not None:
+            sub_user.sex = sex
+        if ethnicity is not None:
+            sub_user.ethnicity = ethnicity
+        
+        db.commit()
+        db.refresh(sub_user)
+        return sub_user
+    
+    @staticmethod
     def soft_delete_sub_user(db: Session, sub_user_id: int) -> SubUser:
         """Soft delete a sub-user."""
         sub_user = SubUserRepository.get_sub_user_by_id(db, sub_user_id)

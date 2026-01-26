@@ -1,4 +1,4 @@
-#!D:\Digibiomics\LungSense-ayesha\backend\myenv\Scripts\python.exe
+#!D:\DigiBiomics\Latest_LungSense_Main\backend\myenv\Scripts\python.exe
 
 import sys
 import json
