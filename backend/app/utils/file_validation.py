@@ -33,7 +33,7 @@ def validate_xray_file(file: UploadFile) -> None:
         raise_bad_request("Invalid X-ray content type")
 
 
-def validate_audio_file(file: UploadFile, file_type: str) -> None:
+def validate_audio_file(file: UploadFile) -> None:
     """Validate audio file type and size."""
     if not file:
         return
@@ -53,11 +53,11 @@ def validate_audio_file(file: UploadFile, file_type: str) -> None:
         "audio/webm"
     }
     if file.content_type not in allowed_content_types:
-        raise_bad_request(f"Invalid {file_type} content type")
+        raise_bad_request(f"Invalid audio content type")
 
 
 def validate_file_size(file_content: bytes, max_size: int, file_type: str) -> None:
     """Validate file size."""
     if len(file_content) > max_size:
         max_mb = max_size / (1024 * 1024)
-        raise_bad_request(f"{file_type} file size exceeds {max_mb}MB limit")
+        raise_bad_request(f"{file_type} file size exceeds {max_mb:.1f}MB limit")

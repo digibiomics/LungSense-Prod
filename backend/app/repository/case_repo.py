@@ -33,8 +33,13 @@ class CaseRepository:
         sub_user_id: Optional[int],
         practitioner_id: Optional[int]
     ) -> Case:
-        """Create a new case."""
+        """Create a new case with catalog number."""
+        from app.utils.privacy_minimal import generate_patient_catalog
+        
+        catalog_number = generate_patient_catalog(user_id, sub_user_id)
+        
         case = Case(
+            catalog_number=catalog_number,
             user_id=user_id,
             sub_user_id=sub_user_id,
             practitioner_id=practitioner_id,

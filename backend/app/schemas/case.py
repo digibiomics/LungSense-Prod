@@ -43,3 +43,27 @@ class CaseResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class CaseListResponse(BaseModel):
+    """Schema for case list in practitioner dashboard."""
+    id: int
+    patient_name: str
+    catalog_number: str
+    status: str
+    created_at: str
+    last_review_date: Optional[str]
+    primary_diagnosis: Optional[str]
+
+
+class CaseDetailResponse(BaseModel):
+    """Schema for detailed case information."""
+    id: int
+    status: str
+    created_at: str
+    patient_id: Optional[int] = None
+    sub_user_id: Optional[int] = None
+    patient: dict
+    symptoms: List[dict]
+    files: List[dict]
+    reviews: List[dict]

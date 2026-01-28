@@ -13,6 +13,7 @@ class Case(Base):
     __tablename__ = "cases"
 
     id = Column(Integer, primary_key=True, index=True)
+    catalog_number = Column(String(20), unique=True, nullable=False, index=True)  # Privacy: LS4A7B9C2D
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     sub_user_id = Column(Integer, ForeignKey("sub_users.id", ondelete="CASCADE"), nullable=True, index=True)
     practitioner_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
@@ -28,4 +29,4 @@ class Case(Base):
     practitioner = relationship("User", foreign_keys=[practitioner_id], backref="cases_as_practitioner")
 
     def __repr__(self) -> str:
-        return f"<Case(id={self.id}, status='{self.status}', practitioner_id={self.practitioner_id})>"
+        return f"<Case(id={self.id}, catalog={self.catalog_number}, status='{self.status}')>"

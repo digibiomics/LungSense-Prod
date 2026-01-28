@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
  
  
-from app.routes import assignments, sub_users, users, profiles, symptoms, cases
+from app.routes import assignments, sub_users, users, profiles, symptoms, cases, practitioner, admin
 
 
 def create_app() -> FastAPI:
@@ -12,12 +12,12 @@ def create_app() -> FastAPI:
     
 
     app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
 
     
     app.include_router(users.router, prefix="/api", tags=["users"])
@@ -26,6 +26,8 @@ def create_app() -> FastAPI:
     app.include_router(profiles.router, prefix="/api", tags=["profiles"])
     app.include_router(symptoms.router, prefix="/api", tags=["symptoms"])
     app.include_router(cases.router, prefix="/api", tags=["cases"])
+    app.include_router(practitioner.router, prefix="/api", tags=["practitioner"])
+    app.include_router(admin.router, prefix="/api", tags=["admin"])
     return app
 
 

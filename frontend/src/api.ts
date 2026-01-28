@@ -119,6 +119,35 @@ export async function createSubUser(
 
 
 
+export async function getSubUserById(subUserId: string | number) {
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(`http://localhost:8000/api/patient/sub-user/${subUserId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || `Failed to fetch sub-user`);
+  }
+
+  const json = await res.json();
+  
+  // Handle APIResponse structure: { status, message, data: {...}, id }
+  // Return the full response so caller can handle data extraction
+  return json;
+}
+
 export async function getUserById(userId: string | number) {
   const token = localStorage.getItem("token");
 
@@ -317,5 +346,158 @@ export async function updateSubUserDashboard(subUserId: string | number, userDat
     throw new Error(err?.message || err?.detail || "Failed to update sub-user demographics");
   }
 
+  return res.json();
+}
+
+// Practitioner API functions
+export async function getPractitionerCases() {
+  const token = localStorage.getItem("token");
+  
+  const res = await fetch("http://localhost:8000/api/practitioner/cases", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to fetch cases");
+  }
+  
+  return res.json();
+}
+
+export async function getPractitionerStats() {
+  const token = localStorage.getItem("token");
+  
+  const res = await fetch("http://localhost:8000/api/practitioner/dashboard/stats", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to fetch stats");
+  }
+  
+  return res.json();
+}
+
+export async function getCaseDetails(caseId: string | number) {
+  const token = localStorage.getItem("token");
+  
+  const res = await fetch(`http://localhost:8000/api/practitioner/cases/${caseId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to fetch case details");
+  }
+  
+  return res.json();
+}
+
+export async function submitCaseReview(caseId: string | number, reviewData: any) {
+  const token = localStorage.getItem("token");
+  
+  const res = await fetch(`http://localhost:8000/api/practitioner/cases/${caseId}/review`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(reviewData),
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to submit review");
+  }
+  
+  return res.json();
+}
+
+export async function createAdminUser(adminData: any) {
+  const token = localStorage.getItem("token");
+  
+  const res = await fetch("http://localhost:8000/api/admin/signup", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(adminData),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to create admin user");
+  }
+
+  return res.json();
+}
+
+export async function getAdminStats() {
+  const token = localStorage.getItem("token");
+  
+  const res = await fetch("http://localhost:8000/api/admin/dashboard/stats", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to fetch admin stats");
+  }
+  
   return res.json();
 }

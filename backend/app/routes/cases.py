@@ -39,25 +39,23 @@ async def create_case(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(create_local_session)
 ):
-    """Create case with symptoms and files (at least one file required)."""
+    """Create case with symptoms and files."""
     
-    # Validate files
-    if xray:
-        validate_xray_file(xray)
-    if cough_audio:
-        validate_audio_file(cough_audio, "Cough audio")
-    if breath_audio:
-        validate_audio_file(breath_audio, "Breath audio")
-    
-    # Validate at least one file
-    if not xray and not cough_audio and not breath_audio:
-        raise_bad_request("At least one file (X-ray, Cough audio, or Chest audio) is required")
-    
-    # Parse symptoms
     try:
+        # Parse symptoms
         symptoms_data = json.loads(symptoms)
     except:
         raise_bad_request("Invalid symptoms format")
+    
+    # Validate symptom IDs exist
+    from app.models.symptom import SymptomsMaster
+    symptom_ids = [s["symptom_id"] for s in symptoms_data]
+    existing_symptoms = db.query(SymptomsMaster.id).filter(SymptomsMaster.id.in_(symptom_ids)).all()
+    existing_ids = [s.id for s in existing_symptoms]
+    
+    invalid_ids = [sid for sid in symptom_ids if sid not in existing_ids]
+    if invalid_ids:
+        raise_bad_request(f"Invalid symptom IDs: {invalid_ids}")
     
     # Determine user_id and sub_user_id
     user_id = current_user.user_id
@@ -80,68 +78,58 @@ async def create_case(
         )
         db.add(case_symptom)
     
-    # Upload files
-    uploaded_files = []
+    # Process file uploads
+    files_to_upload = [
+        (xray, "xray"),
+        (cough_audio, "cough_audio"),
+        (breath_audio, "breath_audio")
+    ]
     
-    if xray:
-        file_id = str(uuid.uuid4())
-        file_ext = xray.filename.split(".")[-1]
-        s3_key = f"xray/{case.id}/{file_id}.{file_ext}"
-        
-        file_content = await xray.read()
-        validate_file_size(file_content, MAX_XRAY_SIZE, "X-ray")
-        if upload_file_to_s3(file_content, s3_key, xray.content_type):
-            case_file = CaseFile(
-                case_id=case.id,
-                modality="xray",
-                file_type=file_ext,
-                s3_bucket=AWS_S3_BUCKET,
-                s3_key=s3_key,
-                file_size=len(file_content),
-                uploaded_by="patient"
-            )
-            db.add(case_file)
-            uploaded_files.append("xray")
-    
-    if cough_audio:
-        file_id = str(uuid.uuid4())
-        file_ext = cough_audio.filename.split(".")[-1]
-        s3_key = f"audio/{case.id}/{file_id}.{file_ext}"
-        
-        file_content = await cough_audio.read()
-        validate_file_size(file_content, MAX_AUDIO_SIZE, "Cough audio")
-        if upload_file_to_s3(file_content, s3_key, cough_audio.content_type):
-            case_file = CaseFile(
-                case_id=case.id,
-                modality="cough_audio",
-                file_type=file_ext,
-                s3_bucket=AWS_S3_BUCKET,
-                s3_key=s3_key,
-                file_size=len(file_content),
-                uploaded_by="patient"
-            )
-            db.add(case_file)
-            uploaded_files.append("cough_audio")
-    
-    if breath_audio:
-        file_id = str(uuid.uuid4())
-        file_ext = breath_audio.filename.split(".")[-1]
-        s3_key = f"chestSounds/{case.id}/{file_id}.{file_ext}"
-        
-        file_content = await breath_audio.read()
-        validate_file_size(file_content, MAX_AUDIO_SIZE, "Breath audio")
-        if upload_file_to_s3(file_content, s3_key, breath_audio.content_type):
-            case_file = CaseFile(
-                case_id=case.id,
-                modality="breath_audio",
-                file_type=file_ext,
-                s3_bucket=AWS_S3_BUCKET,
-                s3_key=s3_key,
-                file_size=len(file_content),
-                uploaded_by="patient"
-            )
-            db.add(case_file)
-            uploaded_files.append("breath_audio")
+    for file, modality in files_to_upload:
+        if file and file.filename:
+            # Validate file
+            if modality == "xray":
+                validate_xray_file(file)
+            else:
+                validate_audio_file(file)
+            
+            # Read file content
+            file_content = await file.read()
+            
+            # Validate file size
+            if modality == "xray":
+                validate_file_size(file_content, MAX_XRAY_SIZE, modality)
+            else:
+                validate_file_size(file_content, MAX_AUDIO_SIZE, modality)
+            
+            # Generate S3 key with existing folder structure
+            file_extension = file.filename.split('.')[-1]
+            
+            # Map modality to existing S3 folders
+            folder_mapping = {
+                "xray": "X ray",
+                "cough_audio": "Cough sounds", 
+                "breath_audio": "Chest sounds"
+            }
+            
+            s3_folder = folder_mapping.get(modality, modality)
+            s3_key = f"{s3_folder}/{case.catalog_number}.{file_extension}"
+            
+            # Upload to S3
+            if upload_file_to_s3(file_content, s3_key, file.content_type):
+                # Save file record
+                case_file = CaseFile(
+                    case_id=case.id,
+                    modality=modality,
+                    s3_key=s3_key,
+                    s3_bucket=AWS_S3_BUCKET,
+                    file_type=file_extension,
+                    file_size=len(file_content),
+                    uploaded_by="patient"
+                )
+                db.add(case_file)
+            else:
+                raise_bad_request(f"Failed to upload {modality} file")
     
     db.commit()
     db.refresh(case)
@@ -157,7 +145,7 @@ async def create_case(
     
     return APIResponse(
         status=ResponseStatus.SUCCESS,
-        message=f"Case created successfully with {len(uploaded_files)} file(s)",
+        message="Case created successfully",
         data=response_data.dict(),
         id=str(case.id)
     )
