@@ -15,3 +15,7 @@ Thumbs.db
 
 # Env files
 .env
+*.env
+
+# Alembic
+backend/alembic.ini
