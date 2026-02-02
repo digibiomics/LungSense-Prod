@@ -45,6 +45,15 @@ export default function AdminDashboard() {
   const isSuper = currentUser.role === "super_admin";
   const isDataAdmin = currentUser.role === "data_admin";
 
+  // Redirect based on role
+  useEffect(() => {
+    if (isSuper) {
+      navigate("/admin/super-dashboard");
+    } else if (isDataAdmin) {
+      navigate("/admin/data-dashboard");
+    }
+  }, [isSuper, isDataAdmin, navigate]);
+
   useEffect(() => {
     fetchDashboardStats();
   }, []);

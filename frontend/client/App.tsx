@@ -21,6 +21,8 @@ import PractitionerPatientDetail from "./pages/PractitionerPatientDetail";
 import PractitionerCaseDetail from "./pages/PractitionerCaseDetail";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import DataAdminDashboard from "./pages/DataAdminDashboard";
 import AdminSignup from "./pages/AdminSignup";
 import NotFound from "./pages/NotFound";
 import ScheduleAppointment from "./pages/scheduleAppointment";
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/practitioner/signup" element={<PractitionerSignup />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/super-dashboard" element={<SuperAdminDashboard />} />
+          <Route path="/admin/data-dashboard" element={<DataAdminDashboard />} />
           <Route path="/admin/signup" element={<AdminSignup />} />
           <Route
             path="/practitioner/patients"

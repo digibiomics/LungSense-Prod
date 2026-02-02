@@ -62,7 +62,12 @@ export default function AdminLogin() {
         JSON.stringify({ email: formData.email, role })
       );
 
-      navigate("/admin/dashboard");
+      // Route based on admin type
+      if (role === "data_admin") {
+        navigate("/admin/data-dashboard");
+      } else {
+        navigate("/admin/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Login failed");
     } finally {
