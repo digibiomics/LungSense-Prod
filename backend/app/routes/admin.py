@@ -31,7 +31,7 @@ def require_admin_role(allowed_roles: List[UserRole]):
     return check_role
 
 
-# 1️⃣ TOP SUMMARY PANEL
+# 1️ TOP SUMMARY PANEL
 @router.get("/admin/dashboard/summary", response_model=APIResponse)
 async def get_dashboard_summary(
     current_user: AuthenticatedUser = Depends(require_admin_role([UserRole.DATA_ADMIN, UserRole.SUPER_ADMIN])),
@@ -87,7 +87,7 @@ async def get_dashboard_summary(
     )
 
 
-# 3️⃣ DATASET EXPLORER TABLE
+# 3️ DATASET EXPLORER TABLE
 @router.get("/admin/dashboard/dataset", response_model=APIResponse)
 async def get_dataset_explorer(
     model_type: Optional[str] = Query(None, description="Filter by model: cough_audio, breath_audio, xray, multi_modal"),

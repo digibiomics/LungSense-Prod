@@ -1,11 +1,15 @@
 from logging.config import fileConfig
 import os
 import sys
+from dotenv import load_dotenv
 
 from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import create_engine
 from sqlalchemy.orm import sessionmaker
+
+# Load environment variables
+load_dotenv()
 
 # Ensure backend root is in Python path
 sys.path.insert(0, os.path.abspath(os.getcwd()))

@@ -29,8 +29,8 @@ class SubUser(Base):
     age = Column(Integer, nullable=False)
     sex = Column(String(1), nullable=False)  # F, M, O
     ethnicity = Column(String(3), nullable=False)  # AFR, ASN, CAU, etc.
-    country = Column(String(2), nullable=False)  # ISO-3166-1 Alpha-2
-    province = Column(String(10), nullable=False)  # ISO-3166-2 format
+    country = Column(String(100), nullable=False)  # Full country name
+    province = Column(String(100), nullable=False)  # Full province/state name
     
     # Respiratory history (JSON array of RespiratoryHistory enum values)
     respiratory_history = Column(Text, nullable=True)  # JSON string

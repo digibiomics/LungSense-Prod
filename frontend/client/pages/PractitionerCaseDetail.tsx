@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Send, Download, Play, User, Calendar, FileText, Stethoscope } from "lucide-react";
+import { ArrowLeft, Save, Send, Download, Play, User, Calendar, FileText, Stethoscope, Edit } from "lucide-react";
 import { getCaseDetails, submitCaseReview, getUserById, getSubUserById } from "../../src/api";
 import { 
   getEthnicityName, 
@@ -70,6 +70,7 @@ export default function PractitionerCaseDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [editingReview, setEditingReview] = useState<number | null>(null);
   const [displayNames, setDisplayNames] = useState({
     country: '',
     province: '',
@@ -116,20 +117,12 @@ export default function PractitionerCaseDetail() {
           sex: getSexName(caseData.patient.sex),
           respiratoryHistory: getRespiratoryHistoryNames(caseData.patient.respiratory_history),
           province: getProvinceName(caseData.patient.province),
-          country: '' // Will be set asynchronously
+          country: getCountryName(caseData.patient.country)
         };
         
-        // Get country name asynchronously
-        if (caseData.patient.country) {
-          getCountryName(caseData.patient.country).then(countryName => {
-            names.country = countryName;
-            setDisplayNames({...names});
-          });
-        } else {
-          setDisplayNames(names);
-        }
+        setDisplayNames(names);
         
-        // Pre-fill form with latest review if exists
+        // Pre-fill form with latest review if exists and not final
         const latestReview = caseData.reviews[caseData.reviews.length - 1];
         if (latestReview && !latestReview.is_final) {
           setReviewForm({
@@ -140,6 +133,7 @@ export default function PractitionerCaseDetail() {
             clinical_notes: latestReview.clinical_notes || "",
             is_final: false
           });
+          setEditingReview(latestReview.id);
         }
       }
     } catch (err: any) {
@@ -147,6 +141,19 @@ export default function PractitionerCaseDetail() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditReview = (review: any) => {
+    setReviewForm({
+      primary_diagnosis: review.primary_diagnosis || "",
+      differential_diagnoses: review.differential_diagnoses || "",
+      severity: review.severity || "",
+      confidence_score: review.confidence_score || 0.5,
+      clinical_notes: review.clinical_notes || "",
+      is_final: false
+    });
+    setEditingReview(review.id);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   };
 
   const handleSubmitReview = async (isFinal: boolean) => {
@@ -164,7 +171,7 @@ export default function PractitionerCaseDetail() {
         // Refresh case data
         await fetchCaseDetail();
         
-        // Reset form if final submission
+        // Reset form and editing state if final submission
         if (isFinal) {
           setReviewForm({
             primary_diagnosis: "",
@@ -174,6 +181,7 @@ export default function PractitionerCaseDetail() {
             clinical_notes: "",
             is_final: false
           });
+          setEditingReview(null);
         }
       }
     } catch (err: any) {
@@ -250,10 +258,25 @@ export default function PractitionerCaseDetail() {
                 Submitted on {new Date(caseDetail.created_at).toLocaleDateString()}
               </p>
             </div>
-            <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
-              isReviewed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
-            }`}>
-              {caseDetail.status}
+            <div className="flex items-center gap-3">
+              {hasReviews && (
+                <Button
+                  onClick={() => {
+                    const latestReview = caseDetail.reviews[caseDetail.reviews.length - 1];
+                    handleEditReview(latestReview);
+                  }}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  Edit Review
+                </Button>
+              )}
+              <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                isReviewed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+              }`}>
+                {caseDetail.status}
+              </div>
             </div>
           </div>
 
@@ -288,7 +311,7 @@ export default function PractitionerCaseDetail() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 font-dm mb-1">Country</p>
-                    <p className="text-gray-900 font-display">{displayNames.country || 'Loading...'}</p>
+                    <p className="text-gray-900 font-display">{displayNames.country || 'Not provided'}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 font-dm mb-1">Province</p>
@@ -378,11 +401,24 @@ export default function PractitionerCaseDetail() {
                           <p className="text-sm text-gray-600 font-dm">
                             {new Date(review.created_at).toLocaleString()}
                           </p>
-                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            review.is_final ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
-                          }`}>
-                            {review.is_final ? "Final" : "Draft"}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                              review.is_final ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+                            }`}>
+                              {review.is_final ? "Final" : "Draft"}
+                            </span>
+                            {!isReviewed && (
+                              <Button
+                                onClick={() => handleEditReview(review)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2"
+                              >
+                                <Edit className="w-3 h-3 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         {review.primary_diagnosis && (
                           <p className="text-gray-900 font-display font-semibold mb-1">
@@ -406,13 +442,34 @@ export default function PractitionerCaseDetail() {
               )}
             </div>
 
-            {/* Review Form */}
-            {!isReviewed && (
+            {/* Review Form - Show for unreviewed cases OR when editing */}
+            {(!isReviewed || editingReview) && (
               <div className="space-y-6">
                 <Card className="p-6 bg-white border-gray-200 shadow-sm">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4 font-display">
-                    Medical Review
-                  </h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold text-gray-900 font-display">
+                      {editingReview ? 'Edit Review' : 'Medical Review'}
+                    </h2>
+                    {editingReview && (
+                      <Button
+                        onClick={() => {
+                          setEditingReview(null);
+                          setReviewForm({
+                            primary_diagnosis: "",
+                            differential_diagnoses: "",
+                            severity: "",
+                            confidence_score: 0.5,
+                            clinical_notes: "",
+                            is_final: false
+                          });
+                        }}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        Cancel Edit
+                      </Button>
+                    )}
+                  </div>
 
                   <div className="space-y-4">
                     <div>

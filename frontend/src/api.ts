@@ -1,13 +1,49 @@
- 
+// Base URL configuration - reads from .env for production flexibility
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
 
+// Google OAuth URLs
+export const GOOGLE_OAUTH_CALLBACK_URL = `${API_BASE_URL}/auth/google/callback`;
+export const GOOGLE_COMPLETE_PROFILE_URL = `${API_BASE_URL}/auth/google/complete-profile`;
+export const ADMIN_LOGIN_URL = `${API_BASE_URL}/auth/admin/login`;
+export const REFRESH_TOKEN_URL = `${API_BASE_URL}/auth/refresh`;
+export const LOGOUT_URL = `${API_BASE_URL}/auth/logout`;
 
-// frontend/src/api.ts
-export const PATIENT_SIGNUP_URL       = "http://localhost:8000/api/patient";
-export const PRACTITIONER_SIGNUP_URL = "http://localhost:8000/api/practitioner";
-
-// You said you want these exact endpoints:
-export const PATIENT_LOGIN_URL       = "http://localhost:8000/api/auth/login";
-export const PRACTITIONER_LOGIN_URL = "http://localhost:8000/api/auth/login";
+// Centralized error handler
+function handleApiError(res: Response, text: string, defaultMessage: string): never {
+  let errorMessage = defaultMessage;
+  
+  try {
+    const err = JSON.parse(text);
+    errorMessage = err?.detail || err?.message || err?.error || defaultMessage;
+  } catch {
+    if (text) errorMessage = text;
+  }
+  
+  // Add status code context
+  if (res.status === 401) {
+    // Clear all auth data
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('user_email');
+    localStorage.removeItem('user_name');
+    localStorage.removeItem('profile_picture');
+    
+    // Redirect to role selection
+    window.location.href = '/select-role';
+    
+    errorMessage = "Session expired. Redirecting to login...";
+  } else if (res.status === 403) {
+    errorMessage = "Access denied. You don't have permission to perform this action.";
+  } else if (res.status === 404) {
+    errorMessage = "Resource not found. Please check and try again.";
+  } else if (res.status === 500) {
+    errorMessage = "Server error. Please try again later.";
+  }
+  
+  throw new Error(errorMessage);
+}
 
 // Helper to POST JSON and return parsed JSON or throw.
 async function postJson(url: string, body: any, opts: RequestInit = {}) {
@@ -21,46 +57,123 @@ async function postJson(url: string, body: any, opts: RequestInit = {}) {
   try { return JSON.parse(text); } catch { return text; }
 }
 
-export async function signupPatient(payload: any) {
-  return postJson(PATIENT_SIGNUP_URL, payload);
+// Google OAuth functions
+export async function googleOAuthCallback(code: string, role: string) {
+  try {
+    console.log('Calling Google OAuth callback with:', { code: code?.substring(0, 20) + '...', role });
+    
+    const response = await fetch(GOOGLE_OAUTH_CALLBACK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ code, role }),
+    });
+
+    console.log('OAuth callback response status:', response.status);
+    
+    const text = await response.text();
+    console.log('OAuth callback response text:', text);
+    
+    if (!response.ok) {
+      let errorMessage;
+      try {
+        const errorData = JSON.parse(text);
+        errorMessage = errorData?.detail || errorData?.message || text;
+      } catch {
+        errorMessage = text || `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch {
+      throw new Error('Invalid JSON response from server');
+    }
+  } catch (error) {
+    console.error('Google OAuth callback error:', error);
+    throw error;
+  }
 }
-export async function signupPractitioner(payload: any) {
-  return postJson(PRACTITIONER_SIGNUP_URL, payload);
+
+export async function completeGoogleProfile(profileData: any) {
+  const token = localStorage.getItem("access_token");
+  
+  if (!token) {
+    throw new Error('No access token found. Please login again.');
+  }
+  
+  const res = await fetch(GOOGLE_COMPLETE_PROFILE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to complete profile");
+  }
+
+  return res.json();
 }
-export async function loginPatient(payload: any) {
-  return postJson(PATIENT_LOGIN_URL, payload);
-}
-export async function loginPractitioner(payload: any) {
-  return postJson(PRACTITIONER_LOGIN_URL, payload);
+
+export async function adminLogin(email: string, password: string) {
+  const res = await fetch(ADMIN_LOGIN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  
+  const text = await res.text();
+  
+  if (!res.ok) {
+    let errorMessage = "Login failed";
+    try {
+      const err = JSON.parse(text);
+      errorMessage = err?.detail || err?.message || err?.error || "Invalid credentials";
+    } catch {
+      errorMessage = text || "Login failed";
+    }
+    throw new Error(errorMessage);
+  }
+  
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("Invalid response from server");
+  }
 }
 
 export const CREATE_SUB_USER_URL = (ownerId: number) =>
-  `http://localhost:8000/api/patient/${ownerId}/sub-user`;
-
-// export async function createSubUser(ownerId: number, payload: any) {
-//   const token = localStorage.getItem("token");
-
-//   return fetch(CREATE_SUB_USER_URL(ownerId), {
-//     method: "POST",
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${token}`,
-//     },
-//     body: JSON.stringify(payload),
-//   }).then(res => res.json());
-// }
+  `${API_BASE_URL}/patient/${ownerId}/sub-user`;
 
 export async function createSubUser(
   ownerId: string | number,
   payload: any
 ) {
+  const token = localStorage.getItem("access_token");
+  
+  if (!token) {
+    throw new Error('No access token found. Please login again.');
+  }
+  
   const res = await fetch(
-    `http://localhost:8000/api/patient/${ownerId}/sub-user`,
+    `${API_BASE_URL}/patient/${ownerId}/sub-user`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     }
@@ -82,11 +195,16 @@ export async function createSubUser(
 
   return res.json();
 }
- export async function getSubUsers(ownerId: number | string) {
-  const token = localStorage.getItem("token");
+
+export async function getSubUsers(ownerId: number | string) {
+  const token = localStorage.getItem("access_token");
+  
+  if (!token) {
+    throw new Error('Session expired. Please login again.');
+  }
 
   const res = await fetch(
-    `http://localhost:8000/api/patient/${ownerId}/sub-users`,
+    `${API_BASE_URL}/patient/${ownerId}/sub-users`,
     {
       method: "GET",
       headers: {
@@ -97,13 +215,13 @@ export async function createSubUser(
   );
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw err;
+    const text = await res.text();
+    handleApiError(res, text, "Unable to load family members. Please try again.");
   }
 
   const json = await res.json();
 
-  // 🔥 THIS IS THE MISSING CASE
+  //  THIS IS THE MISSING CASE
   if (Array.isArray(json?.data?.sub_users)) {
     return json.data.sub_users;
   }
@@ -117,12 +235,10 @@ export async function createSubUser(
   return [];
 }
 
-
-
 export async function getSubUserById(subUserId: string | number) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
-  const res = await fetch(`http://localhost:8000/api/patient/sub-user/${subUserId}`, {
+  const res = await fetch(`${API_BASE_URL}/patient/sub-user/${subUserId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -149,9 +265,9 @@ export async function getSubUserById(subUserId: string | number) {
 }
 
 export async function getUserById(userId: string | number) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
-  const res = await fetch(`http://localhost:8000/api/user/${userId}`, {
+  const res = await fetch(`${API_BASE_URL}/user/${userId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -178,9 +294,9 @@ export async function getUserById(userId: string | number) {
 }
 
 export async function getProfileDetails(profileType: string, profileId: string | number) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
-  const res = await fetch(`http://localhost:8000/api/profile/${profileType}/${profileId}`, {
+  const res = await fetch(`${API_BASE_URL}/profile/${profileType}/${profileId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -203,14 +319,13 @@ export async function getProfileDetails(profileType: string, profileId: string |
 }
 
 export async function createCase(formData: FormData) {
-  const token = localStorage.getItem("token");
-
-  console.log("Creating case with FormData:");
-  for (let [key, value] of formData.entries()) {
-    console.log(key, value);
+  const token = localStorage.getItem("access_token");
+  
+  if (!token) {
+    throw new Error('Session expired. Please login again.');
   }
 
-  const res = await fetch("http://localhost:8000/api/cases", {
+  const res = await fetch(`${API_BASE_URL}/cases`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -218,24 +333,20 @@ export async function createCase(formData: FormData) {
     body: formData,
   });
 
-  console.log("Response status:", res.status);
-
   if (!res.ok) {
     const text = await res.text();
-    console.error("Error response:", text);
-    const err = await res.json().catch(() => ({ message: text }));
-    throw new Error(err?.message || "Failed to create case");
+    handleApiError(res, text, "Unable to submit case. Please check your data and try again.");
   }
 
   return res.json();
 }
 
 export async function updateUser(userId: string | number, userData: any) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
   console.log("Updating user:", userId, "with data:", userData);
 
-  const res = await fetch(`http://localhost:8000/api/user/${userId}`, {
+  const res = await fetch(`${API_BASE_URL}/user/${userId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -244,11 +355,8 @@ export async function updateUser(userId: string | number, userData: any) {
     body: JSON.stringify(userData),
   });
 
-  console.log("Response status:", res.status);
-  
   if (!res.ok) {
     const text = await res.text();
-    console.error("Error response:", text);
     let err;
     try {
       err = JSON.parse(text);
@@ -262,11 +370,11 @@ export async function updateUser(userId: string | number, userData: any) {
 }
 
 export async function updateUserDashboard(userId: string | number, userData: any) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
   console.log("Updating user dashboard:", userId, "with data:", userData);
 
-  const res = await fetch(`http://localhost:8000/api/user/${userId}/dashboard`, {
+  const res = await fetch(`${API_BASE_URL}/user/${userId}/dashboard`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -293,9 +401,9 @@ export async function updateUserDashboard(userId: string | number, userData: any
 }
 
 export async function updateSubUser(subUserId: string | number, userData: any) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
-  const res = await fetch(`http://localhost:8000/api/patient/sub-user/${subUserId}`, {
+  const res = await fetch(`${API_BASE_URL}/patient/sub-user/${subUserId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -319,11 +427,11 @@ export async function updateSubUser(subUserId: string | number, userData: any) {
 }
 
 export async function updateSubUserDashboard(subUserId: string | number, userData: any) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
 
   console.log("Updating sub-user dashboard:", subUserId, "with data:", userData);
 
-  const res = await fetch(`http://localhost:8000/api/patient/sub-user/${subUserId}/dashboard`, {
+  const res = await fetch(`${API_BASE_URL}/patient/sub-user/${subUserId}/dashboard`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -351,9 +459,13 @@ export async function updateSubUserDashboard(subUserId: string | number, userDat
 
 // Practitioner API functions
 export async function getPractitionerCases() {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   
-  const res = await fetch("http://localhost:8000/api/practitioner/cases", {
+  if (!token) {
+    throw new Error('No access token found. Please login again.');
+  }
+  
+  const res = await fetch(`${API_BASE_URL}/practitioner/cases`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -363,22 +475,20 @@ export async function getPractitionerCases() {
   
   if (!res.ok) {
     const text = await res.text();
-    let err;
-    try {
-      err = JSON.parse(text);
-    } catch {
-      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
-    }
-    throw new Error(err?.message || err?.detail || "Failed to fetch cases");
+    handleApiError(res, text, "Unable to load patient cases. Please refresh the page.");
   }
   
   return res.json();
 }
 
 export async function getPractitionerStats() {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   
-  const res = await fetch("http://localhost:8000/api/practitioner/dashboard/stats", {
+  if (!token) {
+    throw new Error('No access token found. Please login again.');
+  }
+  
+  const res = await fetch(`${API_BASE_URL}/practitioner/dashboard/stats`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -388,22 +498,20 @@ export async function getPractitionerStats() {
   
   if (!res.ok) {
     const text = await res.text();
-    let err;
-    try {
-      err = JSON.parse(text);
-    } catch {
-      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
-    }
-    throw new Error(err?.message || err?.detail || "Failed to fetch stats");
+    handleApiError(res, text, "Unable to load dashboard statistics. Please refresh the page.");
   }
   
   return res.json();
 }
 
 export async function getCaseDetails(caseId: string | number) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   
-  const res = await fetch(`http://localhost:8000/api/practitioner/cases/${caseId}`, {
+  if (!token) {
+    throw new Error('No access token found. Please login again.');
+  }
+  
+  const res = await fetch(`${API_BASE_URL}/practitioner/cases/${caseId}`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -413,22 +521,16 @@ export async function getCaseDetails(caseId: string | number) {
   
   if (!res.ok) {
     const text = await res.text();
-    let err;
-    try {
-      err = JSON.parse(text);
-    } catch {
-      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
-    }
-    throw new Error(err?.message || err?.detail || "Failed to fetch case details");
+    handleApiError(res, text, "Unable to load case details. The case may not exist or you don't have access.");
   }
   
   return res.json();
 }
 
 export async function submitCaseReview(caseId: string | number, reviewData: any) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   
-  const res = await fetch(`http://localhost:8000/api/practitioner/cases/${caseId}/review`, {
+  const res = await fetch(`${API_BASE_URL}/practitioner/cases/${caseId}/review`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -451,10 +553,14 @@ export async function submitCaseReview(caseId: string | number, reviewData: any)
   return res.json();
 }
 
+export async function updateCaseReview(caseId: string | number, reviewData: any) {
+  return submitCaseReview(caseId, reviewData);
+}
+
 export async function createAdminUser(adminData: any) {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   
-  const res = await fetch("http://localhost:8000/api/admin/signup", {
+  const res = await fetch(`${API_BASE_URL}/admin/signup`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -478,9 +584,9 @@ export async function createAdminUser(adminData: any) {
 }
 
 export async function getAdminStats() {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
   
-  const res = await fetch("http://localhost:8000/api/admin/dashboard/stats", {
+  const res = await fetch(`${API_BASE_URL}/admin/dashboard/stats`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -499,5 +605,57 @@ export async function getAdminStats() {
     throw new Error(err?.message || err?.detail || "Failed to fetch admin stats");
   }
   
+  return res.json();
+}
+
+export async function getSuperAdminStats() {
+  const token = localStorage.getItem("access_token");
+  
+  const res = await fetch(`${API_BASE_URL}/admin/super/stats`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || "Failed to fetch super admin stats");
+  }
+  
+  return res.json();
+}
+
+export async function createSupportTicket(ticketData: {
+  title: string;
+  description: string;
+  category: string;
+  email: string;
+  priority?: string;
+}) {
+  const res = await fetch(`${API_BASE_URL}/support/tickets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(ticketData),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let err;
+    try {
+      err = JSON.parse(text);
+    } catch {
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
+    throw new Error(err?.message || err?.detail || `Failed to create ticket`);
+  }
+
   return res.json();
 }

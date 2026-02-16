@@ -1,35 +1,81 @@
-import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Save, Send } from "lucide-react";
+import { getCaseDetails } from "../../src/api";
+import { useToast } from "@/hooks/use-toast";
+
+// mock data
 
 export default function PractitionerPatientDetail() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { caseId } = useParams();
+  const { toast } = useToast();
   const patient = location.state?.patient;
 
+  const [caseData, setCaseData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [feedback, setFeedback] = useState("");
   const [savedFeedback, setSavedFeedback] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  if (!patient) {
+  useEffect(() => {
+    const fetchCaseDetails = async () => {
+      if (!caseId) return;
+      
+      try {
+        setLoading(true);
+        const response = await getCaseDetails(caseId);
+        setCaseData(response.data || response);
+      } catch (error: any) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch case details",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCaseDetails();
+  }, [caseId]);
+
+  if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar />
         <main className="flex-1 md:ml-64 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-gray-600 font-dm mb-4">No patient data found</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lungsense-blue mx-auto mb-4"></div>
+            <p className="text-gray-600 font-dm">Loading case details...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!caseData && !patient) {
+    return (
+      <div className="flex min-h-screen bg-gray-50">
+        <Sidebar />
+        <main className="flex-1 md:ml-64 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600 font-dm mb-4">No case data found</p>
             <Button onClick={() => navigate("/practitioner/patients")}>
-              Back to Patients
+              Back to Cases
             </Button>
           </div>
         </main>
       </div>
     );
   }
+
+  const displayData = caseData || patient;
 
   const handleSaveFeedback = async () => {
     if (!feedback.trim()) return;
@@ -61,12 +107,12 @@ export default function PractitionerPatientDetail() {
             </button>
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-gray-900 font-display">
-                {patient.name}
+                {displayData.patient_name || displayData.name || "Patient"}
               </h1>
-              <p className="text-gray-600 font-dm">{patient.email}</p>
+              <p className="text-gray-600 font-dm">{displayData.catalog_number ? `Case #${displayData.catalog_number}` : displayData.email}</p>
             </div>
             <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold text-lg">
-              {patient.name[0]}
+              {(displayData.patient_name || displayData.name || "P")[0]}
             </div>
           </div>
 
@@ -227,29 +273,31 @@ export default function PractitionerPatientDetail() {
 
                 <div className="space-y-3 text-sm">
                   <div>
-                    <p className="text-gray-600 font-dm mb-1">Last Analysis</p>
+                    <p className="text-gray-600 font-dm mb-1">Submitted</p>
                     <p className="text-gray-900 font-display font-semibold">
-                      {new Date(patient.lastAnalysis).toLocaleDateString()}
+                      {new Date(displayData.created_at || displayData.lastAnalysis).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-600 font-dm mb-1">Top Diagnosis</p>
+                    <p className="text-gray-600 font-dm mb-1">Diagnosis</p>
                     <p className="text-gray-900 font-display font-semibold">
-                      {patient.topDiagnosis}
+                      {displayData.primary_diagnosis || displayData.topDiagnosis || "Pending"}
                     </p>
                   </div>
                   <div>
                     <p className="text-gray-600 font-dm mb-1">Status</p>
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                        patient.status === "critical"
-                          ? "bg-red-100 text-red-800"
-                          : patient.status === "warning"
+                        displayData.status === "reviewed"
+                          ? "bg-green-100 text-green-800"
+                          : displayData.status === "submitted"
                             ? "bg-yellow-100 text-yellow-800"
-                            : "bg-green-100 text-green-800"
+                            : displayData.status === "critical"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
                       }`}
                     >
-                      {patient.status}
+                      {displayData.status}
                     </span>
                   </div>
                 </div>

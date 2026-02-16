@@ -8,14 +8,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import SelectRole from "./pages/SelectRole";
-import PatientLogin from "./pages/PatientLogin";
-import PatientSignup from "./pages/PatientSignup";
+import CompleteProfile from "./pages/auth/CompleteProfile";
+import CompletePractitionerProfile from "./pages/auth/CompletePractitionerProfile";
+import UserProfile from "./pages/UserProfile";
+import Login from "./pages/auth/Login";
 import PatientDashboard from "./pages/PatientDashboard";
 import PatientRecords from "./pages/PatientRecords";
 import DiagnosticResults from "./pages/DiagnosticResults";
 import Recommendations from "./pages/Recommendations";
-import PractitionerLogin from "./pages/PractitionerLogin";
-import PractitionerSignup from "./pages/PractitionerSignup";
+import Support from "./pages/Support";
+ 
 import PractitionerPatients from "./pages/PractitionerPatients";
 import PractitionerPatientDetail from "./pages/PractitionerPatientDetail";
 import PractitionerCaseDetail from "./pages/PractitionerCaseDetail";
@@ -39,8 +41,11 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/select-role" element={<SelectRole />} />
-          <Route path="/patient/login" element={<PatientLogin />} />
-          <Route path="/patient/signup" element={<PatientSignup />} />
+         <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/complete-profile" element={<CompleteProfile />} />
+          <Route path="/auth/complete-practitioner-profile" element={<CompletePractitionerProfile />} />
+          <Route path="/patient/profile" element={<UserProfile />} />
+          <Route path="/support" element={<Support/>} />
           <Route path="/patient/upload" element={<PatientDashboard />} />
           <Route path="/patient/records" element={<PatientRecords />} />
           <Route path="/patient/results" element={<DiagnosticResults />} />
@@ -49,9 +54,9 @@ const App = () => (
             element={<Recommendations />}
           />
           <Route path="/patient/scheduleAppointment" element={<ScheduleAppointment />} />
-          <Route path="/practitioner/login" element={<PractitionerLogin />} />
-          <Route path="/practitioner/signup" element={<PractitionerSignup />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
+          {/* <Route path="/practitioner/login" element={<PractitionerLogin />} />
+          <Route path="/practitioner/signup" element={<PractitionerSignup />} /> */}
+          <Route path="auth/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/super-dashboard" element={<SuperAdminDashboard />} />
           <Route path="/admin/data-dashboard" element={<DataAdminDashboard />} />

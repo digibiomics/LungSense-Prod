@@ -19,27 +19,12 @@ class SubUserBase(BaseModel):
     age: int = Field(..., gt=0, description="Age")
     sex: Sex = Field(..., description="Sex (F/M/O)")
     ethnicity: Ethnicity = Field(..., description="Ethnicity code")
-    country: str = Field(..., min_length=2, max_length=2, description="ISO-3166-1 Alpha-2 country code")
-    province: str = Field(..., description="ISO-3166-2 province/state code")
+    country: str = Field(..., min_length=2, description="Country name")
+    province: str = Field(..., description="Province/state name")
     respiratory_history: List[RespiratoryHistory] = Field(
     ..., description="List of respiratory conditions (or NONE)"
 )
-    
-    @validator('country')
-    def validate_country(cls, v):
-        """Validate country code format."""
-        if not re.match(r'^[A-Z]{2}$', v.upper()):
-            raise ValueError('Country must be a valid ISO-3166-1 Alpha-2 code')
-        return v.upper()
-    
-    @validator('province')
-    def validate_province(cls, v, values):
-        """Validate province code format (country-XX)."""
-        if 'country' in values and not v.upper().startswith(values['country'] + '-'):
-            raise ValueError('Province must match country prefix (e.g., US-CA)')
-        if not re.match(r'^[A-Z]{2}-[A-Z0-9]{1,3}$', v.upper()):
-            raise ValueError('Province must be in ISO-3166-2 format (e.g., US-CA)')
-        return v.upper()
+
 
 
 class SubUserCreateRequest(SubUserBase):
@@ -54,7 +39,7 @@ class SubUserUpdateRequest(BaseModel):
     age: Optional[int] = Field(None, gt=0)
     sex: Optional[Sex]
     ethnicity: Optional[Ethnicity]
-    country: Optional[str] = Field(None, min_length=2, max_length=2)
+    country: Optional[str] = Field(None, min_length=2)
     province: Optional[str]
     respiratory_history: Optional[List[RespiratoryHistory]]
 

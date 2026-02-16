@@ -12,28 +12,20 @@ from app.utils.auth import (
     AuthenticatedUser,
     get_current_user,
     require_admin_role,
-    require_ownership_or_admin,
     require_super_admin_role
 )
 from app.sessions.db import create_local_session
 from app.constants.enums import ResponseStatus, UserRole
 from app.utils.exception_handler import raise_bad_request, raise_forbidden
-from app.constants.jwt_utils import create_access_token
-from app.schemas.auth.auth_request import LoginRequest
-from app.schemas.auth.auth_response import  TokenResponse
-from app.schemas.common import APIResponse, PaginatedResponse
+from app.schemas.common import APIResponse
 from app.schemas.user import (
     AdminUserCreateRequest,
     PatientDashboardUpdateRequest,
-    PatientSignupRequest,
-    PractitionerSignupRequest,
     UserListResponse,
     UserResponse,
     UserUpdateRequest
 )
 from app.repository.user_repo import UserRepository
-
-import requests
 
 router = APIRouter()
 
@@ -120,14 +112,14 @@ async def update_user_dashboard(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(create_local_session)
 ):
-    """Update user demographics from patient dashboard (age, sex, ethnicity only)."""
+    """Update user demographics from patient dashboard (age, sex, ethnicity, respiratory_history)."""
     # Users can update themselves, admins can update anyone
     if current_user.user_id != user_id and not current_user.is_admin:
         raise_forbidden("Access denied")
     
     try:
         user = UserRepository.update_user_dashboard(
-            db, user_id, request.age, request.sex, request.ethnicity
+            db, user_id, request.age, request.sex, request.ethnicity, request.respiratory_history
         )
         response_data = UserRepository.to_response(user)
         
@@ -167,169 +159,3 @@ async def delete_user(
         status=ResponseStatus.SUCCESS,
         message=message
     )
-
-
-@router.post("/admin/data-admin", response_model=APIResponse)
-async def create_data_admin(
-    request: AdminUserCreateRequest,
-    current_user: AuthenticatedUser = Depends(require_super_admin_role()),
-    db: Session = Depends(create_local_session)
-):
-    """Create a data admin user (super admin only)."""
-    if request.role != UserRole.DATA_ADMIN:
-        raise_bad_request("This endpoint is for creating data admins only")
-    
-    try:
-        user = UserRepository.create_admin_user(db, request, current_user.user_id)
-        response_data = UserRepository.to_response(user)
-        
-        return APIResponse(
-            status=ResponseStatus.SUCCESS,
-            message="Data admin created successfully",
-            data=response_data.dict(),
-            id=str(user.id)
-        )
-    except Exception as e:
-        raise_bad_request(str(e))
-
-
-@router.post("/admin/super-admin", response_model=APIResponse)
-async def create_super_admin(
-    request: AdminUserCreateRequest,
-    current_user: AuthenticatedUser = Depends(require_super_admin_role()),
-    db: Session = Depends(create_local_session)
-):
-    """Create a super admin user (super admin only)."""
-    if request.role != UserRole.SUPER_ADMIN:
-        raise_bad_request("This endpoint is for creating super admins only")
-    
-    try:
-        user = UserRepository.create_admin_user(db, request, current_user.user_id)
-        response_data = UserRepository.to_response(user)
-        
-        return APIResponse(
-            status=ResponseStatus.SUCCESS,
-            message="Super admin created successfully",
-            data=response_data.dict(),
-            id=str(user.id)
-        )
-    except Exception as e:
-        raise_bad_request(str(e))
-
-
-@router.post("/admin/practitioner", response_model=APIResponse)
-async def create_practitioner_admin(
-    request: AdminUserCreateRequest,
-    current_user: AuthenticatedUser = Depends(require_super_admin_role()),
-    db: Session = Depends(create_local_session)
-):
-    """Create a practitioner user via admin (super admin only)."""
-    if request.role != UserRole.PRACTITIONER:
-        raise_bad_request("This endpoint is for creating practitioners only")
-    
-    try:
-        # Convert admin request to practitioner request (minimal fields)
-        from app.schemas.user import PractitionerSignupRequest
-        
-        practitioner_request = PractitionerSignupRequest(
-            email=request.email,
-            first_name=request.first_name,
-            last_name=request.last_name,
-            password=request.password,
-            practitioner_id=f"ADMIN_{request.email.split('@')[0]}",  # Auto-generate
-            institution="Admin Created",
-            institution_location_country="US",
-            institution_location_province="US-CA"
-        )
-        
-        user = UserRepository.create_practitioner(db, practitioner_request)
-        response_data = UserRepository.to_response(user)
-        
-        return APIResponse(
-            status=ResponseStatus.SUCCESS,
-            message="Practitioner created successfully",
-            data=response_data.dict(),
-            id=str(user.id)
-        )
-    except Exception as e:
-        raise_bad_request(str(e))
-
-
-@router.post("/patient", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def signup_patient(
-    request: PatientSignupRequest,
-    db: Session = Depends(create_local_session)
-):
-    """Patient signup - creates account and returns JWT token."""
-    try:
-        user = UserRepository.create_patient(db, request)
-        token = create_access_token({"user_id": user.id, "email": user.email, "role": user.role})
-        
-        return TokenResponse(
-            access_token=token,
-            token_type="bearer",
-            user_id=user.id,
-            role=user.role
-        )
-    except Exception as e:
-        import traceback
-        print(f"Patient signup error: {str(e)}")
-        print(traceback.format_exc())
-        raise_bad_request(str(e))
-
-
-@router.post("/practitioner", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def signup_practitioner(
-    request: PractitionerSignupRequest,
-    db: Session = Depends(create_local_session)
-):
-    """Practitioner signup - creates account and returns JWT token."""
-    try:
-        user = UserRepository.create_practitioner(db, request)
-        token = create_access_token({"user_id": user.id, "email": user.email, "role": user.role})
-        
-        return TokenResponse(
-            access_token=token,
-            token_type="bearer",
-            user_id=user.id,
-            role=user.role
-        )
-    except Exception as e:
-        raise_bad_request(str(e))
-
-
-@router.post("/auth/login", response_model=TokenResponse)
-async def login(
-    request: LoginRequest,
-    db: Session = Depends(create_local_session)
-):
-    """Login for all user types - verifies credentials and returns JWT."""
-    try:
-        user = UserRepository.authenticate_user(db, request.email, request.password)
-        token = create_access_token({"user_id": user.id, "email": user.email, "role": user.role})
-        
-        return TokenResponse(
-            access_token=token,
-            token_type="bearer",
-            user_id=user.id,
-            role=user.role
-        )
-    except Exception as e:
-        raise_bad_request(str(e))
-
-@router.get("/locations/provinces/{country_code}")
-def get_provinces(country_code: str):
-    url = "https://download.geonames.org/export/dump/admin1CodesASCII.txt"
-    res = requests.get(url)
-    res.raise_for_status()
-
-    provinces = []
-    for line in res.text.split("\n"):
-        if line.startswith(country_code.upper() + "."):
-            parts = line.split("\t")
-            provinces.append({
-                "code": parts[0].replace(".", "-"),
-                "name": parts[1],
-            })
-
-    return provinces

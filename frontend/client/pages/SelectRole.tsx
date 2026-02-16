@@ -37,7 +37,7 @@ export default function SelectRole() {
           {/* Role Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto items-stretch">
             {/* Patient Card */}
-            <Link to="/patient/login">
+            <Link to="/auth/login?role=patient">
               <Card className="p-8 h-full flex flex-col hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-blue group">
                 <div className="text-center space-y-6 flex flex-col flex-1">
                   <div className="w-20 h-20 bg-lungsense-blue-light rounded-full flex items-center justify-center mx-auto group-hover:bg-lungsense-blue-light group-hover:scale-110 transition-all">
@@ -63,7 +63,7 @@ export default function SelectRole() {
             </Link>
 
             {/* Healthcare Practitioner Card */}
-            <Link to="/practitioner/login">
+            <Link to="/auth/login?role=practitioner">
               <Card className="p-8 h-full flex flex-col hover:shadow-xl transition-all cursor-pointer border-2 hover:border-lungsense-green group">
                 <div className="text-center space-y-6 flex flex-col flex-1">
                   <div className="w-20 h-20 bg-lungsense-green/10 rounded-full flex items-center justify-center mx-auto group-hover:bg-lungsense-green group-hover:scale-110 transition-all">

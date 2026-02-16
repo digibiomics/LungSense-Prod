@@ -105,7 +105,7 @@ export default function DataAdminDashboard() {
     return labels[value] || value;
   };
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userEmail = localStorage.getItem("user_email");
 
   useEffect(() => {
     fetchDashboardSummary();
@@ -120,7 +120,7 @@ export default function DataAdminDashboard() {
   const fetchDashboardSummary = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch("http://localhost:8000/api/admin/dashboard/summary", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -139,7 +139,7 @@ export default function DataAdminDashboard() {
   const fetchDatasetExplorer = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       
       const params = new URLSearchParams({
         page: filters.page.toString(),
@@ -168,9 +168,14 @@ export default function DataAdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/admin/login");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("profile_picture");
+    navigate("/auth/admin/login");
   };
 
   return (
@@ -185,7 +190,7 @@ export default function DataAdminDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Data Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">{currentUser.email}</p>
+                <p className="text-sm text-gray-600">{userEmail}</p>
               </div>
             </div>
             <Button

@@ -1,21 +1,46 @@
 # Python
 backend/myenv/
+backend/venv/
 **/__pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.py[cod]
 
 # Node
 node_modules/
 frontend/node_modules/
+frontend/dist/
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Env files
+# Environment files (CRITICAL - Never commit secrets)
 .env
 *.env
+!.env.example
+backend/.env
+frontend/.env
 
-# Alembic
-backend/alembic.ini
+# Test files (don't deploy these)
+backend/recreate_admin.py
+backend/verify_admin.py
+backend/test_data_admin_apis.py
+backend/test_db_connection.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
+build/
+dist/
+*.egg-info/

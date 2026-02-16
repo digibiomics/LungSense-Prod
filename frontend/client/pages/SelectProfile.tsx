@@ -7,36 +7,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import tokenManager from "@/lib/tokenManager";
 
-import {
-  getSubUsers,
-  getUserById,
-  createSubUser,
-} from "../../src/api";
+import countriesStatesData from "../../src/countries+states.json";
 
-/* ---------- LOCATION HELPERS ---------- */
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
-export async function fetchCountriesISO() {
-  const res = await fetch(
-    "https://restcountries.com/v3.1/all?fields=cca2,name"
-  );
-  const data = await res.json();
 
-  return data
-    .filter((c: any) => c.cca2 && c.name?.common)
-    .map((c: any) => ({
-      code: c.cca2.toUpperCase(),
-      name: c.name.common,
-    }))
-    .sort((a: any, b: any) => a.name.localeCompare(b.name));
-}
-
-export async function fetchProvincesISO(countryCode: string) {
-  const res = await fetch(
-    `http://localhost:8000/api/locations/provinces/${countryCode}`
-  );
-  return res.json();
-}
 
 /* ---------- TYPES ---------- */
 
@@ -69,11 +46,9 @@ export default function SelectProfile() {
   const [error, setError] = useState<string | null>(null);
 
   const [countries, setCountries] = useState<
-    { code: string; name: string }[]
+    { name: string; states: string[] }[]
   >([]);
-  const [provinces, setProvinces] = useState<
-    { code: string; name: string }[]
-  >([]);
+  const [provinces, setProvinces] = useState<string[]>([]);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -96,10 +71,16 @@ export default function SelectProfile() {
   useEffect(() => {
     if (!ownerId) return;
 
-    getUserById(ownerId)
-      .then((res: any) => {
-        // Handle APIResponse structure: { status, message, data: {...}, id }
-        const u = res?.data || res;
+    tokenManager.makeAuthenticatedRequest(`${API_BASE_URL}/user/${ownerId}`)
+      .then(async (res) => {
+        if (!res.ok) {
+          if (res.status === 401) {
+            navigate('/select-role');
+          }
+          throw new Error('Failed to fetch user');
+        }
+        const data = await res.json();
+        const u = data?.data || data;
         if (u && u.id) {
           setPrimaryProfile({
             id: u.id,
@@ -113,11 +94,19 @@ export default function SelectProfile() {
         console.error("Failed to fetch primary user:", err);
       });
 
-    getSubUsers(ownerId)
-      .then((list: any[]) => {
+    tokenManager.makeAuthenticatedRequest(`${API_BASE_URL}/patient/${ownerId}/sub-users`)
+      .then(async (res) => {
+        if (!res.ok) {
+          if (res.status === 401) {
+            navigate('/select-role');
+          }
+          return;
+        }
+        const data = await res.json();
+        const list = data?.data?.sub_users || [];
         if (Array.isArray(list)) {
           setProfiles(
-            list.map((u) => ({
+            list.map((u: any) => ({
               id: u.id,
               name: `${u.first_name} ${u.last_name}`,
               avatarColor: "bg-lungsense-blue-light",
@@ -134,7 +123,7 @@ export default function SelectProfile() {
 
   useEffect(() => {
     if (!isAdding) return;
-    fetchCountriesISO().then(setCountries);
+    setCountries(countriesStatesData);
   }, [isAdding]);
 
   /* ---------- COUNTRY → PROVINCE ---------- */
@@ -146,21 +135,12 @@ export default function SelectProfile() {
       return;
     }
 
-    fetchProvincesISO(form.country)
-      .then((res: any) => {
-        if (Array.isArray(res)) {
-          setProvinces(res);
-        } else if (Array.isArray(res?.data?.provinces)) {
-          setProvinces(res.data.provinces);
-        } else {
-          console.error("Unexpected provinces response", res);
-          setProvinces([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Province fetch failed", err);
-        setProvinces([]);
-      });
+    const country = countriesStatesData.find(c => c.name === form.country);
+    if (country && country.states.length > 0) {
+      setProvinces(country.states);
+    } else {
+      setProvinces([]);
+    }
   }, [form.country]);
 
   /* ---------- HELPERS ---------- */
@@ -211,15 +191,8 @@ export default function SelectProfile() {
       return;
     }
 
-    if (!form.province) {
+    if (!form.province && provinces.length > 0) {
       setError("Province/State is required.");
-      return;
-    }
-
-    // Ensure province is in correct format (should already be from dropdown, but validate)
-    const provinceCode = form.province.toUpperCase();
-    if (!provinceCode.includes('-')) {
-      setError("Province format is invalid. Please select from the dropdown.");
       return;
     }
 
@@ -236,15 +209,30 @@ export default function SelectProfile() {
       sex: form.sex.toUpperCase() as "F" | "M" | "O",
       ethnicity: form.ethnicity.toUpperCase(),
       country: form.country.toUpperCase(),
-      province: provinceCode,
+      province: form.province || "",
       respiratory_history: buildHistory(),
     };
 
     try {
-      const response = await createSubUser(ownerId, payload);
+      const response = await tokenManager.makeAuthenticatedRequest(
+        `${API_BASE_URL}/patient/${ownerId}/sub-user`,
+        {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        }
+      );
       
-      // Handle APIResponse structure: { status, message, data: {...}, id }
-      const created = response?.data || response;
+      if (!response.ok) {
+        if (response.status === 401) {
+          navigate('/select-role');
+          return;
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData?.message || errorData?.detail || 'Failed to create profile');
+      }
+
+      const data = await response.json();
+      const created = data?.data || data;
       
       if (!created || !created.id) {
         throw new Error("Failed to create profile. Invalid response from server.");
@@ -279,7 +267,7 @@ export default function SelectProfile() {
       setError(null);
     } catch (err: any) {
       console.error("Failed to create sub-user:", err);
-      const errorMessage = err?.message || err?.detail || err?.error || "Failed to create profile. Please try again.";
+      const errorMessage = err?.message || "Failed to create profile. Please try again.";
       setError(errorMessage);
     }
   };
@@ -292,81 +280,141 @@ export default function SelectProfile() {
   /* ---------- UI ---------- */
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#C9D4F4] via-[#ECEBFA] to-[#F5F2FD] p-12">
-      <h1 className="text-4xl font-bold text-center mb-12">
-        Who is checking in?
-      </h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        {displayProfiles.map((p) => (
-          <div
-            key={p.id}
-            onClick={() => navigate("/patient/upload", {
-              state: {
-                userId: p.id,
-                userType: p.isPrimary ? "self" : "sub_user",
-                userName: p.name
-              }
-            })}
-            className="bg-white/80 rounded-2xl p-8 cursor-pointer hover:shadow-xl transition-all hover:scale-105"
-          >
-            <div
-              className={`w-24 h-24 rounded-full ${p.avatarColor} flex items-center justify-center text-white text-3xl font-bold mx-auto`}
-            >
-              {p.name[0]}
-            </div>
-            <h3 className="mt-4 font-bold text-center">
-              {p.name} {p.isPrimary && "(Primary)"}
-            </h3>
+    <div className="min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
+      {/* Header */}
+      <header className="bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)] border-b border-gray-200">
+        <div className="container mx-auto px-4 py-4 md:py-6">
+          <div className="flex items-center gap-2">
+            <img
+              src="/images/logo-new.png"
+              alt="LungSense Logo"
+              className="h-10 w-auto"
+            />
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 font-display tracking-tight">
+              LungSense
+            </h1>
           </div>
-        ))}
+        </div>
+      </header>
 
-        <button
-          onClick={() => setIsAdding(true)}
-          className="border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center"
-        >
-          <Plus className="w-8 h-8" />
-          Add Profile
-        </button>
-      </div>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 font-display mb-4">
+            Who is checking in?
+          </h1>
+          <p className="text-gray-600 font-dm">
+            Select a profile to access specific respiratory records and history.
+          </p>
+        </div>
+
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-4xl">
+            {displayProfiles.map((p) => (
+              <div
+                key={p.id}
+                onClick={() => navigate("/patient/upload", {
+                  state: {
+                    userId: p.id,
+                    userType: p.isPrimary ? "self" : "sub_user",
+                    userName: p.name
+                  }
+                })}
+                className="bg-white/90 rounded-2xl p-8 cursor-pointer hover:shadow-xl transition-all hover:scale-105 text-center"
+              >
+                <div
+                  className={`w-24 h-24 rounded-full ${p.avatarColor} flex items-center justify-center text-white text-3xl font-bold mx-auto mb-4`}
+                >
+                  {p.name[0]}
+                </div>
+                <h3 className="font-bold text-gray-900 font-display text-lg">
+                  {p.name}
+                </h3>
+                {p.isPrimary && (
+                  <p className="text-sm text-gray-500 font-dm mt-1">ME</p>
+                )}
+              </div>
+            ))}
+
+            <div
+              onClick={() => setIsAdding(true)}
+              className="bg-white/70 border-2 border-dashed border-gray-300 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer hover:bg-white/90 transition-all"
+            >
+              <Plus className="w-12 h-12 text-gray-400 mb-4" />
+              <p className="text-gray-600 font-dm font-medium">ADD PROFILE</p>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full text-center py-4 mt-auto border-t border-white/20 bg-white/10 backdrop-blur-sm">
+        <p className="text-[10px] text-slate-500 font-medium tracking-wide">
+          © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+        </p>
+      </footer>
 
       {/* ---------- MODAL ---------- */}
       {isAdding && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl p-8">
-            <button onClick={() => setIsAdding(false)} className="float-right">
-              <X />
-            </button>
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-2xl p-8 bg-white shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 font-display flex items-center gap-2">
+                <UserPlus className="w-6 h-6" /> Add New Profile
+              </h2>
+              <button 
+                onClick={() => setIsAdding(false)} 
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <h2 className="text-2xl font-bold mb-6 flex gap-2">
-              <UserPlus /> Add New Profile
-            </h2>
-
-            {error && <div className="text-red-600 mb-4">{error}</div>}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+                {error}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>First Name</Label>
-                  <Input name="firstName" onChange={handleChange} />
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">FIRST NAME</Label>
+                  <Input 
+                    name="firstName" 
+                    onChange={handleChange} 
+                    placeholder="e.g. John"
+                    className="font-display"
+                  />
                 </div>
                 <div>
-                  <Label>Last Name</Label>
-                  <Input name="lastName" onChange={handleChange} />
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">LAST NAME</Label>
+                  <Input 
+                    name="lastName" 
+                    onChange={handleChange} 
+                    placeholder="e.g. Doe"
+                    className="font-display"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label>Age</Label>
-                  <Input name="age" type="number" onChange={handleChange} />
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">AGE</Label>
+                  <Input 
+                    name="age" 
+                    type="number" 
+                    onChange={handleChange} 
+                    placeholder="35"
+                    className="font-display"
+                  />
                 </div>
 
                 <div>
-                  <Label>Sex</Label>
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">SEX</Label>
                   <select
                     name="sex"
-                    className="w-full border rounded-md p-2"
+                    className="w-full border rounded-md p-2 h-10 font-display"
                     onChange={handleChange}
                   >
                     <option value="">Select</option>
@@ -377,10 +425,10 @@ export default function SelectProfile() {
                 </div>
 
                 <div>
-                  <Label>Ethnicity</Label>
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">ETHNICITY</Label>
                   <select
                     name="ethnicity"
-                    className="w-full border rounded-md p-2"
+                    className="w-full border rounded-md p-2 h-10 font-display"
                     onChange={handleChange}
                   >
                     <option value="">Select</option>
@@ -395,15 +443,15 @@ export default function SelectProfile() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label>Country</Label>
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">COUNTRY</Label>
                   <select
                     name="country"
-                    className="w-full border rounded-md p-2"
+                    className="w-full border rounded-md p-2 h-10 font-display"
                     onChange={handleChange}
                   >
                     <option value="">Select country</option>
                     {countries.map((c) => (
-                      <option key={c.code} value={c.code}>
+                      <option key={c.name} value={c.name}>
                         {c.name}
                       </option>
                     ))}
@@ -411,46 +459,68 @@ export default function SelectProfile() {
                 </div>
 
                 <div>
-                  <Label>Province / State</Label>
+                  <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">PROVINCE / STATE</Label>
                   <select
                     name="province"
-                    className="w-full border rounded-md p-2"
+                    className="w-full border rounded-md p-2 h-10 font-display"
                     onChange={handleChange}
-                    disabled={!form.country}
+                    disabled={provinces.length === 0}
                   >
-                    <option value="">Select</option>
+                    <option value="">{provinces.length === 0 ? 'No provinces available' : 'Select'}</option>
                     {provinces.map((p) => (
-                      <option key={p.code} value={p.code}>
-                        {p.name}
+                      <option key={p} value={p}>
+                        {p}
                       </option>
                     ))}
                   </select>
+                  {provinces.length === 0 && form.country && (
+                    <p className="text-xs text-gray-500 mt-1">No province data available for selected country</p>
+                  )}
                 </div>
               </div>
 
-              <div className="space-y-2 pt-4 border-t">
-                <Label>Respiratory History</Label>
-                {[
-                  ["historyCOPD", "COPD"],
-                  ["historyAsthma", "Asthma"],
-                  ["historyTB", "Tuberculosis"],
-                  ["historyCF", "Cystic Fibrosis"],
-                  ["isSmoker", "Smoker"],
-                  ["workExposure", "Work Exposure"],
-                ].map(([k, l]) => (
-                  <label key={k} className="flex gap-2">
-                    <input
-                      type="checkbox"
-                      name={k}
-                      checked={(form as any)[k]}
-                      onChange={handleChange}
-                    />
-                    {l}
-                  </label>
-                ))}
+              <div className="space-y-3 pt-4 border-t">
+                <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm">RESPIRATORY HISTORY</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    ["historyCOPD", "COPD"],
+                    ["historyAsthma", "Asthma"],
+                    ["historyTB", "Tuberculosis"],
+                    ["historyCF", "Cystic Fibrosis"],
+                    ["isSmoker", "Current/Former Smoker"],
+                    ["workExposure", "Occupational Exposure"],
+                    ["none", "None"],
+                  ].map(([k, l]) => (
+                    <label key={k} className="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                      <input
+                        type="checkbox"
+                        name={k}
+                        checked={(form as any)[k]}
+                        onChange={handleChange}
+                        className="rounded"
+                      />
+                      <span className="text-sm font-dm">{l}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              <Button type="submit">Create Profile</Button>
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsAdding(false)}
+                  className="flex-1 font-display"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  className="flex-1 bg-lungsense-blue hover:bg-lungsense-blue/90 font-display"
+                >
+                  Create Profile
+                </Button>
+              </div>
             </form>
           </Card>
         </div>

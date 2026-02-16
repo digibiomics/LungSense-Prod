@@ -30,8 +30,15 @@ export const RESPIRATORY_NAMES = {
   'NONE': 'No History'
 };
 
-// Cache for country names to avoid repeated API calls
-const locationCache = new Map();
+// Country mappings
+const COUNTRY_NAMES = {
+  'US': 'United States',
+  'CA': 'Canada',
+  'GB': 'United Kingdom',
+  'AU': 'Australia',
+  'IN': 'India',
+  'DE': 'Germany'
+};
 
 /**
  * Convert ethnicity code to display name
@@ -67,50 +74,34 @@ export const getRespiratoryHistoryNames = (historyJson) => {
 };
 
 /**
- * Get country name from ISO code using REST Countries API
+ * Convert country code to display name
  */
-export const getCountryName = async (code) => {
+export const getCountryName = (code) => {
   if (!code) return 'Not provided';
-  
-  // Check cache first
-  const cacheKey = `country_${code}`;
-  if (locationCache.has(cacheKey)) {
-    return locationCache.get(cacheKey);
-  }
-  
-  try {
-    const response = await fetch(`https://restcountries.com/v3.1/alpha/${code}`);
-    if (!response.ok) throw new Error('API error');
-    
-    const data = await response.json();
-    const countryName = data[0]?.name?.common || code;
-    
-    // Cache the result
-    locationCache.set(cacheKey, countryName);
-    return countryName;
-  } catch (error) {
-    console.warn(`Failed to fetch country name for ${code}:`, error);
-    return code; // Fallback to code if API fails
-  }
+  return COUNTRY_NAMES[code] || code;
 };
 
 /**
- * Get province/state name (simplified mapping for common ones)
+ * Convert province code to display name
  */
 export const getProvinceName = (code) => {
   if (!code) return 'Not provided';
   
-  // Basic mapping for Australian states (extend as needed)
-  const provinceNames = {
-    'AU-01': 'Australian Capital Territory',
-    'AU-02': 'New South Wales',
-    'AU-03': 'Northern Territory', 
-    'AU-04': 'Queensland',
-    'AU-05': 'South Australia',
-    'AU-06': 'Tasmania',
-    'AU-07': 'Victoria',
-    'AU-08': 'Western Australia',
+  // Simple province name extraction from code
+  const provinceMap = {
+    'US-CA': 'California',
+    'US-NY': 'New York', 
+    'US-TX': 'Texas',
+    'US-FL': 'Florida',
+    'IN-MH': 'Maharashtra',
+    'IN-DL': 'Delhi',
+    'IN-KA': 'Karnataka',
+    'IN-TN': 'Tamil Nadu',
+    'CA-ON': 'Ontario',
+    'CA-BC': 'British Columbia',
+    'GB-ENG': 'England',
+    'GB-SCT': 'Scotland'
   };
   
-  return provinceNames[code] || code;
+  return provinceMap[code] || code;
 };

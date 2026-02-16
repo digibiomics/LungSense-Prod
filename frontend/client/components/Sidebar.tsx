@@ -1,19 +1,36 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, FileText, Upload, Menu, Activity, Heart } from "lucide-react";
+import { Home, FileText, Upload, Menu, Activity, Heart, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Sidebar() {
   const location = useLocation();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const navItems = [
+  useEffect(() => {
+    const role = localStorage.getItem('user_role');
+    setUserRole(role);
+  }, []);
+
+  const patientNavItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: Upload, label: "Data Upload", href: "/patient/upload" },
     { icon: FileText, label: "Analysis/Reports", href: "/patient/results" },
     { icon: Heart, label: "Recommendations", href: "/patient/recommendations" },
     { icon: Activity, label: "Past Records", href: "/patient/records" }
   ];
+
+  const practitionerNavItems = [
+    { icon: Home, label: "Home", href: "/" },
+    { icon: Users, label: "Patient Cases", href: "/practitioner/patients" },
+    { icon: Upload, label: "Data Upload", href: "/patient/upload" },
+    { icon: FileText, label: "Analysis/Reports", href: "/patient/results" },
+    { icon: Heart, label: "Recommendations", href: "/patient/recommendations" },
+    { icon: Activity, label: "Past Records", href: "/patient/records" }
+  ];
+
+  const navItems = userRole === 'practitioner' ? practitionerNavItems : patientNavItems;
 
   return (
     <>
@@ -74,7 +91,7 @@ export default function Sidebar() {
           {/* Bottom Section */}
           <div className="absolute bottom-8 left-6 right-6 space-y-4">
             <Link
-              to="/patient/settings"
+              to="/patient/profile"
               className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-display font-medium text-sm hover:bg-gray-700 text-gray-300"
             >
               <svg
@@ -96,11 +113,11 @@ export default function Sidebar() {
                   d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <span>Settings</span>
+              <span>Profile</span>
             </Link>
 
             <Link
-              to="/"
+              to="/support"
               className="flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-display font-medium text-sm hover:bg-gray-700 text-gray-300"
             >
               <svg

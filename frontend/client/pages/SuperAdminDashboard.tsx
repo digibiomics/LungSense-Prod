@@ -84,7 +84,7 @@ export default function SuperAdminDashboard() {
     limit: 50
   });
 
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const userEmail = localStorage.getItem("user_email");
 
   useEffect(() => {
     fetchSystemStats();
@@ -102,7 +102,7 @@ export default function SuperAdminDashboard() {
   const fetchSystemStats = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch("http://localhost:8000/api/admin/super/stats", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -119,7 +119,7 @@ export default function SuperAdminDashboard() {
   const fetchCases = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const params = new URLSearchParams({
         page: caseFilters.page.toString(),
         limit: caseFilters.limit.toString(),
@@ -142,7 +142,7 @@ export default function SuperAdminDashboard() {
   const fetchPractitioners = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch("http://localhost:8000/api/admin/super/practitioners", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -159,7 +159,7 @@ export default function SuperAdminDashboard() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch("http://localhost:8000/api/admin/super/users", {
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -177,7 +177,7 @@ export default function SuperAdminDashboard() {
     try {
       setError("");
       setSuccess("");
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch(`http://localhost:8000/api/admin/super/cases/${caseId}/assign`, {
         method: "POST",
         headers: {
@@ -197,7 +197,7 @@ export default function SuperAdminDashboard() {
 
   const togglePractitionerStatus = async (practitionerId: number) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch(`http://localhost:8000/api/admin/super/practitioners/${practitionerId}/toggle`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
@@ -211,7 +211,7 @@ export default function SuperAdminDashboard() {
 
   const toggleUserStatus = async (userId: number, type: string) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const endpoint = type === "sub_user" 
         ? `http://localhost:8000/api/admin/super/sub-users/${userId}/toggle`
         : `http://localhost:8000/api/admin/super/users/${userId}/toggle`;
@@ -228,9 +228,14 @@ export default function SuperAdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/admin/login");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("profile_picture");
+    navigate("/auth/admin/login");
   };
 
   return (
@@ -245,7 +250,7 @@ export default function SuperAdminDashboard() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Super Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">{currentUser.email}</p>
+                <p className="text-sm text-gray-600">{userEmail}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -7,6 +7,7 @@ from app.models.case_symptom import CaseSymptom
 from app.models.case_file import CaseFile
 from app.models.case_review import CaseReview
 from app.models.data_consent import DataConsent
+from app.models.support_ticket import SupportTicket
 
 __all__ = [
     "User",
@@ -18,4 +19,5 @@ __all__ = [
     "CaseFile",
     "CaseReview",
     "DataConsent",
+    "SupportTicket",
 ]

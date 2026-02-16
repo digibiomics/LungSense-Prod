@@ -41,9 +41,10 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
 
   // Get current user info
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  const isSuper = currentUser.role === "super_admin";
-  const isDataAdmin = currentUser.role === "data_admin";
+  const userRole = localStorage.getItem("user_role");
+  const userEmail = localStorage.getItem("user_email");
+  const isSuper = userRole === "super_admin";
+  const isDataAdmin = userRole === "data_admin";
 
   // Redirect based on role
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function AdminDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch("http://localhost:8000/api/admin/dashboard/stats", {
         headers: {
           "Authorization": `Bearer ${token}`
@@ -81,14 +82,19 @@ export default function AdminDashboard() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/admin/login");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_role");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("profile_picture");
+    navigate("auth/admin/login");
   };
 
   const exportTrainingData = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("access_token");
       const response = await fetch("http://localhost:8000/api/admin/training-data?format=json&anonymize=true", {
         headers: {
           "Authorization": `Bearer ${token}`
@@ -139,7 +145,7 @@ export default function AdminDashboard() {
                 <h1 className="text-2xl font-bold text-gray-900">
                   {isSuper ? "Super Admin" : "Data Admin"} Dashboard
                 </h1>
-                <p className="text-sm text-gray-600">{currentUser.email}</p>
+                <p className="text-sm text-gray-600">{userEmail}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

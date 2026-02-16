@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Sidebar from "@/components/Sidebar";
-import { Upload, Play, Pause, X, AlertCircle, FileText, Mic, Users, ShieldCheck } from "lucide-react";
+import { Upload, Play, Pause, X, AlertCircle, FileText, Mic, Users, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { createCase, getProfileDetails, updateUser, updateUserDashboard, updateSubUser, updateSubUserDashboard } from "../../src/api";
@@ -40,13 +40,17 @@ export default function PatientDashboard() {
   const selectedUserType = location.state?.userType || 'self';
   const selectedUserName = location.state?.userName || "";
   
+  // Check if user is practitioner
+  const userRole = localStorage.getItem('user_role');
+  const isPractitioner = userRole === 'practitioner';
+  
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [coughAudio, setCoughAudio] = useState<Blob | null>(null);
-  const [audioType, setAudioType] = useState<"chest" | "cough">("chest");
+  const [audioType, setAudioType] = useState<"chest" | "cough">("cough");
   const [recordingTime, setRecordingTime] = useState(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [uploadedCoughAudio, setUploadedCoughAudio] = useState<File | null>(null);
@@ -192,7 +196,7 @@ export default function PatientDashboard() {
 
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
+        const blob = new Blob(chunks, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(blob);
         
         if (audioType === "chest") {
@@ -306,8 +310,16 @@ export default function PatientDashboard() {
       const response = await createCase(formData);
       
       toast({
-        title: "Data Uploaded Successfully",
-        description: `Case assigned to practitioner. Please wait for the reports...`,
+      
+        description: (
+          <div className="space-y-2 mt-2">
+            <p className="text-sm"> Your medical data has been uploaded and assigned to a practitioner.</p>
+            <p className="text-sm font-semibold text-lungsense-blue"> Case ID: {response?.data?.catalog_number || response?.catalog_number || 'Pending'}</p>
+            <p className="text-xs text-gray-600 mt-2">You'll receive AI-generated analysis results shortly. Check your results page for updates.</p>
+          </div>
+        ),
+        className: "border-l-4 border-green-500 bg-green-50",
+        duration: 6000,
       });
 
       // Clear form after successful submission
@@ -451,7 +463,7 @@ export default function PatientDashboard() {
         <div className="p-4 md:p-8 space-y-8">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900 font-display">
-              Upload Data for {selectedUserName || "User"}
+             Clinical Information of {selectedUserName || "User"}
             </h1>
             <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center">
                 <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="User" className="w-full h-full rounded-full" />
@@ -459,157 +471,8 @@ export default function PatientDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-2 space-y-6">
 
-              {/* UPLOAD SECTION */}
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
-                    <img src="/images/upload.png" alt="upload" className="h-12 w-auto" />
-                    <h2 className="text-xl font-semibold text-gray-900 font-display">UPLOAD X-RAY DATA</h2>
-                </div>
-                <p className="text-xs text-gray-900 mb-4 ml-1">Upload your chest X-ray scans. Supported formats: .JPG, .PNG, .PDF. Drag and drop allowed.</p>
-
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 flex flex-col gap-6" onDragOver={(e) => e.preventDefault()} onDrop={handleDragDrop}>
-                    <div className="w-full h-48 bg-lungsense-blue-light/20 rounded-lg flex items-center justify-center relative border-2 border-dashed border-lungsense-blue overflow-hidden group">
-                        {uploadedFile ? (
-                           <>
-                             {uploadedFile.type.startsWith('image/') && previewUrl && (
-                                <img src={previewUrl} alt="Thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-30" />
-                             )}
-                             <div className="text-center p-2 flex flex-col items-center z-10">
-                                 <FileText className="w-12 h-12 text-lungsense-blue mb-2" />
-                                 <div className="absolute bottom-0 left-0 right-0 bg-lungsense-blue/80 backdrop-blur-sm p-2 text-center">
-                                   <p className="text-xs text-white truncate font-medium px-2">{uploadedFile.name}</p>
-                                 </div>
-                             </div>
-                             <button onClick={(e) => { e.stopPropagation(); handleClear(); }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-sm hover:bg-red-600 transition-colors z-20">
-                               <X className="w-4 h-4" />
-                             </button>
-                           </>
-                        ) : (
-                           <div className="flex flex-col items-center justify-center text-lungsense-blue/50 group-hover:text-lungsense-blue/70 transition-colors text-center px-4">
-                               <img src="/images/chest-xray-clipart.png" alt="Upload Placeholder" className="w-25 h-25 mb-3 opacity-40 mix-blend-multiply" />
-                               <p className="text-sm font-display font-medium">Drag & Drop X-ray scan file here</p>
-                           </div>
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-3 w-full">
-                        <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} className="hidden" />
-                        <Button onClick={() => fileInputRef.current?.click()} className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white font-display">
-                            Upload X-ray file
-                        </Button>
-                        <Button disabled={!uploadedFile} onClick={() => setIsPreviewOpen(true)} className={`w-full font-display font-medium py-6 rounded-xl shadow-sm ${uploadedFile ? "bg-lungsense-blue text-white hover:bg-lungsense-blue/90" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
-                            View File
-                        </Button>
-                    </div>
-                </div>
-              </div>
-
-              {/* RECORD SECTION */}
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-                <div className="flex items-center gap-2 mb-2">
-                    <img src="/images/record-sound.png" alt="record" className="h-12 w-auto" />
-                    <h2 className="text-xl font-semibold text-gray-900 font-display">RECORD SOUNDS</h2>
-                </div>
-                <p className="text-xs text-gray-900 mb-4 ml-1">Select sound type and record (10 sec max) or upload audio file.</p>
-
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 flex flex-col items-center gap-6">
-                    {/* Audio Type Selection */}
-                    <div className="w-full">
-                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 ml-1">Choose Audio Type</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setAudioType("chest")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${audioType === "chest" ? "bg-lungsense-blue-light text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Chest Sounds</button>
-                            <button onClick={() => setAudioType("cough")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${audioType === "cough" ? "bg-lungsense-blue-light text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Cough Sounds</button>
-                        </div>
-                    </div>
-
-                    {/* Waveform */}
-                    <div className="flex items-center justify-center gap-1 h-12 w-full max-w-md">
-                      {[...Array(25)].map((_, i) => (
-                        <div key={i} className="w-1.5 rounded-full bg-black transition-all duration-100" style={{ height: isRecording ? `${Math.random() * 40 + 8}px` : `${[10, 15, 25, 15, 10, 20, 15, 10, 10, 20, 30, 20, 10, 10, 15, 25, 15, 10, 25, 15, 10, 10, 20, 15, 10][i]}px`}} />
-                      ))}
-                    </div>
-
-                    {/* Recording Timer */}
-                    {isRecording && (
-                      <div className="text-red-500 font-bold text-lg">
-                        Recording: {recordingTime}s / 10s
-                      </div>
-                    )}
-
-                    {/* Recording Status & Preview */}
-                    {audioType === "chest" && recordedAudio && (
-                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-green-600 text-sm font-medium">✓ Chest audio recorded</span>
-                          <button
-                            onClick={() => deleteRecording("chest")}
-                            className="text-red-500 hover:text-red-700 text-xs"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                        {audioUrls.chest && (
-                          <audio controls className="w-full h-8">
-                            <source src={audioUrls.chest} type="audio/wav" />
-                          </audio>
-                        )}
-                      </div>
-                    )}
-                    {audioType === "cough" && coughAudio && (
-                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-green-600 text-sm font-medium">✓ Cough audio recorded</span>
-                          <button
-                            onClick={() => deleteRecording("cough")}
-                            className="text-red-500 hover:text-red-700 text-xs"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                        {audioUrls.cough && (
-                          <audio controls className="w-full h-8">
-                            <source src={audioUrls.cough} type="audio/wav" />
-                          </audio>
-                        )}
-                      </div>
-                    )}
-                    {audioType === "chest" && uploadedChestAudio && (
-                      <div className="text-green-600 text-sm font-medium">✓ Chest audio uploaded: {uploadedChestAudio.name}</div>
-                    )}
-                    {audioType === "cough" && uploadedCoughAudio && (
-                      <div className="text-green-600 text-sm font-medium">✓ Cough audio uploaded: {uploadedCoughAudio.name}</div>
-                    )}
-
-                    {/* Recording Controls */}
-                    <div className="flex items-center justify-center gap-6">
-                        <button onClick={toggleRecording} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isRecording ? "bg-red-500 hover:bg-red-600 scale-105" : "bg-red-500 hover:bg-red-600"}`}>
-                          {isRecording ? <div className="w-5 h-5 bg-white rounded-sm" /> : <Mic className="w-6 h-6 text-white" />}
-                        </button>
-                    </div>
-
-                    {/* Upload Audio File */}
-                    <div className="w-full border-t pt-4">
-                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 text-center">Or Upload Audio File</p>
-                        <input 
-                          ref={audioType === "cough" ? coughAudioInputRef : chestAudioInputRef}
-                          type="file" 
-                          accept="audio/*,.wav,.mp3,.m4a" 
-                          onChange={(e) => handleAudioUpload(e, audioType)} 
-                          className="hidden" 
-                        />
-                        <Button 
-                          onClick={() => audioType === "cough" ? coughAudioInputRef.current?.click() : chestAudioInputRef.current?.click()} 
-                          className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white font-display"
-                        >
-                          Upload {audioType === "chest" ? "Chest" : "Cough"} Audio
-                        </Button>
-                    </div>
-                </div>
-              </div>
-            </div>
-
-            {/* DEMOGRAPHICS & SYMPTOMS */}
+              {/* DEMOGRAPHICS & SYMPTOMS */}
             <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border border-gray-200">
                <div className="flex items-center gap-2 mb-2">
                     <img src="/images/demographics-symptoms.png" alt="demographics" className="h-12 w-auto" />
@@ -740,7 +603,168 @@ export default function PatientDashboard() {
                 </div>
               </div>
             </div>
+            
+            <div className="lg:col-span-2 space-y-6">
+
+              {/* RECORD SECTION */}
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                    <img src="/images/record-sound.png" alt="record" className="h-12 w-auto" />
+                    <h2 className="text-xl font-semibold text-gray-900 font-display">RECORD SOUNDS</h2>
+                </div>
+                <p className="text-xs text-gray-900 mb-4 ml-1">Select sound type and record (10 sec max) or upload audio file.</p>
+
+                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 flex flex-col items-center gap-6">
+                    {/* Audio Type Selection */}
+                    <div className="w-full">
+                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 ml-1">Choose Audio Type</p>
+                        <div className="flex gap-3">
+                            <button disabled={isPractitioner} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${isPractitioner ? 'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed' : 'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed'}`}>Chest Sounds</button>
+                            <button disabled={isPractitioner} onClick={() => setAudioType("cough")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : audioType === "cough" ? "bg-lungsense-blue-light text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Cough Sounds</button>
+                        </div>
+                    </div>
+
+                    {/* Waveform */}
+                    <div className="flex items-center justify-center gap-1 h-12 w-full max-w-md">
+                      {[...Array(25)].map((_, i) => (
+                        <div key={i} className="w-1.5 rounded-full bg-black transition-all duration-100" style={{ height: isRecording ? `${Math.random() * 40 + 8}px` : `${[10, 15, 25, 15, 10, 20, 15, 10, 10, 20, 30, 20, 10, 10, 15, 25, 15, 10, 25, 15, 10, 10, 20, 15, 10][i]}px`}} />
+                      ))}
+                    </div>
+
+                    {/* Recording Timer */}
+                    {isRecording && (
+                      <div className="text-red-500 font-bold text-lg">
+                        Recording: {recordingTime}s / 10s
+                      </div>
+                    )}
+
+                    {/* Recording Status & Preview */}
+                    {audioType === "chest" && recordedAudio && (
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-green-600 text-sm font-medium">✓ Chest audio recorded</span>
+                          <button
+                            onClick={() => deleteRecording("chest")}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        {audioUrls.chest && (
+                          <audio controls controlsList="nodownload" className="w-full h-8">
+                            <source src={audioUrls.chest} type="audio/wav" />
+                          </audio>
+                        )}
+                      </div>
+                    )}
+                    {audioType === "cough" && coughAudio && (
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-green-600 text-sm font-medium">✓ Cough audio recorded</span>
+                          <button
+                            onClick={() => deleteRecording("cough")}
+                            className="text-red-500 hover:text-red-700 text-xs"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                        {audioUrls.cough && (
+                          <audio controls controlsList="nodownload" className="w-full h-8">
+                            <source src={audioUrls.cough} type="audio/webm" />
+                          </audio>
+                        )}
+                      </div>
+                    )}
+                    {audioType === "chest" && uploadedChestAudio && (
+                      <div className="text-green-600 text-sm font-medium">✓ Chest audio uploaded: {uploadedChestAudio.name}</div>
+                    )}
+                    {audioType === "cough" && uploadedCoughAudio && (
+                      <div className="text-green-600 text-sm font-medium">✓ Cough audio uploaded: {uploadedCoughAudio.name}</div>
+                    )}
+
+                    {/* Recording Controls */}
+                    <div className="flex items-center justify-center gap-6">
+                        <button disabled={isPractitioner} onClick={toggleRecording} className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isPractitioner ? 'bg-gray-300 cursor-not-allowed' : isRecording ? "bg-red-500 hover:bg-red-600 scale-105" : "bg-red-500 hover:bg-red-600"}`}>
+                          {isRecording ? <div className="w-5 h-5 bg-white rounded-sm" /> : <Mic className="w-6 h-6 text-white" />}
+                        </button>
+                    </div>
+
+                    {/* Upload Audio File */}
+                    <div className="w-full border-t pt-4">
+                        <p className="text-sm font-semibold text-gray-700 font-display mb-2 text-center">Or Upload Audio File</p>
+                        <input 
+                          ref={audioType === "cough" ? coughAudioInputRef : chestAudioInputRef}
+                          type="file" 
+                          accept="audio/*,.wav,.mp3,.m4a" 
+                          onChange={(e) => handleAudioUpload(e, audioType)} 
+                          className="hidden" 
+                        />
+                        <Button 
+                          disabled={isPractitioner}
+                          onClick={() => audioType === "cough" ? coughAudioInputRef.current?.click() : chestAudioInputRef.current?.click()} 
+                          className={`w-full font-display ${isPractitioner ? 'bg-gray-300 cursor-not-allowed' : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white'}`}
+                        >
+                          Upload {audioType === "chest" ? "Chest" : "Cough"} Audio
+                        </Button>
+                    </div>
+                </div>
+              </div>
+                    
+                  {/* UPLOAD SECTION */}
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+                <div className="flex items-center gap-2 mb-2">
+                    <img src="/images/upload.png" alt="upload" className="h-12 w-auto" />
+                    <h2 className="text-xl font-semibold text-gray-900 font-display">UPLOAD X-RAY DATA</h2>
+                </div>
+                <p className="text-xs text-gray-900 mb-4 ml-1">Upload your chest X-ray scans. Supported formats: .JPG, .PNG, .PDF. Drag and drop allowed.</p>
+
+                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 flex flex-col gap-6" onDragOver={(e) => e.preventDefault()} onDrop={handleDragDrop}>
+                    <div className="w-full h-48 bg-lungsense-blue-light/20 rounded-lg flex items-center justify-center relative border-2 border-dashed border-lungsense-blue overflow-hidden group">
+                        {uploadedFile ? (
+                           <>
+                             {uploadedFile.type.startsWith('image/') && previewUrl && (
+                                <img src={previewUrl} alt="Thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+                             )}
+                             <div className="text-center p-2 flex flex-col items-center z-10">
+                                 <FileText className="w-12 h-12 text-lungsense-blue mb-2" />
+                                 <div className="absolute bottom-0 left-0 right-0 bg-lungsense-blue/80 backdrop-blur-sm p-2 text-center">
+                                   <p className="text-xs text-white truncate font-medium px-2">{uploadedFile.name}</p>
+                                 </div>
+                             </div>
+                             <button onClick={(e) => { e.stopPropagation(); handleClear(); }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-sm hover:bg-red-600 transition-colors z-20">
+                               <X className="w-4 h-4" />
+                             </button>
+                           </>
+                        ) : (
+                           <div className="flex flex-col items-center justify-center text-lungsense-blue/50 group-hover:text-lungsense-blue/70 transition-colors text-center px-4">
+                               <img src="/images/chest-xray-clipart.png" alt="Upload Placeholder" className="w-25 h-25 mb-3 opacity-40 mix-blend-multiply" />
+                               <p className="text-sm font-display font-medium">Drag & Drop X-ray scan file here</p>
+                           </div>
+                        )}
+                    </div>
+                    <div className="flex flex-col gap-3 w-full">
+                        <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileUpload} className="hidden" />
+                        <Button disabled={isPractitioner} onClick={() => fileInputRef.current?.click()} className={`w-full font-display ${isPractitioner ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white'}`}>
+                            Upload X-ray file
+                        </Button>
+                        <Button disabled={!uploadedFile} onClick={() => setIsPreviewOpen(true)} className={`w-full font-display font-medium py-6 rounded-xl shadow-sm ${uploadedFile ? "bg-lungsense-blue text-white hover:bg-lungsense-blue/90" : "bg-gray-200 text-gray-400 cursor-not-allowed"}`}>
+                            View File
+                        </Button>
+                    </div>
+                </div>
+              </div>   
+
+
+            </div>
+
+          
+
+
           </div>
+
+          
+
+
 
           <div className="bg-lungsense-yellow rounded-lg p-4 border lungsense-green">
             <div className="flex gap-3">
@@ -761,11 +785,11 @@ export default function PatientDashboard() {
           </div>
 
           <div className="flex gap-4">
-            <Button onClick={handleClear} className="bg-gray-300 hover:bg-gray-400 text-gray-700 font-display font-semibold px-8 py-6 rounded-lg">Clear</Button>
+            <Button disabled={isPractitioner} onClick={handleClear} className={`font-display font-semibold px-8 py-6 rounded-lg ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}>Clear</Button>
             <Button
               onClick={handleSubmit}
-              disabled={!uploadedFile && !isRecording && selectedSymptoms.length === 0}
-              className="flex-1 w-full bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white font-display disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-display font-semibold py-6 rounded-lg"
+              disabled={isPractitioner || (!uploadedFile && !isRecording && selectedSymptoms.length === 0)}
+              className={`flex-1 w-full font-display font-semibold py-6 rounded-lg ${isPractitioner || (!uploadedFile && !isRecording && selectedSymptoms.length === 0) ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white'}`}
             >
               Submit for AI Generated Diagnosis
             </Button>

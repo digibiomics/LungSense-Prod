@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Shield, Eye, EyeOff } from "lucide-react";
-
-// ✅ reuse existing login endpoint
-import { PATIENT_LOGIN_URL } from  "../../src/api";
+import { adminLogin } from "../../src/api";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -26,45 +24,25 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      const res = await fetch(PATIENT_LOGIN_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      const data = await adminLogin(formData.email, formData.password);
 
-      if (!res.ok) {
-        const text = await res.text();
-        let err;
-        try {
-          err = JSON.parse(text);
-        } catch {
-          throw new Error(text || `HTTP ${res.status}`);
-        }
-        throw new Error(err?.message || "Login failed");
+      // Validate response
+      if (!data || !data.access_token || !data.user_id) {
+        throw new Error("Invalid response from server");
       }
 
-      const data = await res.json();
-      const { access_token, role } = data;
+      // Store tokens
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+      localStorage.setItem("user_id", data.user_id.toString());
+      localStorage.setItem("user_role", data.role);
+      localStorage.setItem("user_email", formData.email);
 
-      // ✅ FRONTEND admin enforcement
-      console.log('Login response:', data); // Debug log
-      console.log('User role:', role); // Debug role
-      
-      if (!["super_admin", "data_admin"].includes(role)) {
-        throw new Error("Access denied. Admin privileges required.");
-      }
-
-      localStorage.setItem("token", access_token);
-      localStorage.setItem(
-        "user",
-        JSON.stringify({ email: formData.email, role })
-      );
-
-      // Route based on admin type
-      if (role === "data_admin") {
+      // Route based on admin role
+      if (data.role === "data_admin") {
         navigate("/admin/data-dashboard");
+      } else if (data.role === "super_admin") {
+        navigate("/admin/super-dashboard");
       } else {
         navigate("/admin/dashboard");
       }

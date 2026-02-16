@@ -2,7 +2,7 @@ import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Calendar, TrendingUp, Eye, Activity, Waves } from "lucide-react";
+import { FileText, Calendar, TrendingUp, Eye, Activity, Waves, Clock, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // --- TYPES ---
@@ -173,12 +173,39 @@ export default function PatientRecords() {
       <Sidebar />
 
       {/* Main Content Area */}
-      <main className="flex-1 md:ml-64 flex flex-col h-full">
+      <main className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden">
 
-        <div className="flex flex-col h-full p-4 md:p-8 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+
+          {/* Coming Soon Banner */}
+          <div className="flex-none bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 rounded-xl p-6 shadow-2xl border border-purple-400/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-lg backdrop-blur-sm">
+                  <Database className="w-8 h-8 text-white animate-pulse" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white font-display mb-1">
+                    Patient History & Records Coming Soon
+                  </h2>
+                  <p className="text-purple-100 font-dm">
+                    Advanced longitudinal tracking and historical analysis will be available in the next version
+                  </p>
+                </div>
+              </div>
+              <Clock className="w-12 h-12 text-white/40" />
+            </div>
+          </div>
+
+          {/* Preview Notice */}
+          <div className="flex-none bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800 font-dm text-center">
+               Preview Mode: The interface below shows how patient records and acoustic analysis will be displayed
+            </p>
+          </div>
 
           {/* 1. Header (Fixed Height) */}
-          <div className="flex-none flex items-center justify-between">
+          <div className="flex-none flex items-center justify-between opacity-60">
             <h1 className="text-3xl font-bold text-gray-900 font-display">
               Patient History
             </h1>
@@ -192,22 +219,22 @@ export default function PatientRecords() {
           </div>
 
           {/* 2. Spectrogram Section */}
-          <div className="flex-none">
+          <div className="flex-none opacity-60 pointer-events-none">
              <AcousticSpectrogram />
           </div>
 
           {/* 3.  Records List  */}
-          <div className="flex-1 min-h-0 overflow-y-auto pr-2 pb-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+          <div className="flex-none opacity-60 space-y-4">
 
-            <h3 className="text-lg font-bold text-gray-800 font-display sticky top-0 bg-[#ECEBFA] py-2 z-10">
+            <h3 className="text-lg font-bold text-gray-800 font-display">
                 Analysis Records
             </h3>
 
-            <div className="grid gap-6">
+            <div className="grid gap-6 pb-4">
               {records.map((record) => (
                 <Card
                   key={record.id}
-                  className="p-6 hover:shadow-lg transition-shadow cursor-pointer bg-white/80 backdrop-blur-sm border-white/40"
+                  className="p-6 bg-white/80 backdrop-blur-sm border-white/40 pointer-events-none"
                 >
                   <div className="flex items-start gap-6">
                     {/* Icon */}
@@ -238,8 +265,8 @@ export default function PatientRecords() {
                     <div className="flex flex-col items-end justify-between gap-8 h-full">
                       <div className="text-right">
                         <Button
-                        onClick={() => handleViewResults(record)}
-                        className="bg-lungsense-blue hover:bg-lungsense-blue/90 text-white font-display font-medium"
+                        disabled
+                        className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium"
                         size="sm"
                         >
                         <Eye className="w-4 h-4 mr-2" />

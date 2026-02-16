@@ -11,6 +11,7 @@ import {
   Wind,
   Bell,
   UserPlus,
+  Clock,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -44,6 +45,23 @@ export default function Recommendations() {
             </div>
           </div>
 
+          {/* Coming Soon Banner */}
+          <div className="bg-gradient-to-r from-lungsense-blue-light to-lungsense-blue rounded-lg p-6 mb-8 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                <Clock className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white font-display mb-1">
+                  Feature Coming Soon!
+                </h2>
+                <p className="text-white/90 font-dm">
+                  We're working  to bring you personalized health recommendations. This feature will be available in the next version.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Introduction */}
           <p className="text-gray-600 font-dm mb-8">
             Based on the analyzed data, the following general suggestions may help guide your next actions. These are not medical instructions. Please seek clinical evaluation from a healthcare provider for personalized medical advice
@@ -73,8 +91,8 @@ export default function Recommendations() {
 
 
                     <Button
-                    onClick={() => navigate('/patient/scheduleAppointment')}
-                    className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium">
+                    disabled
+                    className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium">
                         Schedule Now
                     </Button>
 
@@ -97,8 +115,8 @@ export default function Recommendations() {
                       primary physician or a pulmonologist.
                     </p>
                     <Button
-
-                      className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium"
+                      disabled
+                      className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium"
                     >
                       Learn More
                     </Button>
@@ -129,7 +147,8 @@ export default function Recommendations() {
                       primary physician or a pulmonologist.
                     </p>
                     <Button
-                      className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium"
+                      disabled
+                      className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium"
                     >
                       Track Symptoms
                     </Button>
@@ -151,7 +170,8 @@ export default function Recommendations() {
                       primary physician or a pulmonologist.
                     </p>
                     <Button
-                      className="bg-red-700 border-red-500 text-white hover:bg-red-900 font-display font-medium"
+                      disabled
+                      className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium"
                     >
                       View Details
                     </Button>
@@ -180,7 +200,7 @@ export default function Recommendations() {
                   moderate physical activity, and prioritize rest to
                   support your healing.
                 </p>
-                <Button className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue/90 font-display font-medium">
+                <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium">
                   Explore Wellness
                 </Button>
               </Card>
@@ -198,7 +218,8 @@ export default function Recommendations() {
                   support your healing.
                 </p>
                 <Button
-                  className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue text-white font-display font-medium"
+                  disabled
+                  className="w-full bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium"
                 >
                   Set Reminders
                 </Button>
@@ -218,7 +239,8 @@ export default function Recommendations() {
 
                 </p>
                 <Button
-                  className="w-full bg-lungsense-blue-light hover:bg-lungsense-blue text-white font-display font-medium"
+                  disabled
+                  className="w-full bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium"
                 >
                   Start Exercises
                 </Button>
@@ -243,7 +265,7 @@ export default function Recommendations() {
                     Maintain a schedule of regular medical check-ups to monitor
                     your lung health and detect any changes early.
                   </p>
-                  <Button className="bg-lungsense-blue-light text-white hover:bg-lungsense-blue font-display font-medium">
+                  <Button disabled className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-medium">
                     Plan Check-ups
                   </Button>
                 </div>
@@ -265,7 +287,7 @@ export default function Recommendations() {
                 specialists who can provide expert guidance tailored to your
                 condition.
               </p>
-              <Button className="bg-black text-white hover:bg-gray-900 font-display font-semibold px-8 py-6">
+              <Button disabled className="bg-gray-300 text-gray-500 cursor-not-allowed font-display font-semibold px-8 py-6">
                 Book a Tele-Consultation Now
               </Button>
             </Card>

@@ -8,7 +8,9 @@ import {
   Activity,
   X,
   ExternalLink,
-  Info
+  Info,
+  Sparkles,
+  Brain,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
@@ -100,7 +102,7 @@ export default function DiagnosticResults() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <h1 className="text-3xl md:text-4xl font-bold font-display">
-              Diagnostic Results
+              AI Diagnostic Results
             </h1>
             <div className="flex items-center gap-4">
               <button
@@ -119,9 +121,51 @@ export default function DiagnosticResults() {
             </div>
           </div>
 
+          {/* AI Coming Soon Banner */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-8 shadow-2xl">
+            <div className="absolute inset-0 bg-black/10"></div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center animate-pulse">
+                <Brain className="w-8 h-8 text-white" />
+              </div>
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                  <Sparkles className="w-5 h-5 text-yellow-300" />
+                  <h2 className="text-2xl font-bold text-white font-display">
+                    AI-Powered Diagnostics Coming Soon!
+                  </h2>
+                  <Sparkles className="w-5 h-5 text-yellow-300" />
+                </div>
+                <p className="text-white/90 font-dm text-lg mb-2">
+                  Our advanced AI models are currently in development and will be launched in the next version.
+                </p>
+                <p className="text-white/80 font-dm text-sm">
+                  Below is a preview of how our intelligent diagnostic system will analyze your medical data using cutting-edge machine learning algorithms.
+                </p>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm px-6 py-3 rounded-xl border border-white/20">
+                <p className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Status</p>
+                <p className="text-white text-xl font-bold font-display">In Development</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Preview Notice */}
+          <div className="bg-blue-50 border-l-4 border-lungsense-blue rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-lungsense-blue mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-lungsense-blue font-display mb-1">Preview Mode</h3>
+                <p className="text-sm text-gray-700 font-dm">
+                  The data shown below is for demonstration purposes only. Once our AI models are deployed, you'll receive real-time analysis of your medical data with actionable insights.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* SECTION 1: SUMMARY */}
-          <div>
-            <h2 className="text-2xl font-bold mb-4 font-display">Summary</h2>
+          <div className="opacity-60 pointer-events-none">
+            <h2 className="text-2xl font-bold mb-4 font-display">AI Analysis Summary (Preview)</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {diagnosticData.map((diagnosis, index) => (
                 <Card
@@ -160,7 +204,7 @@ export default function DiagnosticResults() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 opacity-60 pointer-events-none">
             {/* LEFT: Lung Scan Analysis */}
             <div className="bg-white/50 rounded-xl p-6 border border-white/40 shadow-sm">
                 <h2 className="text-xl font-bold mb-2 font-display">Lung Scan Analysis</h2>
@@ -221,7 +265,7 @@ export default function DiagnosticResults() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 opacity-60 pointer-events-none">
             <div className="lg:col-span-2">
                 <Card className="p-6 bg-white border-white-700 h-full">
                   <h2 className="text-xl font-bold mb-2 font-display">How the AI Derived This Result</h2>
@@ -264,7 +308,7 @@ export default function DiagnosticResults() {
                   </div>
                 </div>
                 <Link to="/patient/recommendations">
-                  <Button className="w-full bg-lungsense-blue text-white hover:bg-indigo-700 shadow-md">
+                  <Button disabled className="w-full bg-gray-300 text-gray-500 cursor-not-allowed shadow-md">
                     View Recommendations
                   </Button>
                 </Link>
@@ -278,7 +322,7 @@ export default function DiagnosticResults() {
                         <p className="text-gray-500 text-xs">Technical summary for doctors • 2.4 MB</p>
                     </div>
                 </div>
-                <Button variant="outline" className="w-full bg-lungsense-blue-light text-white border-gray-300 hover:bg-gray-50">
+                <Button disabled variant="outline" className="w-full bg-gray-300 text-gray-500 cursor-not-allowed border-gray-300">
                   Download Report
                 </Button>
               </Card>

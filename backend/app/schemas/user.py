@@ -24,28 +24,11 @@ class PatientSignupRequest(BaseUserSchema):
     age: int = Field(..., gt=18, description="Age must be greater than 18")
     sex: Sex = Field(..., description="Sex (F/M/O)")
     ethnicity: Ethnicity = Field(..., description="Ethnicity code")
-    country: str = Field(..., min_length=2, max_length=2, description="ISO-3166-1 Alpha-2 country code")
-    province: str = Field(..., description="ISO-3166-2 province/state code")
+    country: str = Field(..., min_length=2, description="Country name")
+    province: str = Field(..., description="Province/state name")
     respiratory_history: List[RespiratoryHistory] = Field(
         ..., description="List of respiratory conditions (or NONE)"
     )
-
-    
-    @validator('country')
-    def validate_country(cls, v):
-        """Validate country code format."""
-        if not re.match(r'^[A-Z]{2}$', v.upper()):
-            raise ValueError('Country must be a valid ISO-3166-1 Alpha-2 code')
-        return v.upper()
-    
-    @validator('province')
-    def validate_province(cls, v, values):
-        """Validate province code format (country-XX)."""
-        if 'country' in values and not v.upper().startswith(values['country'] + '-'):
-            raise ValueError('Province must match country prefix (e.g., US-CA)')
-        if not re.match(r'^[A-Z]{2}-[A-Z0-9]{1,3}$', v.upper()):
-            raise ValueError('Province must be in ISO-3166-2 format (e.g., US-CA)')
-        return v.upper()
 
 
 class PractitionerSignupRequest(BaseUserSchema):
@@ -57,11 +40,11 @@ class PractitionerSignupRequest(BaseUserSchema):
     )
     institution: str = Field(..., min_length=3, max_length=100, description="Institution name")
     institution_location_country: str = Field(
-        ..., min_length=2, max_length=2,
-        description="Institution country (ISO-3166-1 Alpha-2)"
+        ..., min_length=2,
+        description="Institution country name"
     )
     institution_location_province: str = Field(
-        ..., description="Institution province (ISO-3166-2 format)"
+        ..., description="Institution province/state name"
     )
     
     @validator('practitioner_id')
@@ -70,24 +53,6 @@ class PractitionerSignupRequest(BaseUserSchema):
         if not re.match(r'^[A-Za-z0-9]{6,20}$', v):
             raise ValueError('Practitioner ID must be 6-20 alphanumeric characters')
         return v
-    
-    @validator('institution_location_country')
-    def validate_country(cls, v):
-        """Validate country code format."""
-        if not re.match(r'^[A-Z]{2}$', v.upper()):
-            raise ValueError('Country must be a valid ISO-3166-1 Alpha-2 code')
-        return v.upper()
-    
-    @validator('institution_location_province')
-    def validate_province(cls, v, values):
-        """Validate province code format."""
-        if 'institution_location_country' in values:
-            country = values['institution_location_country']
-            if not v.upper().startswith(country + '-'):
-                raise ValueError('Province must match country prefix')
-        if not re.match(r'^[A-Z]{2}-[A-Z0-9]{1,3}$', v.upper()):
-            raise ValueError('Province must be in ISO-3166-2 format')
-        return v.upper()
 
 
 class AdminUserCreateRequest(BaseUserSchema):
@@ -131,21 +96,22 @@ class UserUpdateRequest(BaseModel):
     age: Optional[int] = Field(None, gt=18)
     sex: Optional[Sex]
     ethnicity: Optional[Ethnicity]
-    country: Optional[str] = Field(None, min_length=2, max_length=2)
+    country: Optional[str] = Field(None, min_length=2)
     province: Optional[str]
     respiratory_history: Optional[List[RespiratoryHistory]]
     
     # Practitioner fields
     institution: Optional[str] = Field(None, min_length=3, max_length=100)
-    institution_location_country: Optional[str] = Field(None, min_length=2, max_length=2)
+    institution_location_country: Optional[str] = Field(None, min_length=2)
     institution_location_province: Optional[str]
 
 
 class PatientDashboardUpdateRequest(BaseModel):
-    """Simplified update request for patient dashboard - only age, ethnicity, and sex."""
+    """Simplified update request for patient dashboard - only age, ethnicity, sex, and respiratory_history."""
     age: Optional[int] = Field(None, gt=18)
     sex: Optional[Sex]
     ethnicity: Optional[Ethnicity]
+    respiratory_history: Optional[List[RespiratoryHistory]]
 
 
 class UserListResponse(BaseModel):

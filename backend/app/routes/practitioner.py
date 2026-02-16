@@ -200,7 +200,7 @@ async def submit_case_review(
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: Session = Depends(create_local_session)
 ):
-    """Submit practitioner review for a case."""
+    """Submit or update practitioner review for a case."""
     
     # Verify user is practitioner
     user = db.query(User).filter(User.id == current_user.user_id).first()
@@ -215,17 +215,16 @@ async def submit_case_review(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     
-    # Check if a draft review already exists for this case by this practitioner
+    # Check if any review exists for this case by this practitioner
     existing_review = db.query(CaseReview).filter(
         and_(
             CaseReview.case_id == case_id,
-            CaseReview.practitioner_id == current_user.user_id,
-            CaseReview.is_final == False
+            CaseReview.practitioner_id == current_user.user_id
         )
-    ).first()
+    ).order_by(CaseReview.created_at.desc()).first()
     
     if existing_review:
-        # Update existing draft review
+        # Update existing review
         existing_review.primary_diagnosis = review_data.primary_diagnosis
         existing_review.differential_diagnoses = review_data.differential_diagnoses
         existing_review.severity = review_data.severity

@@ -161,7 +161,10 @@ class UserRepository:
             User.deleted_at.is_(None)
         ).first()
         
-        if user and verify_password(password, user.hashed_password):
+        if not user or not user.hashed_password:
+            return None
+            
+        if verify_password(password, user.hashed_password):
             return user
         return None
     
@@ -216,8 +219,8 @@ class UserRepository:
         return user
     
     @staticmethod
-    def update_user_dashboard(db: Session, user_id: int, age: Optional[int], sex: Optional[str], ethnicity: Optional[str]) -> User:
-        """Update user demographics for dashboard (age, sex, ethnicity only)."""
+    def update_user_dashboard(db: Session, user_id: int, age: Optional[int], sex: Optional[str], ethnicity: Optional[str], respiratory_history: Optional[List] = None) -> User:
+        """Update user demographics for dashboard (age, sex, ethnicity, respiratory_history)."""
         user = UserRepository.get_user_by_id(db, user_id)
         
         # Update only the provided fields
@@ -227,6 +230,10 @@ class UserRepository:
             user.sex = sex
         if ethnicity is not None:
             user.ethnicity = ethnicity
+        if respiratory_history is not None:
+            user.respiratory_history = (
+                json.dumps([h.value for h in respiratory_history]) if respiratory_history else None
+            )
         
         db.commit()
         db.refresh(user)
