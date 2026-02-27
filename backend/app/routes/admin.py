@@ -24,8 +24,9 @@ router = APIRouter()
 def require_admin_role(allowed_roles: List[UserRole]):
     """Decorator to check admin roles."""
     def check_role(current_user: AuthenticatedUser = Depends(get_current_user)):
-        user_role = UserRole(current_user.role) if isinstance(current_user.role, str) else current_user.role
-        if user_role not in allowed_roles:
+        user_role_str = current_user.role if isinstance(current_user.role, str) else current_user.role.value
+        allowed_role_strs = [role.value if hasattr(role, 'value') else role for role in allowed_roles]
+        if user_role_str not in allowed_role_strs:
             raise HTTPException(status_code=403, detail="Insufficient privileges")
         return current_user
     return check_role
@@ -271,7 +272,7 @@ async def get_dataset_explorer(
     )
 
 
-# 4️⃣ LABEL DISTRIBUTION & INSIGHTS
+#  LABEL DISTRIBUTION & INSIGHTS
 @router.get("/admin/dashboard/insights", response_model=APIResponse)
 async def get_label_insights(
     model_type: Optional[str] = Query(None, description="Filter by model type"),

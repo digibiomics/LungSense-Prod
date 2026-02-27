@@ -6,7 +6,7 @@ export const patientSignupSchema = z.object({
   first_name: z.string().min(2, "First name must be at least 2 characters").max(50),
   last_name: z.string().min(2, "Last name must be at least 2 characters").max(50),
   password: z.string().min(8, "Password must be at least 8 characters").max(64),
-  age: z.number().gt(18, "Age must be greater than 18"),
+  age: z.number().min(1, "Age must be at least 1").max(120, "Age must be less than 120"),
   sex: z.enum(["F", "M", "O"], { errorMap: () => ({ message: "Sex must be F, M or O" }) }),
   ethnicity: z.string().min(1, "Ethnicity is required"),
   country: z.string().regex(/^[A-Z]{2}$/, "Country must be ISO-3166-1 Alpha-2 code (e.g., US)"),

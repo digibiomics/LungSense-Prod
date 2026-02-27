@@ -24,9 +24,13 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=[
             "http://localhost:3000",  # Local dev
-            "http://localhost:4173",  # Vite dev
+            "http://localhost:5173",  # Vite dev
+            "http://localhost:4173",  # Vite preview
             "http://127.0.0.1:8000",  # Backend self
-            "https://yourdomain.com",  # Production frontend
+            "http://3.7.190.167",  # EC2 IP (temporary)
+            "http://3.7.190.167:8000",  # EC2 IP with port
+             "https://lungsense.ai",
+             "https://www.lungsense.ai"    
         ],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -34,7 +38,7 @@ def create_app() -> FastAPI:
     )
 
     # Auth routes (Google OAuth + Admin login)
-    app.include_router(auth.router, prefix="/api", tags=["auth"])
+    app.include_router(auth.router, prefix="/api")
     
     # User management routes
     app.include_router(users.router, prefix="/api", tags=["users"])

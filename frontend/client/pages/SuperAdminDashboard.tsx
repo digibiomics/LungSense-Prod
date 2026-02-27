@@ -11,6 +11,8 @@ import {
   Clock, AlertCircle, CheckCircle, XCircle, UserCog, Building
 } from "lucide-react";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api';
+
 interface SystemStats {
   total_users: number;
   total_sub_users: number;
@@ -103,7 +105,7 @@ export default function SuperAdminDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("access_token");
-      const response = await fetch("http://localhost:8000/api/admin/super/stats", {
+      const response = await fetch(`${API_BASE_URL}/admin/super/stats`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) throw new Error("Failed to fetch stats");
@@ -126,7 +128,7 @@ export default function SuperAdminDashboard() {
         ...(caseFilters.status !== "all" && { status: caseFilters.status }),
         ...(caseFilters.assigned !== "all" && { assigned: caseFilters.assigned })
       });
-      const response = await fetch(`http://localhost:8000/api/admin/super/cases?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/super/cases?${params}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) throw new Error("Failed to fetch cases");
@@ -143,7 +145,7 @@ export default function SuperAdminDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("access_token");
-      const response = await fetch("http://localhost:8000/api/admin/super/practitioners", {
+      const response = await fetch(`${API_BASE_URL}/admin/super/practitioners`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) throw new Error("Failed to fetch practitioners");
@@ -160,7 +162,7 @@ export default function SuperAdminDashboard() {
     try {
       setLoading(true);
       const token = localStorage.getItem("access_token");
-      const response = await fetch("http://localhost:8000/api/admin/super/users", {
+      const response = await fetch(`${API_BASE_URL}/admin/super/users`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!response.ok) throw new Error("Failed to fetch users");
@@ -178,7 +180,7 @@ export default function SuperAdminDashboard() {
       setError("");
       setSuccess("");
       const token = localStorage.getItem("access_token");
-      const response = await fetch(`http://localhost:8000/api/admin/super/cases/${caseId}/assign`, {
+      const response = await fetch(`${API_BASE_URL}/admin/super/cases/${caseId}/assign`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -198,7 +200,7 @@ export default function SuperAdminDashboard() {
   const togglePractitionerStatus = async (practitionerId: number) => {
     try {
       const token = localStorage.getItem("access_token");
-      const response = await fetch(`http://localhost:8000/api/admin/super/practitioners/${practitionerId}/toggle`, {
+      const response = await fetch(`${API_BASE_URL}/admin/super/practitioners/${practitionerId}/toggle`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -213,8 +215,8 @@ export default function SuperAdminDashboard() {
     try {
       const token = localStorage.getItem("access_token");
       const endpoint = type === "sub_user" 
-        ? `http://localhost:8000/api/admin/super/sub-users/${userId}/toggle`
-        : `http://localhost:8000/api/admin/super/users/${userId}/toggle`;
+        ? `${API_BASE_URL}/admin/super/sub-users/${userId}/toggle`
+        : `${API_BASE_URL}/admin/super/users/${userId}/toggle`;
       
       const response = await fetch(endpoint, {
         method: "POST",

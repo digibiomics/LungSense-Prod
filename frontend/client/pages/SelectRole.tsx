@@ -1,9 +1,27 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Activity, User, Stethoscope } from "lucide-react";
+import { useEffect } from "react";
 
 export default function SelectRole() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Auto-redirect if user is already logged in
+    const token = localStorage.getItem('access_token');
+    const userRole = localStorage.getItem('user_role');
+    const profileCompleted = localStorage.getItem('profile_completed');
+    
+    if (token && profileCompleted === 'true') {
+      if (userRole === 'patient') {
+        navigate('/patient/select-profile', { replace: true });
+      } else if (userRole === 'practitioner') {
+        navigate('/practitioner/patients', { replace: true });
+      }
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#C9D4F4_0%,#ECEBFA_50%,#F5F2FD_100%)]">
       {/* Header */}

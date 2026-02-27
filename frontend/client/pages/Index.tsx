@@ -1,16 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const Index: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Auto-redirect if user is already logged in
+    const token = localStorage.getItem('access_token');
+    const userRole = localStorage.getItem('user_role');
+    const profileCompleted = localStorage.getItem('profile_completed');
+    
+    if (token && profileCompleted === 'true') {
+      if (userRole === 'patient') {
+        navigate('/patient/select-profile', { replace: true });
+        return;
+      } else if (userRole === 'practitioner') {
+        navigate('/practitioner/patients', { replace: true });
+        return;
+      }
+    }
+
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigate]);
 
   return (
     <>

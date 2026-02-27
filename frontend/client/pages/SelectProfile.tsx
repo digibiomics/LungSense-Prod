@@ -356,35 +356,35 @@ export default function SelectProfile() {
 
       {/* ---------- MODAL ---------- */}
       {isAdding && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl p-8 bg-white shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 font-display flex items-center gap-2">
-                <UserPlus className="w-6 h-6" /> Add New Profile
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+          <Card className="w-full max-w-2xl p-4 sm:p-6 md:p-8 bg-white shadow-2xl my-4">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 font-display flex items-center gap-2">
+                <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" /> Add New Profile
               </h2>
               <button 
                 onClick={() => setIsAdding(false)} 
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+              <div className="text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2 sm:p-3 mb-3 sm:mb-4">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">FIRST NAME</Label>
                   <Input 
                     name="firstName" 
                     onChange={handleChange} 
                     placeholder="e.g. John"
-                    className="font-display"
+                    className="font-display text-sm"
                   />
                 </div>
                 <div>
@@ -393,12 +393,12 @@ export default function SelectProfile() {
                     name="lastName" 
                     onChange={handleChange} 
                     placeholder="e.g. Doe"
-                    className="font-display"
+                    className="font-display text-sm"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">AGE</Label>
                   <Input 
@@ -406,7 +406,7 @@ export default function SelectProfile() {
                     type="number" 
                     onChange={handleChange} 
                     placeholder="35"
-                    className="font-display"
+                    className="font-display text-sm"
                   />
                 </div>
 
@@ -414,7 +414,7 @@ export default function SelectProfile() {
                   <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">SEX</Label>
                   <select
                     name="sex"
-                    className="w-full border rounded-md p-2 h-10 font-display"
+                    className="w-full border rounded-md p-2 h-10 font-display text-sm"
                     onChange={handleChange}
                   >
                     <option value="">Select</option>
@@ -428,7 +428,7 @@ export default function SelectProfile() {
                   <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">ETHNICITY</Label>
                   <select
                     name="ethnicity"
-                    className="w-full border rounded-md p-2 h-10 font-display"
+                    className="w-full border rounded-md p-2 h-10 font-display text-sm"
                     onChange={handleChange}
                   >
                     <option value="">Select</option>
@@ -441,12 +441,12 @@ export default function SelectProfile() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">COUNTRY</Label>
                   <select
                     name="country"
-                    className="w-full border rounded-md p-2 h-10 font-display"
+                    className="w-full border rounded-md p-2 h-10 font-display text-sm"
                     onChange={handleChange}
                   >
                     <option value="">Select country</option>
@@ -462,7 +462,7 @@ export default function SelectProfile() {
                   <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm mb-2 block">PROVINCE / STATE</Label>
                   <select
                     name="province"
-                    className="w-full border rounded-md p-2 h-10 font-display"
+                    className="w-full border rounded-md p-2 h-10 font-display text-sm"
                     onChange={handleChange}
                     disabled={provinces.length === 0}
                   >
@@ -479,9 +479,9 @@ export default function SelectProfile() {
                 </div>
               </div>
 
-              <div className="space-y-3 pt-4 border-t">
+              <div className="space-y-3 pt-3 sm:pt-4 border-t">
                 <Label className="text-xs uppercase tracking-wider text-gray-700 font-dm">RESPIRATORY HISTORY</Label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   {[
                     ["historyCOPD", "COPD"],
                     ["historyAsthma", "Asthma"],
@@ -499,24 +499,24 @@ export default function SelectProfile() {
                         onChange={handleChange}
                         className="rounded"
                       />
-                      <span className="text-sm font-dm">{l}</span>
+                      <span className="text-xs sm:text-sm font-dm">{l}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => setIsAdding(false)}
-                  className="flex-1 font-display"
+                  className="flex-1 font-display text-sm"
                 >
                   Cancel
                 </Button>
                 <Button 
                   type="submit" 
-                  className="flex-1 bg-lungsense-blue hover:bg-lungsense-blue/90 font-display"
+                  className="flex-1 bg-lungsense-blue hover:bg-lungsense-blue/90 font-display text-sm"
                 >
                   Create Profile
                 </Button>
