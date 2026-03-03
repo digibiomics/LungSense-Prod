@@ -27,10 +27,13 @@ def create_app() -> FastAPI:
             "http://localhost:5173",  # Vite dev
             "http://localhost:4173",  # Vite preview
             "http://127.0.0.1:8000",  # Backend self
+            "http://localhost:8080", # local web testing
             "http://3.7.190.167",  # EC2 IP (temporary)
             "http://3.7.190.167:8000",  # EC2 IP with port
              "https://lungsense.ai",
-             "https://www.lungsense.ai"    
+             "https://www.lungsense.ai",
+            "capacitor://localhost", # IOS Capacitor view
+            "http://localhost", #Android Capacitor view 
         ],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
