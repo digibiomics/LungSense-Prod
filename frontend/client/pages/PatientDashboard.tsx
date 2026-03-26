@@ -151,81 +151,10 @@ export default function PatientDashboard() {
     };
   }, [previewUrl, audioUrls]);
 
-  const processFile = async (file: File) => {
-    // Compress image files before upload
-    if (file.type.startsWith('image/')) {
-      try {
-        const compressed = await compressImage(file);
-        setUploadedFile(compressed);
-        const url = URL.createObjectURL(compressed);
-        setPreviewUrl(url);
-      } catch (error) {
-        console.error('Compression failed, using original:', error);
-        setUploadedFile(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-      }
-    } else {
-      setUploadedFile(file);
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-    }
-  };
-
-  const compressImage = (file: File): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          
-          // Max dimensions for X-ray (maintains quality for medical use)
-          const MAX_WIDTH = 2048;
-          const MAX_HEIGHT = 2048;
-          
-          let width = img.width;
-          let height = img.height;
-          
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          ctx?.drawImage(img, 0, 0, width, height);
-          
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              } else {
-                reject(new Error('Compression failed'));
-              }
-            },
-            'image/jpeg',
-            0.85 // 85% quality - good balance for medical images
-          );
-        };
-        img.onerror = reject;
-      };
-      reader.onerror = reject;
-    });
+  const processFile = (file: File) => {
+    setUploadedFile(file);
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -606,7 +535,7 @@ export default function PatientDashboard() {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
              Clinical Information of {selectedUserName || "User"}
             </h1>
-            <div onClick={() => navigate('/patient/profile')} className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:opacity-80 transition-opacity">
+            <div className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -941,9 +870,9 @@ export default function PatientDashboard() {
             <Button disabled={isPractitioner} onClick={handleClear} className={`font-display font-semibold px-6 sm:px-8 py-5 sm:py-6 rounded-lg text-sm sm:text-base ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}>Clear</Button>
             <Button
               onClick={handleSubmit}
-              disabled={isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || uploadedChestAudio || recordedAudio || uploadedFile))}
+              disabled={isPractitioner || isSubmitting || (!uploadedFile && !isRecording && selectedSymptoms.length === 0)}
               className={`flex-1 w-full font-display font-semibold py-5 sm:py-6 rounded-lg transition-all text-sm sm:text-base ${
-                isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || uploadedChestAudio || recordedAudio || uploadedFile))
+                isPractitioner || isSubmitting || (!uploadedFile && !isRecording && selectedSymptoms.length === 0)
                   ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                   : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white'
               }`}
