@@ -219,11 +219,14 @@ class UserRepository:
         return user
     
     @staticmethod
-    def update_user_dashboard(db: Session, user_id: int, age: Optional[int], sex: Optional[str], ethnicity: Optional[str], respiratory_history: Optional[List] = None) -> User:
+    def update_user_dashboard(db: Session, user_id: int, first_name: Optional[str], last_name: Optional[str], age: Optional[int], sex: Optional[str], ethnicity: Optional[str], respiratory_history: Optional[List] = None) -> User:
         """Update user demographics for dashboard (age, sex, ethnicity, respiratory_history)."""
         user = UserRepository.get_user_by_id(db, user_id)
         
-        # Update only the provided fields
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
         if age is not None:
             user.age = age
         if sex is not None:

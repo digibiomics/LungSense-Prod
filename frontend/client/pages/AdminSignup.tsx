@@ -25,8 +25,8 @@ export default function AdminSignup() {
   const [success, setSuccess] = useState("");
 
   // Check if user is super admin
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
-  if (currentUser.role !== "super_admin") {
+  const userRole = localStorage.getItem("user_role");
+  if (userRole !== "super_admin") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-8 shadow-xl">

@@ -96,32 +96,32 @@ export default function PractitionerPatientDetail() {
 
       {/* Main Content */}
       <main className="flex-1 md:ml-64">
-        <div className="p-4 md:p-8 space-y-8">
+        <div className="p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-6 md:space-y-8">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
             <button
               onClick={() => navigate("/practitioner/patients")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
             >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
             </button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 font-display">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display truncate">
                 {displayData.patient_name || displayData.name || "Patient"}
               </h1>
-              <p className="text-gray-600 font-dm">{displayData.catalog_number ? `Case #${displayData.catalog_number}` : displayData.email}</p>
+              <p className="text-sm text-gray-600 font-dm">{displayData.catalog_number ? `Case #${displayData.catalog_number}` : displayData.email}</p>
             </div>
-            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold text-lg">
+            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
               {(displayData.patient_name || displayData.name || "P")[0]}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Patient Analysis Results */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Diagnostic Summary */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 font-display">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 font-display">
                   Latest AI Analysis Results
                 </h2>
 
@@ -178,8 +178,8 @@ export default function PractitionerPatientDetail() {
               </Card>
 
               {/* Disease Probability Distribution */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 font-display">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 font-display">
                   Disease Probability Distribution
                 </h2>
 
@@ -211,10 +211,10 @@ export default function PractitionerPatientDetail() {
             </div>
 
             {/* Feedback Section */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {/* Add Feedback */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 font-display">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 font-display">
                   Add Feedback
                 </h2>
 
@@ -244,8 +244,8 @@ export default function PractitionerPatientDetail() {
 
               {/* Previous Feedback */}
               {savedFeedback.length > 0 && (
-                <Card className="p-6 bg-white border-gray-200 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 font-display">
+                <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 font-display">
                     Feedback History
                   </h3>
 
@@ -266,8 +266,8 @@ export default function PractitionerPatientDetail() {
               )}
 
               {/* Patient Information */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 font-display">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4 font-display">
                   Patient Information
                 </h3>
 

@@ -118,55 +118,57 @@ export default function PractitionerPatients() {
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 md:ml-64">
-        <div className="p-4 md:p-8 space-y-8">
+      <main className="flex-1 md:ml-64 w-full">
+        <div className="p-3 sm:p-4 md:p-8 space-y-6 sm:space-y-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 font-display">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
               Patient Cases
             </h1>
-            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold">
-              ©
+            <div className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
             </div>
           </div>
 
           {/* Stats Cards */}
           {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-              <Card className="p-4 bg-white border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+              <Card className="p-3 sm:p-4 bg-white border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
                   <div>
-                    <p className="text-sm text-gray-600 font-dm">Total Cases</p>
-                    <p className="text-2xl font-bold text-gray-900 font-display">{stats.total_cases}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-dm">Total Cases</p>
+                    <p className="text-xl sm:text-2xl font-bold text-gray-900 font-display">{stats.total_cases}</p>
                   </div>
-                  <FileText className="w-8 h-8 text-lungsense-blue" />
+                  <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-lungsense-blue" />
                 </div>
               </Card>
-              <Card className="p-4 bg-white border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
+              <Card className="p-3 sm:p-4 bg-white border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
                   <div>
-                    <p className="text-sm text-gray-600 font-dm">Pending Review</p>
-                    <p className="text-2xl font-bold text-yellow-600 font-display">{stats.pending_review}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-dm">Pending</p>
+                    <p className="text-xl sm:text-2xl font-bold text-yellow-600 font-display">{stats.pending_review}</p>
                   </div>
-                  <Clock className="w-8 h-8 text-yellow-600" />
+                  <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-600" />
                 </div>
               </Card>
-              <Card className="p-4 bg-white border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
+              <Card className="p-3 sm:p-4 bg-white border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
                   <div>
-                    <p className="text-sm text-gray-600 font-dm">Reviewed</p>
-                    <p className="text-2xl font-bold text-green-600 font-display">{stats.reviewed_cases}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-dm">Reviewed</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-600 font-display">{stats.reviewed_cases}</p>
                   </div>
-                  <CheckCircle className="w-8 h-8 text-green-600" />
+                  <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
                 </div>
               </Card>
-              <Card className="p-4 bg-white border-gray-200 shadow-sm">
-                <div className="flex items-center justify-between">
+              <Card className="p-3 sm:p-4 bg-white border-gray-200 shadow-sm">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
                   <div>
-                    <p className="text-sm text-gray-600 font-dm">Completion Rate</p>
-                    <p className="text-2xl font-bold text-lungsense-blue font-display">{stats.completion_rate}%</p>
+                    <p className="text-xs sm:text-sm text-gray-600 font-dm">Rate</p>
+                    <p className="text-xl sm:text-2xl font-bold text-lungsense-blue font-display">{stats.completion_rate}%</p>
                   </div>
-                  <div className="w-8 h-8 bg-lungsense-blue rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-lungsense-blue rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                     %
                   </div>
                 </div>
@@ -175,15 +177,15 @@ export default function PractitionerPatients() {
           )}
 
           {/* Search Bar */}
-          <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
-            <div className="flex items-center gap-2 px-4 py-2">
-              <Search className="w-5 h-5 text-gray-400" />
+          <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-200">
+            <div className="flex items-center gap-2 px-2 sm:px-4 py-2">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
               <Input
                 type="text"
                 placeholder="Search by patient name or catalog number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="border-0 focus:ring-0 font-dm"
+                className="border-0 focus:ring-0 font-dm text-sm"
               />
             </div>
           </div>
@@ -196,32 +198,33 @@ export default function PractitionerPatients() {
           )}
 
           {/* Cases List */}
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {filteredCases.length > 0 ? (
               filteredCases.map((case_item) => (
                 <Card
                   key={case_item.id}
-                  className="p-6 hover:shadow-lg transition-shadow border-gray-200"
+                  className="p-4 sm:p-6 hover:shadow-lg transition-shadow border-gray-200"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-4 mb-3">
-                        <div className="w-12 h-12 bg-lungsense-blue rounded-full flex items-center justify-center text-white font-bold text-lg">
+                  <div className="flex flex-col lg:flex-row items-start justify-between gap-4">
+                    <div className="flex-1 w-full">
+                      <div className="flex items-center gap-3 sm:gap-4 mb-3">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-md flex-shrink-0">
                           {case_item.patient_name[0]}
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 font-display">
-                            {case_item.patient_name} - #{case_item.catalog_number}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 font-display truncate">
+                            {case_item.patient_name}
                           </h3>
+                          <p className="text-xs sm:text-sm text-gray-600 font-dm">#{case_item.catalog_number}</p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4">
                         <div>
                           <p className="text-xs uppercase tracking-wider text-gray-600 font-dm font-semibold mb-1">
                             Submitted
                           </p>
-                          <p className="text-sm text-gray-900 font-display">
+                          <p className="text-xs sm:text-sm text-gray-900 font-display">
                             {new Date(case_item.created_at).toLocaleDateString()}
                           </p>
                         </div>
@@ -230,7 +233,7 @@ export default function PractitionerPatients() {
                             Status
                           </p>
                           <span
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border capitalize ${getStatusColor(
+                            className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 rounded-full text-xs font-semibold border capitalize ${getStatusColor(
                               case_item.status,
                             )}`}
                           >
@@ -242,7 +245,7 @@ export default function PractitionerPatients() {
                           <p className="text-xs uppercase tracking-wider text-gray-600 font-dm font-semibold mb-1">
                             Diagnosis
                           </p>
-                          <p className="text-sm text-gray-900 font-display">
+                          <p className="text-xs sm:text-sm text-gray-900 font-display truncate">
                             {case_item.primary_diagnosis || "Pending"}
                           </p>
                         </div>
@@ -251,7 +254,7 @@ export default function PractitionerPatients() {
 
                     <Button
                       onClick={() => handleViewCase(case_item)}
-                      className="bg-lungsense-blue hover:bg-lungsense-blue/90 text-white font-display font-medium ml-4"
+                      className="bg-lungsense-blue hover:bg-lungsense-blue/90 text-white font-display font-medium w-full lg:w-auto text-sm sm:text-base"
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       Review Case
@@ -261,11 +264,11 @@ export default function PractitionerPatients() {
               ))
             ) : (
               <div className="text-center py-12">
-                <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-600 mb-2 font-display">
+                <FileText className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-base sm:text-lg font-semibold text-gray-600 mb-2 font-display">
                   No Cases Found
                 </h3>
-                <p className="text-gray-500 font-dm">
+                <p className="text-sm text-gray-500 font-dm">
                   {searchTerm ? "Try adjusting your search criteria" : "No cases assigned yet"}
                 </p>
               </div>

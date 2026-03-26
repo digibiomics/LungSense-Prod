@@ -45,10 +45,10 @@ class SubUserUpdateRequest(BaseModel):
 
 
 class SubUserDashboardUpdateRequest(BaseModel):
-    """Simplified update request for sub-user dashboard - only age, ethnicity, and sex."""
+    """Update request for sub-user profile page - name and age only."""
+    first_name: Optional[str] = Field(None, min_length=2, max_length=50)
+    last_name: Optional[str] = Field(None, min_length=2, max_length=50)
     age: Optional[int] = Field(None, gt=0)
-    sex: Optional[Sex]
-    ethnicity: Optional[Ethnicity]
 
 
 class SubUserResponse(BaseModel):

@@ -108,6 +108,8 @@ class UserUpdateRequest(BaseModel):
 
 class PatientDashboardUpdateRequest(BaseModel):
     """Simplified update request for patient dashboard - only age, ethnicity, sex, and respiratory_history."""
+    first_name: Optional[str] = Field(None, min_length=2, max_length=50)
+    last_name: Optional[str] = Field(None, min_length=2, max_length=50)
     age: Optional[int] = Field(None, gt=18)
     sex: Optional[Sex]
     ethnicity: Optional[Ethnicity]

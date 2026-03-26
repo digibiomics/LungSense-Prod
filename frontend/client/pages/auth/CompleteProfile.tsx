@@ -320,14 +320,19 @@ export default function CompleteProfile() {
                     <Input
                       type="number"
                       placeholder="35"
+                      min="1"
+                      max="120"
                       value={currentProfile.age}
                       onChange={(e) => {
-                        if (isSubUser) {
-                          const updated = [...subUsers];
-                          updated[activeSubUserIndex].age = e.target.value;
-                          setSubUsers(updated);
-                        } else {
-                          setProfileData(prev => ({ ...prev, age: e.target.value }));
+                        const value = e.target.value;
+                        if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 120)) {
+                          if (isSubUser) {
+                            const updated = [...subUsers];
+                            updated[activeSubUserIndex].age = value;
+                            setSubUsers(updated);
+                          } else {
+                            setProfileData(prev => ({ ...prev, age: value }));
+                          }
                         }
                       }}
                       className="font-display"

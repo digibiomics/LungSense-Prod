@@ -26,6 +26,7 @@ const SYMPTOMS_LIST = [
   { id: 14, name: "Recent Infection or cold before onset" },
   { id: 15, name: "Known Exposure (TB/COVID/flu)" },
   { id: 16, name: "Smoking habits" },
+  { id: 17, name: "None" },
 ];
 
 
@@ -75,6 +76,7 @@ export default function PatientDashboard() {
     sex: ""
   });
   const [isSavingDemographics, setIsSavingDemographics] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch demographics for selected user on mount
   useEffect(() => {
@@ -149,10 +151,81 @@ export default function PatientDashboard() {
     };
   }, [previewUrl, audioUrls]);
 
-  const processFile = (file: File) => {
-    setUploadedFile(file);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+  const processFile = async (file: File) => {
+    // Compress image files before upload
+    if (file.type.startsWith('image/')) {
+      try {
+        const compressed = await compressImage(file);
+        setUploadedFile(compressed);
+        const url = URL.createObjectURL(compressed);
+        setPreviewUrl(url);
+      } catch (error) {
+        console.error('Compression failed, using original:', error);
+        setUploadedFile(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      }
+    } else {
+      setUploadedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    }
+  };
+
+  const compressImage = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Max dimensions for X-ray (maintains quality for medical use)
+          const MAX_WIDTH = 2048;
+          const MAX_HEIGHT = 2048;
+          
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Compression failed'));
+              }
+            },
+            'image/jpeg',
+            0.85 // 85% quality - good balance for medical images
+          );
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,18 +243,23 @@ export default function PatientDashboard() {
     }
   };
 
+  const removeXray = () => {
+    setUploadedFile(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  };
+
   const handleClear = () => {
     setUploadedFile(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
-    setAudioType("chest");
+    setAudioType("cough");
     setSelectedSymptoms([]);
     setRecordedAudio(null);
     setCoughAudio(null);
     setUploadedCoughAudio(null);
     setUploadedChestAudio(null);
     setRecordingTime(0);
-    // Clear audio URLs
     Object.values(audioUrls).forEach(url => {
       if (url) URL.revokeObjectURL(url);
     });
@@ -190,6 +268,16 @@ export default function PatientDashboard() {
 
   const startRecording = async () => {
     try {
+      // Check if HTTPS is being used (required for mobile)
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        toast({
+          title: "HTTPS Required",
+          description: "Microphone access requires a secure connection (HTTPS). Please access the site via HTTPS.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       const chunks: BlobPart[] = [];
@@ -212,11 +300,26 @@ export default function PatientDashboard() {
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Microphone error:', error);
+      
+      let errorMessage = "Microphone access denied";
+      
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMessage = "Microphone permission denied. Please allow microphone access in your browser settings and try again.";
+      } else if (error.name === 'NotFoundError') {
+        errorMessage = "No microphone found. Please connect a microphone and try again.";
+      } else if (error.name === 'NotSupportedError') {
+        errorMessage = "Your browser doesn't support audio recording. Please use a modern browser or upload an audio file instead.";
+      } else if (error.name === 'NotReadableError') {
+        errorMessage = "Microphone is already in use by another application. Please close other apps using the microphone.";
+      }
+      
       toast({
-        title: "Error",
-        description: "Microphone access denied",
+        title: "Microphone Error",
+        description: errorMessage,
         variant: "destructive",
+        duration: 5000,
       });
     }
   };
@@ -265,16 +368,27 @@ export default function PatientDashboard() {
   };
 
   const toggleSymptom = (symptomId: number) => {
-    const exists = selectedSymptoms.find(s => s.id === symptomId);
+    if (symptomId === 17) {
+      // "None" toggles exclusively
+      const isNoneSelected = selectedSymptoms.some(s => s.id === 17);
+      setSelectedSymptoms(isNoneSelected ? [] : [{ id: 17, severity: 3, duration_days: 3 }]);
+      return;
+    }
+    // Selecting any real symptom removes "None"
+    const withoutNone = selectedSymptoms.filter(s => s.id !== 17);
+    const exists = withoutNone.find(s => s.id === symptomId);
     if (exists) {
-      setSelectedSymptoms(selectedSymptoms.filter((s) => s.id !== symptomId));
+      setSelectedSymptoms(withoutNone.filter((s) => s.id !== symptomId));
     } else {
-      setSelectedSymptoms([...selectedSymptoms, { id: symptomId, severity: 3, duration_days: 3 }]);
+      setSelectedSymptoms([...withoutNone, { id: symptomId, severity: 3, duration_days: 3 }]);
     }
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    
     try {
+      setIsSubmitting(true);
       const formData = new FormData();
       
       formData.append("profile_type", selectedUserType);
@@ -331,6 +445,8 @@ export default function PatientDashboard() {
         description: error.message || "Failed to create case",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -403,15 +519,15 @@ export default function PatientDashboard() {
       <Sidebar />
 
       {isPreviewOpen && previewUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white rounded-xl w-full max-w-4xl h-[85vh] flex flex-col overflow-hidden relative shadow-2xl">
-                <div className="flex items-center justify-between p-4 border-b">
-                    <h3 className="font-display font-semibold text-lg">File Preview: {uploadedFile?.name}</h3>
-                    <button onClick={() => setIsPreviewOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                        <X className="w-5 h-5 text-gray-500" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 sm:p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl w-full max-w-4xl h-[90vh] sm:h-[85vh] flex flex-col overflow-hidden relative shadow-2xl">
+                <div className="flex items-center justify-between p-3 sm:p-4 border-b">
+                    <h3 className="font-display font-semibold text-sm sm:text-lg truncate">File Preview: {uploadedFile?.name}</h3>
+                    <button onClick={() => setIsPreviewOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0">
+                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                     </button>
                 </div>
-                <div className="flex-1 bg-gray-100 flex items-center justify-center p-4 overflow-auto">
+                <div className="flex-1 bg-gray-100 flex items-center justify-center p-2 sm:p-4 overflow-auto">
                     {uploadedFile?.type.startsWith('image/') ? (
                         <img src={previewUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded shadow-sm" />
                     ) : (
@@ -424,18 +540,18 @@ export default function PatientDashboard() {
 
       {/* PRIVACY POLICY MODAL */}
       {isPrivacyOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <Card className="max-w-2xl w-full max-h-[85vh] flex flex-col p-6 shadow-2xl bg-white animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4">
+          <Card className="max-w-2xl w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col p-4 sm:p-6 shadow-2xl bg-white animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-6 h-6 text-lungsense-blue" />
-                <h3 className="text-xl font-bold font-display">Privacy Policy</h3>
+                <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-lungsense-blue" />
+                <h3 className="text-lg sm:text-xl font-bold font-display">Privacy Policy</h3>
               </div>
               <button onClick={() => setIsPrivacyOpen(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
-                <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 hover:text-gray-600" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-6 pr-2 text-sm text-gray-600 leading-relaxed text-left">
+            <div className="flex-1 overflow-y-auto space-y-4 sm:space-y-6 pr-2 text-xs sm:text-sm text-gray-600 leading-relaxed text-left">
               <section>
                 <h4 className="font-bold text-gray-900 mb-2 font-display">1. Data Collection</h4>
                 <p>We collect personal identifiers (name, age, sex) and clinical health data (respiratory sounds, medical history). This data is strictly used for screening and model improvement.</p>
@@ -448,37 +564,64 @@ export default function PatientDashboard() {
                 <h4 className="font-bold text-gray-900 mb-2 font-display">3. Security</h4>
                 <p>All data is encrypted in transit and at rest using industry-standard protocols. Identifiers are decoupled from clinical data wherever possible.</p>
               </section>
-              <div className="bg-red-50 p-4 rounded-lg border border-red-100 text-red-800 text-xs">
+              <div className="bg-red-50 p-3 sm:p-4 rounded-lg border border-red-100 text-red-800 text-xs">
                 <strong>IMPORTANT:</strong> This application is a screening tool and does not provide a definitive medical diagnosis. Always consult with a qualified healthcare professional.
               </div>
             </div>
-            <div className="mt-6 pt-4 border-t flex justify-end">
-              <Button onClick={() => setIsPrivacyOpen(false)} className="bg-lungsense-blue text-white px-8">I Understand</Button>
+            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t flex justify-end">
+              <Button onClick={() => setIsPrivacyOpen(false)} className="bg-lungsense-blue text-white px-6 sm:px-8 text-sm sm:text-base">I Understand</Button>
             </div>
           </Card>
         </div>
       )}
 
-      <main className="flex-1 md:ml-64">
-        <div className="p-4 md:p-8 space-y-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 font-display">
+      <main className="flex-1 md:ml-64 w-full">
+        <div className="p-3 sm:p-4 md:p-8 space-y-6 sm:space-y-8">
+          {/* Practitioner Demo Banner */}
+          {isPractitioner && (
+            <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4 sm:p-6 shadow-sm">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-bold text-blue-900 font-display mb-2">
+                    Demo View: Patient Data Upload Interface
+                  </h3>
+                  <p className="text-xs sm:text-sm text-blue-800 leading-relaxed">
+                    This is a demonstration of how patients upload their medical data. As a practitioner, you can view this interface to understand the patient experience, but all upload functions are disabled. Patients use this page to submit X-rays, audio recordings, symptoms, and demographics for AI analysis.
+                  </p>
+                  <div className="mt-3 flex items-center gap-2 text-xs text-blue-700 font-medium">
+                    <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span>View-only mode • All upload actions are disabled for practitioners</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
              Clinical Information of {selectedUserName || "User"}
             </h1>
-            <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=user" alt="User" className="w-full h-full rounded-full" />
+            <div onClick={() => navigate('/patient/profile')} className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:opacity-80 transition-opacity">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
 
               {/* DEMOGRAPHICS & SYMPTOMS */}
-            <div className="lg:col-span-2 bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div className="lg:col-span-2 bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                <div className="flex items-center gap-2 mb-2">
-                    <img src="/images/demographics-symptoms.png" alt="demographics" className="h-12 w-auto" />
-                    <h2 className="text-xl font-semibold text-gray-900 font-display">DEMOGRAPHICS & SYMPTOMS</h2>
+                    <img src="/images/demographics-symptoms.png" alt="demographics" className="h-10 sm:h-12 w-auto" />
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">DEMOGRAPHICS & SYMPTOMS</h2>
                </div>
-               <p className="text-xs text-gray-900 mb-6 ml-1">Update patient information and select any current symptoms for better AI accuracy.</p>
+               <p className="text-xs text-gray-900 mb-4 sm:mb-6 ml-1">Update patient information and select any current symptoms for better AI accuracy.</p>
 
               <div className="space-y-6">
                 <div className="space-y-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100">
@@ -604,17 +747,17 @@ export default function PatientDashboard() {
               </div>
             </div>
             
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
 
               {/* RECORD SECTION */}
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2 mb-2">
-                    <img src="/images/record-sound.png" alt="record" className="h-12 w-auto" />
-                    <h2 className="text-xl font-semibold text-gray-900 font-display">RECORD SOUNDS</h2>
+                    <img src="/images/record-sound.png" alt="record" className="h-10 sm:h-12 w-auto" />
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">RECORD SOUNDS</h2>
                 </div>
-                <p className="text-xs text-gray-900 mb-4 ml-1">Select sound type and record (10 sec max) or upload audio file.</p>
+                <p className="text-xs text-gray-900 mb-3 sm:mb-4 ml-1">Select sound type and record (10 sec max) or upload audio file.</p>
 
-                <div className="bg-gray-50 rounded-xl p-6 border border-gray-100 flex flex-col items-center gap-6">
+                <div className="bg-gray-50 rounded-xl p-4 sm:p-6 border border-gray-100 flex flex-col items-center gap-4 sm:gap-6">
                     {/* Audio Type Selection */}
                     <div className="w-full">
                         <p className="text-sm font-semibold text-gray-700 font-display mb-2 ml-1">Choose Audio Type</p>
@@ -679,7 +822,17 @@ export default function PatientDashboard() {
                       <div className="text-green-600 text-sm font-medium">✓ Chest audio uploaded: {uploadedChestAudio.name}</div>
                     )}
                     {audioType === "cough" && uploadedCoughAudio && (
-                      <div className="text-green-600 text-sm font-medium">✓ Cough audio uploaded: {uploadedCoughAudio.name}</div>
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-green-600 text-sm font-medium truncate">✓ {uploadedCoughAudio.name}</span>
+                          <button
+                            onClick={() => setUploadedCoughAudio(null)}
+                            className="text-red-500 hover:text-red-700 text-xs ml-2 flex-shrink-0"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
                     )}
 
                     {/* Recording Controls */}
@@ -711,15 +864,15 @@ export default function PatientDashboard() {
               </div>
                     
                   {/* UPLOAD SECTION */}
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2 mb-2">
-                    <img src="/images/upload.png" alt="upload" className="h-12 w-auto" />
-                    <h2 className="text-xl font-semibold text-gray-900 font-display">UPLOAD X-RAY DATA</h2>
+                    <img src="/images/upload.png" alt="upload" className="h-10 sm:h-12 w-auto" />
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">UPLOAD X-RAY DATA</h2>
                 </div>
-                <p className="text-xs text-gray-900 mb-4 ml-1">Upload your chest X-ray scans. Supported formats: .JPG, .PNG, .PDF. Drag and drop allowed.</p>
+                <p className="text-xs text-gray-900 mb-3 sm:mb-4 ml-1">Upload your chest X-ray scans. Supported formats: .JPG, .PNG, .PDF. Drag and drop allowed.</p>
 
-                <div className="bg-gray-50 rounded-xl p-5 border border-gray-100 flex flex-col gap-6" onDragOver={(e) => e.preventDefault()} onDrop={handleDragDrop}>
-                    <div className="w-full h-48 bg-lungsense-blue-light/20 rounded-lg flex items-center justify-center relative border-2 border-dashed border-lungsense-blue overflow-hidden group">
+                <div className="bg-gray-50 rounded-xl p-4 sm:p-5 border border-gray-100 flex flex-col gap-4 sm:gap-6" onDragOver={(e) => e.preventDefault()} onDrop={handleDragDrop}>
+                    <div className="w-full h-40 sm:h-48 bg-lungsense-blue-light/20 rounded-lg flex items-center justify-center relative border-2 border-dashed border-lungsense-blue overflow-hidden group">
                         {uploadedFile ? (
                            <>
                              {uploadedFile.type.startsWith('image/') && previewUrl && (
@@ -731,14 +884,14 @@ export default function PatientDashboard() {
                                    <p className="text-xs text-white truncate font-medium px-2">{uploadedFile.name}</p>
                                  </div>
                              </div>
-                             <button onClick={(e) => { e.stopPropagation(); handleClear(); }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-sm hover:bg-red-600 transition-colors z-20">
+                             <button onClick={(e) => { e.stopPropagation(); removeXray(); }} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-sm hover:bg-red-600 transition-colors z-20">
                                <X className="w-4 h-4" />
                              </button>
                            </>
                         ) : (
                            <div className="flex flex-col items-center justify-center text-lungsense-blue/50 group-hover:text-lungsense-blue/70 transition-colors text-center px-4">
-                               <img src="/images/chest-xray-clipart.png" alt="Upload Placeholder" className="w-25 h-25 mb-3 opacity-40 mix-blend-multiply" />
-                               <p className="text-sm font-display font-medium">Drag & Drop X-ray scan file here</p>
+                               <img src="/images/chest-xray-clipart.png" alt="Upload Placeholder" className="w-20 h-20 sm:w-25 sm:h-25 mb-2 sm:mb-3 opacity-40 mix-blend-multiply" />
+                               <p className="text-xs sm:text-sm font-display font-medium">Drag & Drop X-ray scan file here</p>
                            </div>
                         )}
                     </div>
@@ -766,10 +919,10 @@ export default function PatientDashboard() {
 
 
 
-          <div className="bg-lungsense-yellow rounded-lg p-4 border lungsense-green">
-            <div className="flex gap-3">
-              <AlertCircle className="w-5 h-5 text-lungsense-blue flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-black font-dm">
+          <div className="bg-lungsense-yellow rounded-lg p-3 sm:p-4 border lungsense-green">
+            <div className="flex gap-2 sm:gap-3">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-lungsense-blue flex-shrink-0 mt-0.5" />
+              <div className="text-xs sm:text-sm text-black font-dm">
                 <span className="font-semibold">Privacy Notice:</span> We handle
                 your data securely and use it only for medical analysis. Read
                 our{" "}
@@ -784,14 +937,25 @@ export default function PatientDashboard() {
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Button disabled={isPractitioner} onClick={handleClear} className={`font-display font-semibold px-8 py-6 rounded-lg ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}>Clear</Button>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Button disabled={isPractitioner} onClick={handleClear} className={`font-display font-semibold px-6 sm:px-8 py-5 sm:py-6 rounded-lg text-sm sm:text-base ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}>Clear</Button>
             <Button
               onClick={handleSubmit}
-              disabled={isPractitioner || (!uploadedFile && !isRecording && selectedSymptoms.length === 0)}
-              className={`flex-1 w-full font-display font-semibold py-6 rounded-lg ${isPractitioner || (!uploadedFile && !isRecording && selectedSymptoms.length === 0) ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 transition-opacity text-white'}`}
+              disabled={isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || uploadedChestAudio || recordedAudio || uploadedFile))}
+              className={`flex-1 w-full font-display font-semibold py-5 sm:py-6 rounded-lg transition-all text-sm sm:text-base ${
+                isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || uploadedChestAudio || recordedAudio || uploadedFile))
+                  ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                  : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white'
+              }`}
             >
-              Submit for AI Generated Diagnosis
+              {isSubmitting ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Submitting...</span>
+                </div>
+              ) : (
+                'Submit for AI Generated Diagnosis'
+              )}
             </Button>
           </div>
         </div>

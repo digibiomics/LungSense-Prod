@@ -85,7 +85,16 @@ async def google_callback(
             ).first()
             
             if user:
-                print(f"Found existing user by email, linking Google account")
+                print(f"Found existing user by email with role={user.role}, requested role={request.role}")
+                
+                # Check if user is trying to login with a different role
+                requested_role = UserRole.PATIENT if request.role == "patient" else UserRole.PRACTITIONER
+                if user.role != requested_role:
+                    raise_bad_request(
+                        f"This email is already registered as a {user.role}. "
+                        f"Please login with your existing {user.role} account or use a different email address."
+                    )
+                
                 # Link Google account to existing user
                 user.google_id = google_id
                 user.profile_picture_url = picture
@@ -118,7 +127,15 @@ async def google_callback(
             db.commit()
             db.refresh(user)
         else:
-            print(f"Found existing user: id={user.id}, profile_completed={user.profile_completed}")
+            print(f"Found existing user: id={user.id}, role={user.role}, profile_completed={user.profile_completed}")
+            
+            # Check if user is trying to login with a different role
+            requested_role = UserRole.PATIENT if request.role == "patient" else UserRole.PRACTITIONER
+            if user.role != requested_role:
+                raise_bad_request(
+                    f"This Google account is already registered as a {user.role}. "
+                    f"Please login with your existing {user.role} account or use a different Google account."
+                )
         
         print(f"User ready: id={user.id}, email={user.email}, role={user.role}")
         

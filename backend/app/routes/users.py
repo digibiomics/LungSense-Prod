@@ -119,7 +119,7 @@ async def update_user_dashboard(
     
     try:
         user = UserRepository.update_user_dashboard(
-            db, user_id, request.age, request.sex, request.ethnicity, request.respiratory_history
+            db, user_id, request.first_name, request.last_name, request.age, request.sex, request.ethnicity, request.respiratory_history
         )
         response_data = UserRepository.to_response(user)
         

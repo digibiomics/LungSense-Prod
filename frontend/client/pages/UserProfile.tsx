@@ -130,26 +130,25 @@ export default function UserProfile() {
 
     try {
       setIsSaving(true);
-      
-      const updateData = {
-        age: profile.age,
-        sex: profile.sex,
-        ethnicity: profile.ethnicity,
-        respiratory_history: profile.respiratory_history
-      };
 
       const response = await tokenManager.makeAuthenticatedRequest(
         `${API_BASE_URL}/user/${profile.id}/dashboard`,
         {
           method: 'PUT',
-          body: JSON.stringify(updateData)
+          body: JSON.stringify({
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            age: profile.age,
+            sex: profile.sex,
+            ethnicity: profile.ethnicity,
+            respiratory_history: profile.respiratory_history
+          })
         }
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to update profile');
-      }
+      if (!response.ok) throw new Error('Failed to update profile');
 
+      localStorage.setItem('user_name', `${profile.first_name} ${profile.last_name}`);
       toast.success('Profile updated successfully');
       setIsEditing(false);
       fetchUserProfile();
@@ -185,7 +184,7 @@ export default function UserProfile() {
 
     try {
       const response = await tokenManager.makeAuthenticatedRequest(
-        `${API_BASE_URL}/patient/sub-user/${editedSubUser.id}`,
+        `${API_BASE_URL}/patient/sub-user/${editedSubUser.id}/dashboard`,
         {
           method: 'PUT',
           body: JSON.stringify({
@@ -196,7 +195,11 @@ export default function UserProfile() {
         }
       );
 
-      if (!response.ok) throw new Error('Failed to update family member');
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Sub-user update error response:', errText);
+        throw new Error(`Failed to update family member: ${errText}`);
+      }
 
       toast.success('Family member updated successfully');
       setEditingSubUser(null);
@@ -226,6 +229,24 @@ export default function UserProfile() {
     } catch (error) {
       console.error('Error deleting sub-user:', error);
       toast.error('Failed to delete family member');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+    if (!profile) return;
+    try {
+      const response = await tokenManager.makeAuthenticatedRequest(
+        `${API_BASE_URL}/user/${profile.id}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error('Failed to delete account');
+      await tokenManager.logout();
+      toast.success('Account deleted successfully');
+      navigate('/select-role');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account');
     }
   };
 
@@ -277,18 +298,18 @@ export default function UserProfile() {
       <Sidebar />
 
       <main className="flex-1 md:ml-64 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 py-8 space-y-6">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-6 sm:py-8 space-y-4 sm:space-y-6">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 font-display">My Profile</h1>
-              <p className="text-gray-600 mt-1">Manage your personal information and preferences</p>
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 font-display">My Profile</h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your personal information and preferences</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <Button
-                onClick={() => confirm('Are you sure you want to delete your account? This action cannot be undone.') && toast.error('Account deletion feature coming soon')}
+                onClick={handleDeleteAccount}
                 variant="outline"
-                className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
+                className="flex items-center justify-center gap-2 border-red-500 text-red-600 hover:bg-red-50 text-sm"
               >
                 <Trash2 className="w-4 h-4" />
                 Delete Account
@@ -296,7 +317,7 @@ export default function UserProfile() {
               <Button
                 onClick={handleLogout}
                 variant="outline"
-                className="flex items-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50"
+                className="flex items-center justify-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
               >
                 <LogOut className="w-4 h-4" />
                 Logout
@@ -306,22 +327,39 @@ export default function UserProfile() {
 
           {/* Main Profile Card */}
           <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardHeader className="pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+            <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-white shadow-lg">
                     <AvatarImage src={profilePicture || ''} alt={userName || ''} />
-                    <AvatarFallback className="text-2xl bg-white text-lungsense-blue font-bold">
+                    <AvatarFallback className="text-xl sm:text-2xl bg-white text-lungsense-blue font-bold">
                       {profile ? getInitials(profile.first_name, profile.last_name) : 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <CardTitle className="text-3xl font-display">{userName}</CardTitle>
+                  <div className="w-full sm:w-auto">
+                    {isEditing ? (
+                      <div className="flex gap-2 mt-1">
+                        <Input
+                          value={profile?.first_name || ''}
+                          onChange={(e) => setProfile(prev => prev ? {...prev, first_name: e.target.value} : null)}
+                          placeholder="First name"
+                          className="bg-white/20 border-white text-white placeholder:text-blue-200 h-9 text-sm font-display font-semibold"
+                        />
+                        <Input
+                          value={profile?.last_name || ''}
+                          onChange={(e) => setProfile(prev => prev ? {...prev, last_name: e.target.value} : null)}
+                          placeholder="Last name"
+                          className="bg-white/20 border-white text-white placeholder:text-blue-200 h-9 text-sm font-display font-semibold"
+                        />
+                      </div>
+                    ) : (
+                      <CardTitle className="text-2xl sm:text-3xl font-display">{userName}</CardTitle>
+                    )}
                     <div className="flex items-center gap-2 mt-2">
-                      <Mail className="w-4 h-4" />
-                      <span className="text-blue-100">{userEmail}</span>
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="text-xs sm:text-sm text-blue-100 truncate">{userEmail}</span>
                     </div>
-                    <Badge className={`mt-3 ${getRoleColor(userRole || '')} px-3 py-1`}>
+                    <Badge className={`mt-2 sm:mt-3 ${getRoleColor(userRole || '')} px-2 sm:px-3 py-1 text-xs`}>
                       {userRole?.replace('_', ' ').toUpperCase()}
                     </Badge>
                   </div>
@@ -330,19 +368,19 @@ export default function UserProfile() {
                 {!isEditing ? (
                   <Button
                     onClick={() => setIsEditing(true)}
-                    className="bg-white text-lungsense-blue hover:bg-blue-50"
+                    className="bg-white text-lungsense-blue hover:bg-blue-50 w-full sm:w-auto text-sm"
                     size="sm"
                   >
                     <Edit className="w-4 h-4 mr-2" />
                     Edit Profile
                   </Button>
                 ) : (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       onClick={() => setIsEditing(false)}
                       variant="outline"
                       size="sm"
-                      className="bg-white/20 border-white text-white hover:bg-white/30"
+                      className="bg-white/20 border-white text-white hover:bg-white/30 flex-1 sm:flex-none text-sm"
                     >
                       <X className="w-4 h-4 mr-1" />
                       Cancel
@@ -351,7 +389,7 @@ export default function UserProfile() {
                       onClick={handleSave}
                       disabled={isSaving}
                       size="sm"
-                      className="bg-white text-lungsense-blue hover:bg-blue-50"
+                      className="bg-white text-lungsense-blue hover:bg-blue-50 flex-1 sm:flex-none text-sm"
                     >
                       <Save className="w-4 h-4 mr-1" />
                       {isSaving ? 'Saving...' : 'Save Changes'}
@@ -361,15 +399,15 @@ export default function UserProfile() {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-8 p-6">
+            <CardContent className="space-y-6 sm:space-y-8 p-4 sm:p-6">
               {/* Personal Information */}
               <div>
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
-                  <User className="w-6 h-6 text-lungsense-blue" />
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
+                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-lungsense-blue" />
                   Personal Information
                 </h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="age" className="text-gray-700 font-semibold">Age</Label>
                     {isEditing ? (
@@ -377,8 +415,16 @@ export default function UserProfile() {
                         id="age"
                         type="number"
                         value={profile?.age || ''}
-                        onChange={(e) => setProfile(prev => prev ? {...prev, age: parseInt(e.target.value)} : null)}
-                        min="18"
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          if (!isNaN(value) && value >= 1 && value <= 120) {
+                            setProfile(prev => prev ? {...prev, age: value} : null);
+                          } else if (e.target.value === '') {
+                            setProfile(prev => prev ? {...prev, age: undefined} : null);
+                          }
+                        }}
+                        min="1"
+                        max="120"
                         className="border-gray-300"
                       />
                     ) : (
@@ -553,27 +599,27 @@ export default function UserProfile() {
           {/* Family Members */}
           {userRole === 'patient' && (
             <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-2xl font-display">
-                  <Users className="w-6 h-6" />
+              <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl font-display">
+                  <Users className="w-5 h-5 sm:w-6 sm:h-6" />
                   Family Members
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 {subUsers.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     {subUsers.map((subUser) => (
                       <Card key={subUser.id} className="border-2 border-gray-200 hover:border-lungsense-blue transition-all shadow-md">
-                        <CardContent className="p-5">
+                        <CardContent className="p-4 sm:p-5">
                           {editingSubUser === subUser.id ? (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-3 sm:space-y-4">
+                              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                                 <div>
                                   <Label className="text-xs">First Name</Label>
                                   <Input
                                     value={editedSubUser?.first_name || ''}
                                     onChange={(e) => setEditedSubUser(prev => prev ? {...prev, first_name: e.target.value} : null)}
-                                    className="h-8"
+                                    className="h-8 text-sm"
                                   />
                                 </div>
                                 <div>
@@ -581,7 +627,7 @@ export default function UserProfile() {
                                   <Input
                                     value={editedSubUser?.last_name || ''}
                                     onChange={(e) => setEditedSubUser(prev => prev ? {...prev, last_name: e.target.value} : null)}
-                                    className="h-8"
+                                    className="h-8 text-sm"
                                   />
                                 </div>
                               </div>
@@ -590,16 +636,25 @@ export default function UserProfile() {
                                 <Input
                                   type="number"
                                   value={editedSubUser?.age || ''}
-                                  onChange={(e) => setEditedSubUser(prev => prev ? {...prev, age: parseInt(e.target.value)} : null)}
-                                  className="h-8"
+                                  onChange={(e) => {
+                                    const value = parseInt(e.target.value);
+                                    if (!isNaN(value) && value >= 1 && value <= 120) {
+                                      setEditedSubUser(prev => prev ? {...prev, age: value} : null);
+                                    } else if (e.target.value === '') {
+                                      setEditedSubUser(prev => prev ? {...prev, age: 0} : null);
+                                    }
+                                  }}
+                                  min="1"
+                                  max="120"
+                                  className="h-8 text-sm"
                                 />
                               </div>
-                              <div className="flex gap-2">
-                                <Button onClick={handleSaveSubUser} size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <Button onClick={handleSaveSubUser} size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-sm">
                                   <Save className="w-3 h-3 mr-1" />
                                   Save
                                 </Button>
-                                <Button onClick={() => setEditingSubUser(null)} size="sm" variant="outline" className="flex-1">
+                                <Button onClick={() => setEditingSubUser(null)} size="sm" variant="outline" className="flex-1 text-sm">
                                   Cancel
                                 </Button>
                               </div>
@@ -608,8 +663,8 @@ export default function UserProfile() {
                             <>
                               <div className="flex items-start justify-between mb-3">
                                 <div>
-                                  <h4 className="font-bold text-lg text-gray-900">{subUser.first_name} {subUser.last_name}</h4>
-                                  <Badge className="mt-1 bg-blue-100 text-blue-800">Family Member</Badge>
+                                  <h4 className="font-bold text-base sm:text-lg text-gray-900">{subUser.first_name} {subUser.last_name}</h4>
+                                  <Badge className="mt-1 bg-blue-100 text-blue-800 text-xs">Family Member</Badge>
                                 </div>
                                 <div className="flex gap-1">
                                   <Button
@@ -630,7 +685,7 @@ export default function UserProfile() {
                                   </Button>
                                 </div>
                               </div>
-                              <div className="space-y-2 text-sm">
+                              <div className="space-y-2 text-xs sm:text-sm">
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Age:</span>
                                   <span className="font-semibold text-gray-900">{subUser.age} years</span>
@@ -645,7 +700,7 @@ export default function UserProfile() {
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Location:</span>
-                                  <span className="font-semibold text-gray-900">{subUser.province}, {subUser.country}</span>
+                                  <span className="font-semibold text-gray-900 truncate ml-2">{subUser.province}, {subUser.country}</span>
                                 </div>
                               </div>
                             </>

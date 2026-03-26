@@ -126,17 +126,16 @@ class SubUserRepository:
         return sub_user
     
     @staticmethod
-    def update_sub_user_dashboard(db: Session, sub_user_id: int, age: Optional[int], sex: Optional[str], ethnicity: Optional[str]) -> SubUser:
-        """Update sub-user demographics for dashboard (age, sex, ethnicity only)."""
+    def update_sub_user_dashboard(db: Session, sub_user_id: int, first_name: Optional[str], last_name: Optional[str], age: Optional[int]) -> SubUser:
+        """Update sub-user name and age."""
         sub_user = SubUserRepository.get_sub_user_by_id(db, sub_user_id)
-        
-        # Update only the provided fields
+
+        if first_name is not None:
+            sub_user.first_name = first_name
+        if last_name is not None:
+            sub_user.last_name = last_name
         if age is not None:
             sub_user.age = age
-        if sex is not None:
-            sub_user.sex = sex
-        if ethnicity is not None:
-            sub_user.ethnicity = ethnicity
         
         db.commit()
         db.refresh(sub_user)

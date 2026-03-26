@@ -21,6 +21,7 @@ SYMPTOMS = [
     "Recent Infection or cold before onset",
     "Known Exposure (TB/COVID/flu)",
     "Smoking habits",
+    "None",
 ]
 
 

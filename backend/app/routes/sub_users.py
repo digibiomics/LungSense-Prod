@@ -159,7 +159,7 @@ async def update_sub_user_dashboard(
     
     try:
         updated_sub_user = SubUserRepository.update_sub_user_dashboard(
-            db, sub_user_id, request.age, request.sex, request.ethnicity
+            db, sub_user_id, request.first_name, request.last_name, request.age
         )
         response_data = SubUserRepository.to_response(updated_sub_user)
         

@@ -35,12 +35,10 @@ export default function Recommendations() {
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                 <Bell className="w-6 h-6 text-gray-600" />
               </button>
-              <div className="w-10 h-10 bg-lungsense-blue rounded-full flex items-center justify-center">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
-                  alt="User"
-                  className="w-full h-full rounded-full"
-                />
+              <div onClick={() => navigate('/patient/profile')} className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:opacity-80 transition-opacity">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </div>
             </div>
           </div>

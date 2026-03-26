@@ -241,24 +241,24 @@ export default function PractitionerCaseDetail() {
       <Sidebar />
       
       <main className="flex-1 md:ml-64">
-        <div className="p-4 md:p-8 space-y-8">
+        <div className="p-3 sm:p-4 md:p-8 space-y-4 sm:space-y-6 md:space-y-8">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-6 sm:mb-8">
             <button
               onClick={() => navigate("/practitioner/patients")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
             >
-              <ArrowLeft className="w-6 h-6 text-gray-600" />
+              <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
             </button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 font-display">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
                 Case #{caseDetail.id}
               </h1>
-              <p className="text-gray-600 font-dm">
+              <p className="text-sm text-gray-600 font-dm">
                 Submitted on {new Date(caseDetail.created_at).toLocaleDateString()}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               {hasReviews && (
                 <Button
                   onClick={() => {
@@ -266,13 +266,14 @@ export default function PractitionerCaseDetail() {
                     handleEditReview(latestReview);
                   }}
                   variant="outline"
-                  className="flex items-center gap-2"
+                  size="sm"
+                  className="flex items-center gap-2 text-xs sm:text-sm"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                   Edit Review
                 </Button>
               )}
-              <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+              <div className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold ${
                 isReviewed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
               }`}>
                 {caseDetail.status}
@@ -280,19 +281,19 @@ export default function PractitionerCaseDetail() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {/* Case Information */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Patient Information */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <User className="w-5 h-5 text-lungsense-blue" />
-                  <h2 className="text-xl font-semibold text-gray-900 font-display">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">
                     Patient Information
                   </h2>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <p className="text-sm text-gray-600 font-dm mb-1">Name</p>
                     <p className="text-gray-900 font-display font-semibold">{caseDetail.patient.name}</p>
@@ -325,10 +326,10 @@ export default function PractitionerCaseDetail() {
               </Card>
 
               {/* Symptoms */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <Stethoscope className="w-5 h-5 text-lungsense-blue" />
-                  <h2 className="text-xl font-semibold text-gray-900 font-display">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">
                     Reported Symptoms
                   </h2>
                 </div>
@@ -343,10 +344,10 @@ export default function PractitionerCaseDetail() {
               </Card>
 
               {/* Data Provided by Patient */}
-              <Card className="p-6 bg-white border-gray-200 shadow-sm">
+              <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
                 <div className="flex items-center gap-3 mb-4">
                   <FileText className="w-5 h-5 text-lungsense-blue" />
-                  <h2 className="text-xl font-semibold text-gray-900 font-display">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">
                     Data Provided by the Patient
                   </h2>
                 </div>
@@ -354,7 +355,7 @@ export default function PractitionerCaseDetail() {
                 <div className="grid gap-3">
                   {caseDetail.files.length > 0 ? (
                     caseDetail.files.map((file) => (
-                      <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div key={file.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-3">
                           {getFileIcon(file.modality)}
                           <div>
@@ -386,10 +387,10 @@ export default function PractitionerCaseDetail() {
 
               {/* Previous Reviews */}
               {hasReviews && (
-                <Card className="p-6 bg-white border-gray-200 shadow-sm">
+                <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
                   <div className="flex items-center gap-3 mb-4">
                     <Calendar className="w-5 h-5 text-lungsense-blue" />
-                    <h2 className="text-xl font-semibold text-gray-900 font-display">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900 font-display">
                       Review History
                     </h2>
                   </div>
@@ -444,8 +445,8 @@ export default function PractitionerCaseDetail() {
 
             {/* Review Form - Show for unreviewed cases OR when editing */}
             {(!isReviewed || editingReview) && (
-              <div className="space-y-6">
-                <Card className="p-6 bg-white border-gray-200 shadow-sm">
+              <div className="space-y-4 sm:space-y-6">
+                <Card className="p-4 sm:p-6 bg-white border-gray-200 shadow-sm">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-gray-900 font-display">
                       {editingReview ? 'Edit Review' : 'Medical Review'}
