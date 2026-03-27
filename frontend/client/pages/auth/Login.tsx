@@ -3,15 +3,12 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { googleOAuthCallback } from '../../../src/api';
+import { googleOAuthCallback, recordConsent } from '../../../src/api';
 import { User, Stethoscope, CheckSquare, Square } from 'lucide-react';
 import PrivacyModal from '@/components/PrivacyModal';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
-// The Google OAuth button always renders at exactly 400px wide internally.
-// We render it at a fixed 400px, then scale it down via CSS transform so it
-// fits whatever container is available — no clipping, no iframe overflow issues.
 const GOOGLE_BTN_NATIVE_WIDTH = 400;
 
 export default function Login() {
@@ -32,7 +29,6 @@ export default function Login() {
 
   const loginHint = localStorage.getItem('user_email') || undefined;
 
-  // Measure the wrapper and derive the scale so the 400px button fills it exactly.
   const updateScale = useCallback(() => {
     if (!wrapperRef.current) return;
     const available = wrapperRef.current.getBoundingClientRect().width;
@@ -68,6 +64,7 @@ export default function Login() {
       const data = await googleOAuthCallback(idToken, role);
       if (!data || !data.access_token || !data.user_id) throw new Error('Invalid response from server');
 
+      // Store auth data first — recordConsent needs the token to be in localStorage
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user_id', data.user_id.toString());
@@ -76,6 +73,10 @@ export default function Login() {
       localStorage.setItem('user_name', `${data.first_name} ${data.last_name}`);
       localStorage.setItem('profile_completed', data.profile_completed.toString());
       if (data.profile_picture_url) localStorage.setItem('profile_picture', data.profile_picture_url);
+
+      // Record consent in the database now that we have a valid token.
+      // This is non-blocking — a failure here will not prevent login from succeeding.
+      await recordConsent();
 
       toast.success('Login successful!');
       if (!data.profile_completed) {
@@ -101,7 +102,6 @@ export default function Login() {
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
 
-      {/* Privacy Policy Modal */}
       {showPolicy && (
         <PrivacyModal
           onClose={() => setShowPolicy(false)}
@@ -196,15 +196,7 @@ export default function Login() {
                   </button>
                 </div>
 
-                {/* Google Sign-In
-                    ─────────────────────────────────────────────────────────────
-                    The Google iframe always renders at 400px. We place it inside
-                    a 400px-wide inner div, then scale the entire inner div down
-                    so it fits the outer wrapper (which is 100% of the card width).
-                    transform-origin: top center keeps it aligned to the top edge.
-                    The outer wrapper height is set to btnScale*54px (button height)
-                    so the layout doesn't leave a gap beneath the scaled button.
-                    ───────────────────────────────────────────────────────────── */}
+                {/* Google Sign-In */}
                 <div className="w-full flex flex-col items-center gap-2 sm:gap-3">
                   <div
                     ref={wrapperRef}

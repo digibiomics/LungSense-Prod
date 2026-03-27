@@ -382,3 +382,54 @@ async def logout_all_devices(
         )
     except Exception as e:
         raise_bad_request(f"Logout failed: {str(e)}")
+
+@router.post("/consent", response_model=APIResponse)
+async def record_consent(
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: Session = Depends(create_local_session)
+):
+    """
+    Record or update the authenticated user's data consent (consent_for_training = True).
+    Called immediately after Google OAuth login completes on the frontend.
+    The endpoint is only reached when the user has explicitly checked the consent checkbox,
+    so consent_for_training is always written as True.
+    Uses upsert logic: creates a new record if none exists, updates if one does.
+    """
+    try:
+        print(f"Recording consent for user_id={current_user.user_id}")
+
+        from app.models.data_consent import DataConsent
+
+        existing = db.query(DataConsent).filter(
+            DataConsent.user_id == current_user.user_id,
+            DataConsent.sub_user_id.is_(None)
+        ).first()
+
+        if existing:
+            print(f"Updating existing consent record id={existing.id}")
+            existing.consent_for_training = True
+        else:
+            print(f"Creating new consent record for user_id={current_user.user_id}")
+            consent_record = DataConsent(
+                user_id=current_user.user_id,
+                sub_user_id=None,
+                consent_for_training=True
+            )
+            db.add(consent_record)
+
+        db.commit()
+
+        print(f"Consent recorded successfully for user_id={current_user.user_id}")
+
+        return APIResponse(
+            status=ResponseStatus.SUCCESS,
+            message="Consent recorded successfully",
+            data={"user_id": current_user.user_id, "consent_for_training": True}
+        )
+
+    except Exception as e:
+        db.rollback()
+        print(f"Consent recording error for user_id={current_user.user_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        raise_bad_request(f"Failed to record consent: {str(e)}")
