@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import tokenManager from '@/lib/tokenManager';
 import countriesStatesData from '../../../src/countries+states.json';
@@ -17,7 +16,6 @@ interface PractitionerProfileData {
   institution: string;
   institution_location_country: string;
   institution_location_province: string;
-  consent: boolean;
 }
 
 export default function CompletePractitionerProfile() {
@@ -31,8 +29,7 @@ export default function CompletePractitionerProfile() {
     practitioner_id: '',
     institution: '',
     institution_location_country: '',
-    institution_location_province: '',
-    consent: false
+    institution_location_province: ''
   });
 
   useEffect(() => {
@@ -55,11 +52,6 @@ export default function CompletePractitionerProfile() {
     if (!profileData.practitioner_id || !profileData.institution ||
         !profileData.institution_location_country || !profileData.institution_location_province) {
       setError('Please complete all required fields');
-      return;
-    }
-
-    if (!profileData.consent) {
-      setError('Please accept the consent form to continue');
       return;
     }
 
@@ -117,8 +109,7 @@ export default function CompletePractitionerProfile() {
         <PrivacyModal onClose={() => setShowPrivacyModal(false)} />
       )}
 
-      {/*
-        h-[100dvh] + overflow-hidden shell ensures footer always stays visible.
+      {/* + overflow-hidden shell ensures footer always stays visible.
         Main is flex-1 min-h-0 overflow-y-auto so the form card scrolls on short
         viewports rather than pushing the footer off-screen.
       */}
@@ -236,32 +227,20 @@ export default function CompletePractitionerProfile() {
                   </div>
                 </div>
 
-                {/* Consent */}
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3 p-3 sm:p-4 border rounded-lg bg-gray-50">
-                    <Checkbox
-                      checked={profileData.consent}
-                      onCheckedChange={(checked) =>
-                        setProfileData(prev => ({ ...prev, consent: checked as boolean }))
-                      }
-                      className="mt-0.5 flex-shrink-0"
-                    />
-                    <div className="flex-1">
-                      <Label className="text-xs sm:text-sm font-dm cursor-pointer leading-relaxed">
-                        I consent to the collection and processing of my data for medical analysis
-                        purposes. I understand that my information will be handled in accordance
-                        with applicable privacy laws and regulations, as described in LungSense's{' '}
-                        <button
-                          type="button"
-                          onClick={() => setShowPrivacyModal(true)}
-                          className="text-lungsense-blue underline font-medium hover:opacity-80 transition-opacity"
-                        >
-                          Terms of Use & Medical Disclaimer
-                        </button>
-                        .
-                      </Label>
-                    </div>
-                  </div>
+                {/* Terms notice */}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+                    By completing your profile and using LungSense, you agree to our{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowPrivacyModal(true)}
+                      className="text-lungsense-blue underline font-medium hover:opacity-80 transition-opacity"
+                    >
+                      Terms of Use &amp; Medical Disclaimer
+                    </button>
+                    . LungSense does not provide medical advice — all outputs are
+                    intended for screening and monitoring purposes only.
+                  </p>
                 </div>
 
                 {/* Submit */}

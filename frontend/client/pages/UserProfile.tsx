@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { User, Mail, MapPin, Heart, Building, LogOut, Edit, Save, X, Trash2, Users, FileText } from 'lucide-react';
+import { User, Mail, MapPin, Heart, Building, LogOut, Edit, Save, X, Trash2, Users, FileText, Calendar } from 'lucide-react';
 import tokenManager from '@/lib/tokenManager';
 import PrivacyModal from '@/components/PrivacyModal';
 
@@ -63,6 +63,7 @@ export default function UserProfile() {
   const userName = localStorage.getItem('user_name');
   const userEmail = localStorage.getItem('user_email');
   const profilePicture = localStorage.getItem('profile_picture');
+  const [displayName, setDisplayName] = useState(userName || '');
 
   useEffect(() => {
     fetchUserProfile();
@@ -133,23 +134,25 @@ export default function UserProfile() {
     try {
       setIsSaving(true);
 
-      const updateData = {
-        age: profile.age,
-        sex: profile.sex,
-        ethnicity: profile.ethnicity,
-        respiratory_history: profile.respiratory_history
-      };
-
       const response = await tokenManager.makeAuthenticatedRequest(
         `${API_BASE_URL}/user/${profile.id}/dashboard`,
         {
           method: 'PUT',
-          body: JSON.stringify(updateData)
+          body: JSON.stringify({
+            first_name: profile.first_name,
+            last_name: profile.last_name,
+            age: profile.age,
+            sex: profile.sex,
+            ethnicity: profile.ethnicity,
+            respiratory_history: profile.respiratory_history
+          })
         }
       );
 
       if (!response.ok) throw new Error('Failed to update profile');
 
+      localStorage.setItem('user_name', `${profile.first_name} ${profile.last_name}`);
+      setDisplayName(`${profile.first_name} ${profile.last_name}`);
       toast.success('Profile updated successfully');
       setIsEditing(false);
       fetchUserProfile();
@@ -184,7 +187,7 @@ export default function UserProfile() {
 
     try {
       const response = await tokenManager.makeAuthenticatedRequest(
-        `${API_BASE_URL}/patient/sub-user/${editedSubUser.id}`,
+        `${API_BASE_URL}/patient/sub-user/${editedSubUser.id}/dashboard`,
         {
           method: 'PUT',
           body: JSON.stringify({
@@ -195,7 +198,11 @@ export default function UserProfile() {
         }
       );
 
-      if (!response.ok) throw new Error('Failed to update family member');
+      if (!response.ok) {
+        const errText = await response.text();
+        console.error('Sub-user update error response:', errText);
+        throw new Error(`Failed to update family member: ${errText}`);
+      }
 
       toast.success('Family member updated successfully');
       setEditingSubUser(null);
@@ -223,6 +230,24 @@ export default function UserProfile() {
     } catch (error) {
       console.error('Error deleting sub-user:', error);
       toast.error('Failed to delete family member');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
+    if (!profile) return;
+    try {
+      const response = await tokenManager.makeAuthenticatedRequest(
+        `${API_BASE_URL}/user/${profile.id}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) throw new Error('Failed to delete account');
+      await tokenManager.logout();
+      toast.success('Account deleted successfully');
+      navigate('/select-role');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+      toast.error('Failed to delete account');
     }
   };
 
@@ -301,10 +326,7 @@ export default function UserProfile() {
               {/* Action buttons — stack on mobile, row on sm+ */}
               <div className="flex flex-col xs:flex-row sm:flex-row gap-2 w-full sm:w-auto">
                 <Button
-                  onClick={() =>
-                    confirm('Are you sure you want to delete your account? This action cannot be undone.') &&
-                    toast.error('Account deletion feature coming soon')
-                  }
+                  onClick={handleDeleteAccount}
                   variant="outline"
                   size="sm"
                   className="flex items-center justify-center gap-2 border-red-500 text-red-600 hover:bg-red-50 text-xs sm:text-sm w-full sm:w-auto"
@@ -340,9 +362,26 @@ export default function UserProfile() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <CardTitle className="text-xl sm:text-2xl md:text-3xl font-display truncate">
-                        {userName}
-                      </CardTitle>
+                      {isEditing ? (
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            value={profile?.first_name || ''}
+                            onChange={(e) => setProfile(prev => prev ? {...prev, first_name: e.target.value} : null)}
+                            placeholder="First name"
+                            className="bg-white/20 border-white text-white placeholder:text-blue-200 h-9 text-sm font-display font-semibold"
+                          />
+                          <Input
+                            value={profile?.last_name || ''}
+                            onChange={(e) => setProfile(prev => prev ? {...prev, last_name: e.target.value} : null)}
+                            placeholder="Last name"
+                            className="bg-white/20 border-white text-white placeholder:text-blue-200 h-9 text-sm font-display font-semibold"
+                          />
+                        </div>
+                      ) : (
+                        <CardTitle className="text-xl sm:text-2xl md:text-3xl font-display truncate">
+                          {displayName}
+                        </CardTitle>
+                      )}
                       <div className="flex items-center gap-1.5 mt-1">
                         <Mail className="w-3 h-3 flex-shrink-0" />
                         <span className="text-xs sm:text-sm text-blue-100 truncate">{userEmail}</span>
@@ -391,7 +430,8 @@ export default function UserProfile() {
               {/* Card body */}
               <CardContent className="space-y-5 sm:space-y-6 md:space-y-8 p-4 sm:p-5 md:p-6">
 
-                {/* Personal Information */}
+                {/* Personal Information — patients only */}
+                {userRole === 'patient' && (
                 <div>
                   <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
                     <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-lungsense-blue" />
@@ -478,6 +518,7 @@ export default function UserProfile() {
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Location */}
                 {profile?.country && (

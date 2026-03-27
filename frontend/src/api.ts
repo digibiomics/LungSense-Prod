@@ -53,6 +53,53 @@ async function postJson(url: string, body: any, opts: RequestInit = {}) {
   try { return JSON.parse(text); } catch { return text; }
 }
 
+
+// ─── Pre-signed S3 upload helpers ───────────────────────────────────────────
+
+export type FileType = "xray" | "cough_audio" | "breath_audio";
+
+export async function requestPresignedUrl(
+  file_type: FileType,
+  content_type: string,
+  file_extension: string
+): Promise<{ presigned_url: string; s3_key: string }> {
+  const token = localStorage.getItem("access_token");
+  if (!token) throw new Error("Session expired. Please login again.");
+
+  const res = await fetch(`${API_BASE_URL}/cases/presign`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ file_type, content_type, file_extension }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    handleApiError(res, text, "Failed to get upload URL. Please try again.");
+  }
+
+  const json = await res.json();
+  // APIResponse wraps payload in .data
+  const payload = json?.data ?? json;
+  if (!payload?.presigned_url || !payload?.s3_key) {
+    throw new Error("Invalid presign response from server.");
+  }
+  return { presigned_url: payload.presigned_url, s3_key: payload.s3_key };
+}
+
+export async function uploadToS3(presigned_url: string, file: File | Blob, content_type: string): Promise<void> {
+  const res = await fetch(presigned_url, {
+    method: "PUT",
+    headers: { "Content-Type": content_type },
+    body: file,
+  });
+  if (!res.ok) throw new Error(`S3 upload failed: ${res.status} ${res.statusText}`);
+}
+
+
+
 // ─── Google OAuth ────────────────────────────────────────────────────────────
 
 export async function googleOAuthCallback(code: string, role: string) {
@@ -310,15 +357,24 @@ export async function getProfileDetails(profileType: string, profileId: string |
   return res.json();
 }
 
-export async function createCase(formData: FormData) {
+export async function createCase(payload: {
+  profile_type: string;
+  profile_id: string | number;
+  symptoms: { symptom_id: number; severity: number; duration_days: number }[];
+  xray_key?: string;
+  cough_audio_key?: string;
+  breath_audio_key?: string;
+}) {
   const token = localStorage.getItem("access_token");
-
-  if (!token) throw new Error('Session expired. Please login again.');
+  if (!token) throw new Error("Session expired. Please login again.");
 
   const res = await fetch(`${API_BASE_URL}/cases`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: formData,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -328,6 +384,25 @@ export async function createCase(formData: FormData) {
 
   return res.json();
 }
+
+// export async function createCase(formData: FormData) {
+//   const token = localStorage.getItem("access_token");
+
+//   if (!token) throw new Error('Session expired. Please login again.');
+
+//   const res = await fetch(`${API_BASE_URL}/cases`, {
+//     method: "POST",
+//     headers: { Authorization: `Bearer ${token}` },
+//     body: formData,
+//   });
+
+//   if (!res.ok) {
+//     const text = await res.text();
+//     handleApiError(res, text, "Unable to submit case. Please check your data and try again.");
+//   }
+
+//   return res.json();
+// }
 
 export async function updateUser(userId: string | number, userData: any) {
   const token = localStorage.getItem("access_token");

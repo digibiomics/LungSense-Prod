@@ -45,6 +45,7 @@ const App = () => (
           <Route path="/auth/complete-profile" element={<CompleteProfile />} />
           <Route path="/auth/complete-practitioner-profile" element={<CompletePractitionerProfile />} />
           <Route path="/patient/profile" element={<UserProfile />} />
+          <Route path="/practitioner/profile" element={<UserProfile />} />
           <Route path="/support" element={<Support/>} />
           <Route path="/patient/upload" element={<PatientDashboard />} />
           <Route path="/patient/records" element={<PatientRecords />} />
