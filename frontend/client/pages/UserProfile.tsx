@@ -9,8 +9,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { User, Mail, Calendar, MapPin, Heart, Building, LogOut, Edit, Save, X, Plus, Trash2, Users } from 'lucide-react';
+import { User, Mail, MapPin, Heart, Building, LogOut, Edit, Save, X, Trash2, Users, FileText } from 'lucide-react';
 import tokenManager from '@/lib/tokenManager';
+import PrivacyModal from '@/components/PrivacyModal';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
@@ -56,6 +57,7 @@ export default function UserProfile() {
   const [newCondition, setNewCondition] = useState('');
   const [editingSubUser, setEditingSubUser] = useState<number | null>(null);
   const [editedSubUser, setEditedSubUser] = useState<SubUser | null>(null);
+  const [showPrivacy, setShowPrivacy] = useState(false);
 
   const userRole = localStorage.getItem('user_role');
   const userName = localStorage.getItem('user_name');
@@ -70,7 +72,7 @@ export default function UserProfile() {
     try {
       setIsLoading(true);
       const userId = localStorage.getItem('user_id');
-      
+
       if (!userId) {
         toast.error('User not found');
         navigate('/select-role');
@@ -131,24 +133,23 @@ export default function UserProfile() {
     try {
       setIsSaving(true);
 
+      const updateData = {
+        age: profile.age,
+        sex: profile.sex,
+        ethnicity: profile.ethnicity,
+        respiratory_history: profile.respiratory_history
+      };
+
       const response = await tokenManager.makeAuthenticatedRequest(
         `${API_BASE_URL}/user/${profile.id}/dashboard`,
         {
           method: 'PUT',
-          body: JSON.stringify({
-            first_name: profile.first_name,
-            last_name: profile.last_name,
-            age: profile.age,
-            sex: profile.sex,
-            ethnicity: profile.ethnicity,
-            respiratory_history: profile.respiratory_history
-          })
+          body: JSON.stringify(updateData)
         }
       );
 
       if (!response.ok) throw new Error('Failed to update profile');
 
-      localStorage.setItem('user_name', `${profile.first_name} ${profile.last_name}`);
       toast.success('Profile updated successfully');
       setIsEditing(false);
       fetchUserProfile();
@@ -162,7 +163,6 @@ export default function UserProfile() {
 
   const handleAddCondition = () => {
     if (!newCondition.trim() || !profile) return;
-    
     const updatedHistory = [...(profile.respiratory_history || []), newCondition.trim()];
     setProfile({ ...profile, respiratory_history: updatedHistory });
     setNewCondition('');
@@ -184,7 +184,7 @@ export default function UserProfile() {
 
     try {
       const response = await tokenManager.makeAuthenticatedRequest(
-        `${API_BASE_URL}/patient/sub-user/${editedSubUser.id}/dashboard`,
+        `${API_BASE_URL}/patient/sub-user/${editedSubUser.id}`,
         {
           method: 'PUT',
           body: JSON.stringify({
@@ -195,11 +195,7 @@ export default function UserProfile() {
         }
       );
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error('Sub-user update error response:', errText);
-        throw new Error(`Failed to update family member: ${errText}`);
-      }
+      if (!response.ok) throw new Error('Failed to update family member');
 
       toast.success('Family member updated successfully');
       setEditingSubUser(null);
@@ -217,9 +213,7 @@ export default function UserProfile() {
     try {
       const response = await tokenManager.makeAuthenticatedRequest(
         `${API_BASE_URL}/patient/sub-user/${subUserId}`,
-        {
-          method: 'DELETE'
-        }
+        { method: 'DELETE' }
       );
 
       if (!response.ok) throw new Error('Failed to delete family member');
@@ -229,24 +223,6 @@ export default function UserProfile() {
     } catch (error) {
       console.error('Error deleting sub-user:', error);
       toast.error('Failed to delete family member');
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) return;
-    if (!profile) return;
-    try {
-      const response = await tokenManager.makeAuthenticatedRequest(
-        `${API_BASE_URL}/user/${profile.id}`,
-        { method: 'DELETE' }
-      );
-      if (!response.ok) throw new Error('Failed to delete account');
-      await tokenManager.logout();
-      toast.success('Account deleted successfully');
-      navigate('/select-role');
-    } catch (error) {
-      console.error('Error deleting account:', error);
-      toast.error('Failed to delete account');
     }
   };
 
@@ -260,450 +236,562 @@ export default function UserProfile() {
     }
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
+  const getInitials = (firstName: string, lastName: string) =>
+    `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric', month: 'long', day: 'numeric'
     });
-  };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'patient': return 'bg-blue-500 text-white';
+      case 'patient':      return 'bg-blue-500 text-white';
       case 'practitioner': return 'bg-green-500 text-white';
-      case 'data_admin': return 'bg-purple-500 text-white';
-      case 'super_admin': return 'bg-red-500 text-white';
-      default: return 'bg-gray-500 text-white';
+      case 'data_admin':   return 'bg-purple-500 text-white';
+      case 'super_admin':  return 'bg-red-500 text-white';
+      default:             return 'bg-gray-500 text-white';
     }
   };
 
+  /* ─── Loading state ─────────────────────────────────────────── */
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-lungsense-blue mx-auto"></div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-lungsense-blue mx-auto" />
           <p className="mt-4 text-gray-700 font-medium">Loading profile...</p>
         </div>
       </div>
     );
   }
 
+  /* ─── Page ──────────────────────────────────────────────────── */
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
-      <Sidebar />
+    <>
+      <style>{`
+        /* Safe-area support for notched mobile browsers */
+        @supports (padding: env(safe-area-inset-bottom)) {
+          .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        }
+      `}</style>
 
-      <main className="flex-1 md:ml-64 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-6 sm:py-8 space-y-4 sm:space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 font-display">My Profile</h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your personal information and preferences</p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-              <Button
-                onClick={handleDeleteAccount}
-                variant="outline"
-                className="flex items-center justify-center gap-2 border-red-500 text-red-600 hover:bg-red-50 text-sm"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Account
-              </Button>
-              <Button
-                onClick={handleLogout}
-                variant="outline"
-                className="flex items-center justify-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50 text-sm"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
-            </div>
-          </div>
+      {/* Privacy policy modal — view-only from this page (no consent flow) */}
+      {showPrivacy && (
+        <PrivacyModal onClose={() => setShowPrivacy(false)} />
+      )}
 
-          {/* Main Profile Card */}
-          <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-            <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-                  <Avatar className="w-20 h-20 sm:w-24 sm:h-24 border-4 border-white shadow-lg">
-                    <AvatarImage src={profilePicture || ''} alt={userName || ''} />
-                    <AvatarFallback className="text-xl sm:text-2xl bg-white text-lungsense-blue font-bold">
-                      {profile ? getInitials(profile.first_name, profile.last_name) : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="w-full sm:w-auto">
-                    <CardTitle className="text-2xl sm:text-3xl font-display">{userName}</CardTitle>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="text-xs sm:text-sm text-blue-100 truncate">{userEmail}</span>
-                    </div>
-                    <Badge className={`mt-2 sm:mt-3 ${getRoleColor(userRole || '')} px-2 sm:px-3 py-1 text-xs`}>
-                      {userRole?.replace('_', ' ').toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-                
-                {!isEditing ? (
-                  <Button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-white text-lungsense-blue hover:bg-blue-50 w-full sm:w-auto text-sm"
-                    size="sm"
-                  >
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit Profile
-                  </Button>
-                ) : (
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                      onClick={() => setIsEditing(false)}
-                      variant="outline"
-                      size="sm"
-                      className="bg-white/20 border-white text-white hover:bg-white/30 flex-1 sm:flex-none text-sm"
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleSave}
-                      disabled={isSaving}
-                      size="sm"
-                      className="bg-white text-lungsense-blue hover:bg-blue-50 flex-1 sm:flex-none text-sm"
-                    >
-                      <Save className="w-4 h-4 mr-1" />
-                      {isSaving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
+      <div className="flex h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-hidden">
+        <Sidebar />
 
-            <CardContent className="space-y-6 sm:space-y-8 p-4 sm:p-6">
-              {/* Personal Information */}
+        <main className="flex-1 md:ml-64 overflow-y-auto safe-bottom">
+          <div className="max-w-6xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6">
+
+            {/* ── Page header ── */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
-                  <User className="w-5 h-5 sm:w-6 sm:h-6 text-lungsense-blue" />
-                  Personal Information
-                </h3>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="age" className="text-gray-700 font-semibold">Age</Label>
-                    {isEditing ? (
-                      <Input
-                        id="age"
-                        type="number"
-                        value={profile?.age || ''}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value);
-                          if (!isNaN(value) && value >= 1 && value <= 120) {
-                            setProfile(prev => prev ? {...prev, age: value} : null);
-                          } else if (e.target.value === '') {
-                            setProfile(prev => prev ? {...prev, age: undefined} : null);
-                          }
-                        }}
-                        min="1"
-                        max="120"
-                        className="border-gray-300"
-                      />
-                    ) : (
-                      <p className="text-gray-900 font-medium text-lg">{profile?.age || 'Not specified'}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="sex" className="text-gray-700 font-semibold">Sex</Label>
-                    {isEditing ? (
-                      <select
-                        id="sex"
-                        value={profile?.sex || ''}
-                        onChange={(e) => setProfile(prev => prev ? {...prev, sex: e.target.value} : null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="">Select</option>
-                        <option value="M">Male</option>
-                        <option value="F">Female</option>
-                        <option value="O">Other</option>
-                      </select>
-                    ) : (
-                      <p className="text-gray-900 font-medium text-lg">
-                        {profile?.sex === 'M' ? 'Male' : profile?.sex === 'F' ? 'Female' : profile?.sex === 'O' ? 'Other' : 'Not specified'}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="ethnicity" className="text-gray-700 font-semibold">Ethnicity</Label>
-                    {isEditing ? (
-                      <select
-                        id="ethnicity"
-                        value={profile?.ethnicity || ''}
-                        onChange={(e) => setProfile(prev => prev ? {...prev, ethnicity: e.target.value} : null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      >
-                        <option value="">Select</option>
-                        <option value="AFR">African</option>
-                        <option value="ASN">Asian</option>
-                        <option value="CAU">Caucasian</option>
-                        <option value="HIS">Hispanic</option>
-                        <option value="NAM">Native American</option>
-                        <option value="PAC">Pacific Islander</option>
-                        <option value="OTH">Other</option>
-                      </select>
-                    ) : (
-                      <p className="text-gray-900 font-medium text-lg">{profile?.ethnicity || 'Not specified'}</p>
-                    )}
-                  </div>
-                </div>
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 font-display">
+                  My Profile
+                </h1>
+                <p className="text-xs sm:text-sm md:text-base text-gray-600 mt-0.5 sm:mt-1">
+                  Manage your personal information and preferences
+                </p>
               </div>
 
-              {/* Location */}
-              {profile?.country && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
-                      <MapPin className="w-6 h-6 text-lungsense-blue" />
-                      Location
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-gray-700 font-semibold">Country</Label>
-                        <p className="text-gray-900 font-medium text-lg">{profile.country}</p>
+              {/* Action buttons — stack on mobile, row on sm+ */}
+              <div className="flex flex-col xs:flex-row sm:flex-row gap-2 w-full sm:w-auto">
+                <Button
+                  onClick={() =>
+                    confirm('Are you sure you want to delete your account? This action cannot be undone.') &&
+                    toast.error('Account deletion feature coming soon')
+                  }
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center justify-center gap-2 border-red-500 text-red-600 hover:bg-red-50 text-xs sm:text-sm w-full sm:w-auto"
+                >
+                  <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Delete Account
+                </Button>
+                <Button
+                  onClick={handleLogout}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center justify-center gap-2 border-gray-300 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm w-full sm:w-auto"
+                >
+                  <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Logout
+                </Button>
+              </div>
+            </div>
+
+            {/* ── Main profile card ── */}
+            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+
+              {/* Gradient header */}
+              <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+
+                  {/* Avatar + name */}
+                  <div className="flex flex-row items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
+                    <Avatar className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 border-4 border-white shadow-lg flex-shrink-0">
+                      <AvatarImage src={profilePicture || ''} alt={userName || ''} />
+                      <AvatarFallback className="text-lg sm:text-xl md:text-2xl bg-white text-lungsense-blue font-bold">
+                        {profile ? getInitials(profile.first_name, profile.last_name) : 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <CardTitle className="text-xl sm:text-2xl md:text-3xl font-display truncate">
+                        {userName}
+                      </CardTitle>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Mail className="w-3 h-3 flex-shrink-0" />
+                        <span className="text-xs sm:text-sm text-blue-100 truncate">{userEmail}</span>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-700 font-semibold">Province/State</Label>
-                        <p className="text-gray-900 font-medium text-lg">{profile.province || 'Not specified'}</p>
-                      </div>
+                      <Badge className={`mt-2 ${getRoleColor(userRole || '')} px-2 py-0.5 text-xs`}>
+                        {userRole?.replace('_', ' ').toUpperCase()}
+                      </Badge>
                     </div>
                   </div>
-                </>
-              )}
 
-              {/* Respiratory History - Only for patients */}
-              {userRole === 'patient' && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
-                      <Heart className="w-6 h-6 text-red-500" />
-                      Respiratory History
-                    </h3>
-                    
-                    {isEditing ? (
-                      <div className="space-y-3">
-                        <p className="text-sm text-gray-600">Medical & Family History - Check all that apply to you or your immediate family.</p>
-                        <div className="space-y-2">
-                          {[
-                            { key: 'COPD', label: 'COPD' },
-                            { key: 'ASTHMA', label: 'Asthma' },
-                            { key: 'TB', label: 'Tuberculosis (TB)' },
-                            { key: 'CF', label: 'Cystic Fibrosis (CF)' },
-                            { key: 'SMOKER', label: 'Current or Former Smoker' },
-                            { key: 'WORK_EXPOSURE', label: 'Occupational Exposure (e.g., Mines, Mining, Industrial Dust)' },
-                            { key: 'NONE', label: 'None of the above' }
-                          ].map(item => (
-                            <label
-                              key={item.key}
-                              className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={profile?.respiratory_history?.includes(item.key) || false}
-                                onChange={() => {
-                                  if (!profile) return;
-                                  const history = [...(profile.respiratory_history || [])];
-                                  if (item.key === 'NONE') {
-                                    setProfile({ ...profile, respiratory_history: history.includes('NONE') ? [] : ['NONE'] });
-                                  } else {
-                                    const filtered = history.filter(h => h !== 'NONE');
-                                    if (filtered.includes(item.key)) {
-                                      setProfile({ ...profile, respiratory_history: filtered.filter(h => h !== item.key) });
-                                    } else {
-                                      setProfile({ ...profile, respiratory_history: [...filtered, item.key] });
-                                    }
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                              <span className="text-sm">{item.label}</span>
-                            </label>
-                          ))}
+                  {/* Edit / Save / Cancel */}
+                  {!isEditing ? (
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      className="bg-white text-lungsense-blue hover:bg-blue-50 w-full sm:w-auto text-xs sm:text-sm"
+                      size="sm"
+                    >
+                      <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
+                      Edit Profile
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button
+                        onClick={() => setIsEditing(false)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-white/20 border-white text-white hover:bg-white/30 flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleSave}
+                        disabled={isSaving}
+                        size="sm"
+                        className="bg-white text-lungsense-blue hover:bg-blue-50 flex-1 sm:flex-none text-xs sm:text-sm"
+                      >
+                        <Save className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1" />
+                        {isSaving ? 'Saving...' : 'Save Changes'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+
+              {/* Card body */}
+              <CardContent className="space-y-5 sm:space-y-6 md:space-y-8 p-4 sm:p-5 md:p-6">
+
+                {/* Personal Information */}
+                <div>
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-lungsense-blue" />
+                    Personal Information
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+                    {/* Age */}
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="age" className="text-gray-700 font-semibold text-sm">Age</Label>
+                      {isEditing ? (
+                        <Input
+                          id="age"
+                          type="number"
+                          value={profile?.age || ''}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (!isNaN(value) && value >= 1 && value <= 120) {
+                              setProfile(prev => prev ? { ...prev, age: value } : null);
+                            } else if (e.target.value === '') {
+                              setProfile(prev => prev ? { ...prev, age: undefined } : null);
+                            }
+                          }}
+                          min="1"
+                          max="120"
+                          className="border-gray-300 h-9 sm:h-10 text-sm"
+                        />
+                      ) : (
+                        <p className="text-gray-900 font-medium text-base sm:text-lg">
+                          {profile?.age || 'Not specified'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Sex */}
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="sex" className="text-gray-700 font-semibold text-sm">Sex</Label>
+                      {isEditing ? (
+                        <select
+                          id="sex"
+                          value={profile?.sex || ''}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, sex: e.target.value } : null)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-9 sm:h-10"
+                        >
+                          <option value="">Select</option>
+                          <option value="M">Male</option>
+                          <option value="F">Female</option>
+                          <option value="O">Other</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 font-medium text-base sm:text-lg">
+                          {profile?.sex === 'M' ? 'Male'
+                            : profile?.sex === 'F' ? 'Female'
+                            : profile?.sex === 'O' ? 'Other'
+                            : 'Not specified'}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Ethnicity */}
+                    <div className="space-y-1.5 sm:space-y-2">
+                      <Label htmlFor="ethnicity" className="text-gray-700 font-semibold text-sm">Ethnicity</Label>
+                      {isEditing ? (
+                        <select
+                          id="ethnicity"
+                          value={profile?.ethnicity || ''}
+                          onChange={(e) => setProfile(prev => prev ? { ...prev, ethnicity: e.target.value } : null)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm h-9 sm:h-10"
+                        >
+                          <option value="">Select</option>
+                          <option value="AFR">African</option>
+                          <option value="ASN">Asian</option>
+                          <option value="CAU">Caucasian</option>
+                          <option value="HIS">Hispanic</option>
+                          <option value="NAM">Native American</option>
+                          <option value="PAC">Pacific Islander</option>
+                          <option value="OTH">Other</option>
+                        </select>
+                      ) : (
+                        <p className="text-gray-900 font-medium text-base sm:text-lg">
+                          {profile?.ethnicity || 'Not specified'}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location */}
+                {profile?.country && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
+                        <MapPin className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-lungsense-blue" />
+                        Location
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label className="text-gray-700 font-semibold text-sm">Country</Label>
+                          <p className="text-gray-900 font-medium text-base sm:text-lg">{profile.country}</p>
+                        </div>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label className="text-gray-700 font-semibold text-sm">Province/State</Label>
+                          <p className="text-gray-900 font-medium text-base sm:text-lg">
+                            {profile.province || 'Not specified'}
+                          </p>
                         </div>
                       </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {profile?.respiratory_history && profile.respiratory_history.length > 0 ? (
-                          profile.respiratory_history.map((condition, index) => (
-                            <Badge key={index} variant="secondary" className="px-3 py-2 text-sm bg-red-100 text-red-800 border border-red-200">
-                              {condition}
-                            </Badge>
-                          ))
-                        ) : (
-                          <p className="text-gray-500 italic">No respiratory conditions recorded</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* Practitioner Info */}
-              {userRole === 'practitioner' && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-gray-800">
-                      <Building className="w-6 h-6 text-lungsense-blue" />
-                      Professional Information
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label className="text-gray-700 font-semibold">Practitioner ID</Label>
-                        <p className="text-gray-900 font-medium text-lg">{profile?.practitioner_id || 'Not specified'}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-gray-700 font-semibold">Institution</Label>
-                        <p className="text-gray-900 font-medium text-lg">{profile?.institution || 'Not specified'}</p>
-                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
 
+                {/* Respiratory History — patients only */}
+                {userRole === 'patient' && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
+                        <Heart className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-red-500" />
+                        Respiratory History
+                      </h3>
 
-            </CardContent>
-          </Card>
-
-          {/* Family Members */}
-          {userRole === 'patient' && (
-            <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2 text-xl sm:text-2xl font-display">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6" />
-                  Family Members
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 sm:p-6">
-                {subUsers.length > 0 ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    {subUsers.map((subUser) => (
-                      <Card key={subUser.id} className="border-2 border-gray-200 hover:border-lungsense-blue transition-all shadow-md">
-                        <CardContent className="p-4 sm:p-5">
-                          {editingSubUser === subUser.id ? (
-                            <div className="space-y-3 sm:space-y-4">
-                              <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                                <div>
-                                  <Label className="text-xs">First Name</Label>
-                                  <Input
-                                    value={editedSubUser?.first_name || ''}
-                                    onChange={(e) => setEditedSubUser(prev => prev ? {...prev, first_name: e.target.value} : null)}
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                                <div>
-                                  <Label className="text-xs">Last Name</Label>
-                                  <Input
-                                    value={editedSubUser?.last_name || ''}
-                                    onChange={(e) => setEditedSubUser(prev => prev ? {...prev, last_name: e.target.value} : null)}
-                                    className="h-8 text-sm"
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <Label className="text-xs">Age</Label>
-                                <Input
-                                  type="number"
-                                  value={editedSubUser?.age || ''}
-                                  onChange={(e) => {
-                                    const value = parseInt(e.target.value);
-                                    if (!isNaN(value) && value >= 1 && value <= 120) {
-                                      setEditedSubUser(prev => prev ? {...prev, age: value} : null);
-                                    } else if (e.target.value === '') {
-                                      setEditedSubUser(prev => prev ? {...prev, age: 0} : null);
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            Medical &amp; Family History — Check all that apply to you or your immediate family.
+                          </p>
+                          <div className="space-y-2">
+                            {[
+                              { key: 'COPD',          label: 'COPD' },
+                              { key: 'ASTHMA',        label: 'Asthma' },
+                              { key: 'TB',            label: 'Tuberculosis (TB)' },
+                              { key: 'CF',            label: 'Cystic Fibrosis (CF)' },
+                              { key: 'SMOKER',        label: 'Current or Former Smoker' },
+                              { key: 'WORK_EXPOSURE', label: 'Occupational Exposure (e.g., Mines, Mining, Industrial Dust)' },
+                              { key: 'NONE',          label: 'None of the above' }
+                            ].map(item => (
+                              <label
+                                key={item.key}
+                                className="flex items-center gap-3 p-2.5 sm:p-3 border rounded-lg cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={profile?.respiratory_history?.includes(item.key) || false}
+                                  onChange={() => {
+                                    if (!profile) return;
+                                    const history = [...(profile.respiratory_history || [])];
+                                    if (item.key === 'NONE') {
+                                      setProfile({ ...profile, respiratory_history: history.includes('NONE') ? [] : ['NONE'] });
+                                    } else {
+                                      const filtered = history.filter(h => h !== 'NONE');
+                                      if (filtered.includes(item.key)) {
+                                        setProfile({ ...profile, respiratory_history: filtered.filter(h => h !== item.key) });
+                                      } else {
+                                        setProfile({ ...profile, respiratory_history: [...filtered, item.key] });
+                                      }
                                     }
                                   }}
-                                  min="1"
-                                  max="120"
-                                  className="h-8 text-sm"
+                                  className="w-4 h-4 flex-shrink-0"
                                 />
-                              </div>
-                              <div className="flex flex-col sm:flex-row gap-2">
-                                <Button onClick={handleSaveSubUser} size="sm" className="flex-1 bg-green-600 hover:bg-green-700 text-sm">
-                                  <Save className="w-3 h-3 mr-1" />
-                                  Save
-                                </Button>
-                                <Button onClick={() => setEditingSubUser(null)} size="sm" variant="outline" className="flex-1 text-sm">
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
+                                <span className="text-xs sm:text-sm leading-snug">{item.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {profile?.respiratory_history && profile.respiratory_history.length > 0 ? (
+                            profile.respiratory_history.map((condition, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="px-2.5 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm bg-red-100 text-red-800 border border-red-200"
+                              >
+                                {condition}
+                              </Badge>
+                            ))
                           ) : (
-                            <>
-                              <div className="flex items-start justify-between mb-3">
-                                <div>
-                                  <h4 className="font-bold text-base sm:text-lg text-gray-900">{subUser.first_name} {subUser.last_name}</h4>
-                                  <Badge className="mt-1 bg-blue-100 text-blue-800 text-xs">Family Member</Badge>
-                                </div>
-                                <div className="flex gap-1">
-                                  <Button
-                                    onClick={() => handleEditSubUser(subUser)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 hover:bg-blue-100"
-                                  >
-                                    <Edit className="w-4 h-4 text-blue-600" />
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleDeleteSubUser(subUser.id)}
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-8 w-8 p-0 hover:bg-red-100"
-                                  >
-                                    <Trash2 className="w-4 h-4 text-red-600" />
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="space-y-2 text-xs sm:text-sm">
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Age:</span>
-                                  <span className="font-semibold text-gray-900">{subUser.age} years</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Sex:</span>
-                                  <span className="font-semibold text-gray-900">{subUser.sex === 'M' ? 'Male' : subUser.sex === 'F' ? 'Female' : 'Other'}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Ethnicity:</span>
-                                  <span className="font-semibold text-gray-900">{subUser.ethnicity}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-gray-600">Location:</span>
-                                  <span className="font-semibold text-gray-900 truncate ml-2">{subUser.province}, {subUser.country}</span>
-                                </div>
-                              </div>
-                            </>
+                            <p className="text-gray-500 italic text-sm">No respiratory conditions recorded</p>
                           )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-600 mb-2">No Family Members</h3>
-                    <p className="text-gray-500">Add family members from the dashboard to manage their health records</p>
-                  </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
                 )}
+
+                {/* Professional Information — practitioners only */}
+                {userRole === 'practitioner' && (
+                  <>
+                    <Separator />
+                    <div>
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2 text-gray-800">
+                        <Building className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-lungsense-blue" />
+                        Professional Information
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label className="text-gray-700 font-semibold text-sm">Practitioner ID</Label>
+                          <p className="text-gray-900 font-medium text-base sm:text-lg">
+                            {profile?.practitioner_id || 'Not specified'}
+                          </p>
+                        </div>
+                        <div className="space-y-1.5 sm:space-y-2">
+                          <Label className="text-gray-700 font-semibold text-sm">Institution</Label>
+                          <p className="text-gray-900 font-medium text-base sm:text-lg">
+                            {profile?.institution || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Privacy Policy link — always visible at bottom of profile card */}
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs sm:text-sm font-semibold text-gray-700">Terms of Use &amp; Medical Disclaimer</p>
+                    <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
+                      Review how your health data is collected and used
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowPrivacy(true)}
+                    className="flex items-center gap-1.5 text-xs sm:text-sm text-lungsense-blue hover:underline active:opacity-60 transition-opacity flex-shrink-0 ml-4"
+                  >
+                    <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    View Policy
+                  </button>
+                </div>
+
               </CardContent>
             </Card>
-          )}
-        </div>
-      </main>
-    </div>
+
+            {/* ── Family Members — patients only ── */}
+            {userRole === 'patient' && (
+              <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+                <CardHeader className="pb-3 sm:pb-4 bg-gradient-to-r from-lungsense-blue to-indigo-600 text-white rounded-t-lg px-4 sm:px-6">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl md:text-2xl font-display">
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
+                    Family Members
+                  </CardTitle>
+                </CardHeader>
+
+                <CardContent className="p-3 sm:p-4 md:p-6">
+                  {subUsers.length > 0 ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+                      {subUsers.map((subUser) => (
+                        <Card
+                          key={subUser.id}
+                          className="border-2 border-gray-200 hover:border-lungsense-blue transition-all shadow-md"
+                        >
+                          <CardContent className="p-3 sm:p-4 md:p-5">
+                            {editingSubUser === subUser.id ? (
+                              <div className="space-y-3">
+                                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                                  <div>
+                                    <Label className="text-xs">First Name</Label>
+                                    <Input
+                                      value={editedSubUser?.first_name || ''}
+                                      onChange={(e) => setEditedSubUser(prev => prev ? { ...prev, first_name: e.target.value } : null)}
+                                      className="h-8 text-sm mt-1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs">Last Name</Label>
+                                    <Input
+                                      value={editedSubUser?.last_name || ''}
+                                      onChange={(e) => setEditedSubUser(prev => prev ? { ...prev, last_name: e.target.value } : null)}
+                                      className="h-8 text-sm mt-1"
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Age</Label>
+                                  <Input
+                                    type="number"
+                                    value={editedSubUser?.age || ''}
+                                    onChange={(e) => {
+                                      const value = parseInt(e.target.value);
+                                      if (!isNaN(value) && value >= 1 && value <= 120) {
+                                        setEditedSubUser(prev => prev ? { ...prev, age: value } : null);
+                                      } else if (e.target.value === '') {
+                                        setEditedSubUser(prev => prev ? { ...prev, age: 0 } : null);
+                                      }
+                                    }}
+                                    min="1"
+                                    max="120"
+                                    className="h-8 text-sm mt-1"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={handleSaveSubUser}
+                                    size="sm"
+                                    className="flex-1 bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
+                                  >
+                                    <Save className="w-3 h-3 mr-1" />
+                                    Save
+                                  </Button>
+                                  <Button
+                                    onClick={() => setEditingSubUser(null)}
+                                    size="sm"
+                                    variant="outline"
+                                    className="flex-1 text-xs sm:text-sm"
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                                  <div>
+                                    <h4 className="font-bold text-sm sm:text-base md:text-lg text-gray-900">
+                                      {subUser.first_name} {subUser.last_name}
+                                    </h4>
+                                    <Badge className="mt-1 bg-blue-100 text-blue-800 text-xs">
+                                      Family Member
+                                    </Badge>
+                                  </div>
+                                  <div className="flex gap-1 flex-shrink-0">
+                                    <Button
+                                      onClick={() => handleEditSubUser(subUser)}
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0 hover:bg-blue-100"
+                                    >
+                                      <Edit className="w-4 h-4 text-blue-600" />
+                                    </Button>
+                                    <Button
+                                      onClick={() => handleDeleteSubUser(subUser.id)}
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8 w-8 p-0 hover:bg-red-100"
+                                    >
+                                      <Trash2 className="w-4 h-4 text-red-600" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Age:</span>
+                                    <span className="font-semibold text-gray-900">{subUser.age} years</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Sex:</span>
+                                    <span className="font-semibold text-gray-900">
+                                      {subUser.sex === 'M' ? 'Male' : subUser.sex === 'F' ? 'Female' : 'Other'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Ethnicity:</span>
+                                    <span className="font-semibold text-gray-900">{subUser.ethnicity}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-600">Location:</span>
+                                    <span className="font-semibold text-gray-900 truncate ml-2">
+                                      {subUser.province}, {subUser.country}
+                                    </span>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 sm:py-12">
+                      <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                      <h3 className="text-base sm:text-lg font-semibold text-gray-600 mb-1 sm:mb-2">
+                        No Family Members
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        Add family members from the dashboard to manage their health records
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Bottom privacy note — small legal reminder, visible on all roles */}
+            <div className="text-center pb-2 safe-bottom">
+              <p className="text-[10px] sm:text-xs text-gray-400">
+                Your data is processed in accordance with our{' '}
+                <button
+                  onClick={() => setShowPrivacy(true)}
+                  className="text-lungsense-blue hover:underline active:opacity-60"
+                >
+                  Terms of Use &amp; Medical Disclaimer
+                </button>
+                .
+              </p>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </>
   );
 }
