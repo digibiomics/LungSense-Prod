@@ -1,18 +1,17 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Activity, User, Stethoscope } from "lucide-react";
+import { User, Stethoscope, ChevronRight } from "lucide-react";
 import { useEffect } from "react";
 
 export default function SelectRole() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Auto-redirect if user is already logged in
     const token = localStorage.getItem('access_token');
     const userRole = localStorage.getItem('user_role');
     const profileCompleted = localStorage.getItem('profile_completed');
-    
+
     if (token && profileCompleted === 'true') {
       if (userRole === 'patient') {
         navigate('/patient/select-profile', { replace: true });

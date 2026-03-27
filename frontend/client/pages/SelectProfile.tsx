@@ -356,8 +356,8 @@ export default function SelectProfile() {
 
       {/* ---------- MODAL ---------- */}
       {isAdding && (
-        <div className="fixed inset-0 bg-black/60 flex items-start sm:items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
-          <Card className="w-full max-w-2xl p-4 sm:p-6 md:p-8 bg-white shadow-2xl mt-4 sm:my-4 mb-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto">
+          <Card className="w-full max-w-2xl p-4 sm:p-6 md:p-8 bg-white shadow-2xl my-4">
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 font-display flex items-center gap-2">
                 <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" /> Add New Profile

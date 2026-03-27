@@ -7,11 +7,10 @@ const Index: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Auto-redirect if user is already logged in
     const token = localStorage.getItem('access_token');
     const userRole = localStorage.getItem('user_role');
     const profileCompleted = localStorage.getItem('profile_completed');
-    
+
     if (token && profileCompleted === 'true') {
       if (userRole === 'patient') {
         navigate('/patient/select-profile', { replace: true });

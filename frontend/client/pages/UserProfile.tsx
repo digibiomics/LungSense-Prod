@@ -337,24 +337,7 @@ export default function UserProfile() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="w-full sm:w-auto">
-                    {isEditing ? (
-                      <div className="flex gap-2 mt-1">
-                        <Input
-                          value={profile?.first_name || ''}
-                          onChange={(e) => setProfile(prev => prev ? {...prev, first_name: e.target.value} : null)}
-                          placeholder="First name"
-                          className="bg-white/20 border-white text-white placeholder:text-blue-200 h-9 text-sm font-display font-semibold"
-                        />
-                        <Input
-                          value={profile?.last_name || ''}
-                          onChange={(e) => setProfile(prev => prev ? {...prev, last_name: e.target.value} : null)}
-                          placeholder="Last name"
-                          className="bg-white/20 border-white text-white placeholder:text-blue-200 h-9 text-sm font-display font-semibold"
-                        />
-                      </div>
-                    ) : (
-                      <CardTitle className="text-2xl sm:text-3xl font-display">{userName}</CardTitle>
-                    )}
+                    <CardTitle className="text-2xl sm:text-3xl font-display">{userName}</CardTitle>
                     <div className="flex items-center gap-2 mt-2">
                       <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
                       <span className="text-xs sm:text-sm text-blue-100 truncate">{userEmail}</span>
