@@ -43,6 +43,8 @@ export default function CompleteProfile() {
     province: '',
     respiratory_history: []
   });
+  const [otherText, setOtherText] = useState('');
+  const [subUserOtherText, setSubUserOtherText] = useState<{ [key: number]: string }>({});
 
   const [subUsers, setSubUsers] = useState<SubUserData[]>([]);
   const [activeSubUserIndex, setActiveSubUserIndex] = useState(-1);
@@ -75,9 +77,13 @@ export default function CompleteProfile() {
 
   const toggleRespiratoryHistory = (condition: string) => {
     setProfileData(prev => {
-      const history = [...prev.respiratory_history];
+      const history = [...prev.respiratory_history].filter(h => !h.startsWith('OTHER:'));
       if (condition === 'NONE') {
         return { ...prev, respiratory_history: history.includes('NONE') ? [] : ['NONE'] };
+      } else if (condition === 'OTHER') {
+        const hasOther = prev.respiratory_history.some(h => h.startsWith('OTHER'));
+        const filtered = history.filter(h => h !== 'NONE');
+        return { ...prev, respiratory_history: hasOther ? filtered : [...filtered, 'OTHER'] };
       } else {
         const filtered = history.filter(h => h !== 'NONE');
         if (filtered.includes(condition)) {
@@ -98,9 +104,13 @@ export default function CompleteProfile() {
 
   const toggleSubUserRespiratoryHistory = (condition: string, index: number) => {
     const updatedSubUsers = [...subUsers];
-    const history = [...updatedSubUsers[index].respiratory_history];
+    const history = [...updatedSubUsers[index].respiratory_history].filter(h => !h.startsWith('OTHER:'));
     if (condition === 'NONE') {
       updatedSubUsers[index].respiratory_history = history.includes('NONE') ? [] : ['NONE'];
+    } else if (condition === 'OTHER') {
+      const hasOther = updatedSubUsers[index].respiratory_history.some(h => h.startsWith('OTHER'));
+      const filtered = history.filter(h => h !== 'NONE');
+      updatedSubUsers[index].respiratory_history = hasOther ? filtered : [...filtered, 'OTHER'];
     } else {
       const filtered = history.filter(h => h !== 'NONE');
       if (filtered.includes(condition)) {
@@ -178,8 +188,10 @@ export default function CompleteProfile() {
         ethnicity: profileData.ethnicity,
         country: profileData.country,
         province: profileData.province,
-        respiratory_history: profileData.respiratory_history,
-        sub_users: subUsers.map(su => ({
+        respiratory_history: profileData.respiratory_history.map(h =>
+          h === 'OTHER' && otherText.trim() ? `OTHER:${otherText.trim()}` : h
+        ),
+        sub_users: subUsers.map((su, i) => ({
           first_name: su.first_name,
           last_name: su.last_name,
           age: parseInt(su.age),
@@ -187,7 +199,9 @@ export default function CompleteProfile() {
           ethnicity: su.ethnicity,
           country: su.country,
           province: su.province,
-          respiratory_history: su.respiratory_history
+          respiratory_history: su.respiratory_history.map(h =>
+            h === 'OTHER' && subUserOtherText[i]?.trim() ? `OTHER:${subUserOtherText[i].trim()}` : h
+          )
         }))
       };
 
@@ -491,6 +505,7 @@ export default function CompleteProfile() {
                         { key: 'SMOKER',        label: 'Current or Former Smoker' },
                         { key: 'WORK_EXPOSURE', label: 'Occupational Exposure (e.g., Mines, Mining, Industrial Dust)' },
                         { key: 'NONE',          label: 'None of the above' },
+                        { key: 'OTHER',         label: 'Other' },
                       ].map(item => (
                         <label
                           key={item.key}
@@ -498,7 +513,13 @@ export default function CompleteProfile() {
                         >
                           <input
                             type="checkbox"
-                            checked={currentProfile.respiratory_history.includes(item.key)}
+                            checked={
+                              item.key === 'OTHER'
+                                ? (isSubUser
+                                    ? subUsers[activeSubUserIndex].respiratory_history.some(h => h.startsWith('OTHER'))
+                                    : currentProfile.respiratory_history.some(h => h.startsWith('OTHER')))
+                                : currentProfile.respiratory_history.includes(item.key)
+                            }
                             onChange={() => {
                               if (isSubUser) {
                                 toggleSubUserRespiratoryHistory(item.key, activeSubUserIndex);
@@ -511,6 +532,25 @@ export default function CompleteProfile() {
                           <span className="text-sm">{item.label}</span>
                         </label>
                       ))}
+                      {/* Other text box */}
+                      {(isSubUser
+                        ? subUsers[activeSubUserIndex].respiratory_history.some(h => h.startsWith('OTHER'))
+                        : currentProfile.respiratory_history.some(h => h.startsWith('OTHER'))
+                      ) && (
+                        <textarea
+                          value={isSubUser ? (subUserOtherText[activeSubUserIndex] || '') : otherText}
+                          onChange={e => {
+                            if (isSubUser) {
+                              setSubUserOtherText(prev => ({ ...prev, [activeSubUserIndex]: e.target.value }));
+                            } else {
+                              setOtherText(e.target.value);
+                            }
+                          }}
+                          placeholder="Please describe your condition..."
+                          rows={2}
+                          className="w-full border rounded-lg p-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-lungsense-blue"
+                        />
+                      )}
                     </div>
                   </div>
                 )}

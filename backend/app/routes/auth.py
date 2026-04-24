@@ -301,6 +301,35 @@ async def admin_login(
     )
 
 
+@router.post("/login", response_model=TokenResponse)
+async def user_login(
+    request: LoginRequest,
+    db: Session = Depends(create_local_session)
+):
+    """Email/password login for patients and practitioners."""
+    user = UserRepository.authenticate_user(db, request.email, request.password)
+
+    if not user:
+        raise_unauthorized("Invalid email or password")
+
+    if user.role not in [UserRole.PATIENT, UserRole.PRACTITIONER]:
+        raise_unauthorized("Use the admin login page")
+
+    access_token = create_access_token({
+        "user_id": user.id,
+        "email": user.email,
+        "role": user.role
+    })
+
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token="temp_refresh_token",
+        user_id=user.id,
+        role=user.role,
+        profile_completed=user.profile_completed
+    )
+
+
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_access_token(
     request: RefreshTokenRequest,

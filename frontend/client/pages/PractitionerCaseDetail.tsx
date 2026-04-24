@@ -33,6 +33,7 @@ interface CaseDetail {
   };
   symptoms: Array<{
     name: string;
+    custom_text?: string;
   }>;
   files: Array<{
     id: number;
@@ -338,6 +339,12 @@ export default function PractitionerCaseDetail() {
                   {caseDetail.symptoms.map((symptom, index) => (
                     <div key={index} className="p-3 bg-gray-50 rounded-lg">
                       <p className="font-semibold text-gray-900 font-display">{symptom.name}</p>
+                      {symptom.custom_text && (
+                        <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
+                          <p className="text-xs text-gray-600 font-dm mb-1 font-semibold">Patient Description:</p>
+                          <p className="text-sm text-gray-800 font-dm italic">"{symptom.custom_text}"</p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -518,20 +525,7 @@ export default function PractitionerCaseDetail() {
                       </Select>
                     </div>
 
-                    <div>
-                      <Label className="text-sm font-semibold text-gray-700 font-display mb-2 block">
-                        Confidence Score: {Math.round(reviewForm.confidence_score * 100)}%
-                      </Label>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={reviewForm.confidence_score}
-                        onChange={(e) => setReviewForm({...reviewForm, confidence_score: parseFloat(e.target.value)})}
-                        className="w-full"
-                      />
-                    </div>
+
 
                     <div>
                       <Label className="text-sm font-semibold text-gray-700 font-display mb-2 block">

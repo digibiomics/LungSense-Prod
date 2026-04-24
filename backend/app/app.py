@@ -33,7 +33,8 @@ def create_app() -> FastAPI:
              "https://lungsense.ai",
              "https://www.lungsense.ai",
             "capacitor://localhost", # IOS Capacitor view
-            "http://localhost", #Android Capacitor view 
+            "http://localhost", #Android Capacitor view
+            "https://utopia-confusion-gating.ngrok-free.dev", # ngrok test domain
         ],
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

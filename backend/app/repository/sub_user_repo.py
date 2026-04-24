@@ -26,37 +26,19 @@ class SubUserRepository:
         request: SubUserCreateRequest
     ) -> SubUser:
         """Create a new sub-user under a main patient account."""
-        # Check if email already exists
-        existing = db.query(SubUser).filter(
-            or_(SubUser.email == request.email, SubUser.deleted_at.is_not(None))
-        ).first()
-        
-        if existing:
-            if existing.deleted_at:
-                # Reactivate soft-deleted sub-user
-                existing.restore()
-                existing.owner_user_id = owner_user_id
-                existing.first_name = request.first_name
-                existing.last_name = request.last_name
-                existing.age = request.age
-                existing.sex = request.sex
-                existing.ethnicity = request.ethnicity
-                existing.country = request.country
-                existing.province = request.province
-                existing.respiratory_history = (
-                    json.dumps([h.value for h in request.respiratory_history])
-                    if request.respiratory_history else None
-                )
-                db.commit()
-                db.refresh(existing)
-                return existing
-            else:
+        # Check email uniqueness only if email is provided
+        if request.email:
+            existing = db.query(SubUser).filter(
+                SubUser.email == request.email,
+                SubUser.deleted_at.is_(None)
+            ).first()
+            if existing:
                 raise_conflict("Email already registered")
         
         # Create new sub-user
         sub_user = SubUser(
             owner_user_id=owner_user_id,
-            email=request.email,
+            email=request.email or None,
             first_name=request.first_name,
             last_name=request.last_name,
             age=request.age,

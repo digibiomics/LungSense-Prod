@@ -154,11 +154,15 @@ async def get_case_details(
     # Format symptoms
     symptom_data = []
     for case_symptom, symptom in symptoms:
-        symptom_data.append({
+        symptom_info = {
             "name": symptom.name,
             "severity": case_symptom.severity,
             "duration_days": case_symptom.duration_days
-        })
+        }
+        # Add custom text if it exists (for "Other" symptoms)
+        if case_symptom.custom_text:
+            symptom_info["custom_text"] = case_symptom.custom_text
+        symptom_data.append(symptom_info)
     
     # Format reviews
     review_data = []

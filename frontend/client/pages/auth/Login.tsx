@@ -2,9 +2,10 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { googleOAuthCallback, recordConsent } from '../../../src/api';
-import { User, Stethoscope, CheckSquare, Square } from 'lucide-react';
+import { googleOAuthCallback, recordConsent, userLogin } from '../../../src/api';
+import { User, Stethoscope, CheckSquare, Square, Eye, EyeOff } from 'lucide-react';
 import PrivacyModal from '@/components/PrivacyModal';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -19,6 +20,11 @@ export default function Login() {
   const [consentChecked, setConsentChecked] = useState(false);
   const [showPolicy, setShowPolicy] = useState(false);
   const [btnScale, setBtnScale] = useState(1);
+  const [loginMode, setLoginMode] = useState<'google' | 'password'>('google');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -59,12 +65,44 @@ export default function Login() {
      'user_name', 'profile_completed', 'profile_picture'].forEach(k => localStorage.removeItem(k));
   };
 
+  const storeAuthAndNavigate = (data: any) => {
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    localStorage.setItem('user_id', data.user_id.toString());
+    localStorage.setItem('user_role', data.role);
+    localStorage.setItem('user_email', data.email || '');
+    localStorage.setItem('user_name', `${data.first_name || ''} ${data.last_name || ''}`.trim());
+    localStorage.setItem('profile_completed', data.profile_completed.toString());
+    if (data.profile_picture_url) localStorage.setItem('profile_picture', data.profile_picture_url);
+    toast.success('Login successful!');
+    if (!data.profile_completed) {
+      navigate(data.role === 'patient' ? '/auth/complete-profile' : '/auth/complete-practitioner-profile');
+    } else {
+      navigate(data.role === 'patient' ? '/patient/select-profile' : '/practitioner/patients');
+    }
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consentChecked) { toast.error('Please accept the Terms first'); return; }
+    if (!email || !password) { toast.error('Email and password are required'); return; }
+    try {
+      setIsLoggingIn(true);
+      const data = await userLogin(email, password);
+      if (!data?.access_token) throw new Error('Invalid response from server');
+      storeAuthAndNavigate(data);
+    } catch (err: any) {
+      toast.error(err.message || 'Login failed');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
   const processBackendLogin = async (idToken: string) => {
     try {
       const data = await googleOAuthCallback(idToken, role);
       if (!data || !data.access_token || !data.user_id) throw new Error('Invalid response from server');
 
-      // Store auth data first — recordConsent needs the token to be in localStorage
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('refresh_token', data.refresh_token);
       localStorage.setItem('user_id', data.user_id.toString());
@@ -74,16 +112,8 @@ export default function Login() {
       localStorage.setItem('profile_completed', data.profile_completed.toString());
       if (data.profile_picture_url) localStorage.setItem('profile_picture', data.profile_picture_url);
 
-      // Record consent in the database now that we have a valid token.
-      // This is non-blocking — a failure here will not prevent login from succeeding.
       await recordConsent();
-
-      toast.success('Login successful!');
-      if (!data.profile_completed) {
-        navigate(data.role === 'patient' ? '/auth/complete-profile' : '/auth/complete-practitioner-profile');
-      } else {
-        navigate(data.role === 'patient' ? '/patient/select-profile' : '/practitioner/patients');
-      }
+      storeAuthAndNavigate(data);
     } catch (error: any) {
       console.error('Login error:', error);
       clearAuthData();
@@ -162,7 +192,7 @@ export default function Login() {
                       Sign in as {roleLabel}
                     </h2>
                     <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      Use your Google account to continue
+                      {loginMode === 'google' ? 'Use your Google account to continue' : 'Use your email and password'}
                     </p>
                   </div>
                 </div>
@@ -196,7 +226,28 @@ export default function Login() {
                   </button>
                 </div>
 
+                {/* Login method toggle */}
+                <div className="w-full flex rounded-xl border border-gray-200 overflow-hidden">
+                  <button
+                    onClick={() => setLoginMode('google')}
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                      loginMode === 'google' ? 'bg-lungsense-blue text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    Google Sign-In
+                  </button>
+                  <button
+                    onClick={() => setLoginMode('password')}
+                    className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                      loginMode === 'password' ? 'bg-lungsense-blue text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    Email & Password
+                  </button>
+                </div>
+
                 {/* Google Sign-In */}
+                {loginMode === 'google' && (
                 <div className="w-full flex flex-col items-center gap-2 sm:gap-3">
                   <div
                     ref={wrapperRef}
@@ -224,13 +275,60 @@ export default function Login() {
                       />
                     </div>
                   </div>
-
                   {!consentChecked && (
                     <p className="text-[11px] text-gray-400 text-center leading-relaxed">
                       Please review and accept the Terms above to continue
                     </p>
                   )}
                 </div>
+                )}
+
+                {/* Email & Password */}
+                {loginMode === 'password' && (
+                <form onSubmit={handlePasswordLogin} className="w-full flex flex-col gap-3">
+                  <input
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-lungsense-blue"
+                    autoComplete="email"
+                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-lungsense-blue pr-10"
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(p => !p)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={!consentChecked || isLoggingIn}
+                    className={`w-full font-display font-semibold rounded-xl py-2.5 ${
+                      consentChecked && !isLoggingIn
+                        ? 'bg-lungsense-blue hover:bg-lungsense-blue/90 text-white'
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {isLoggingIn ? 'Signing in...' : `Sign in as ${roleLabel}`}
+                  </Button>
+                  {!consentChecked && (
+                    <p className="text-[11px] text-gray-400 text-center">
+                      Please accept the Terms above to continue
+                    </p>
+                  )}
+                </form>
+                )}
 
                 {/* Divider */}
                 <div className="w-full border-t border-gray-100" />

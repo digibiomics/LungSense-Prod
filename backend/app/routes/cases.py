@@ -37,6 +37,7 @@ class CaseSubmission(BaseModel):
     xray_key: Optional[str] = None
     cough_audio_key: Optional[str] = None
     breath_audio_key: Optional[str] = None
+    other_symptom_text: Optional[str] = None
 
 
 @router.post("/cases/presign", response_model=APIResponse)
@@ -117,11 +118,17 @@ async def create_case(
     
     # Add symptoms
     for symptom_data in case_data.symptoms:
+        # Check if this is the "Other" symptom (ID 18) and add custom text
+        custom_text = None
+        if symptom_data["symptom_id"] == 18 and case_data.other_symptom_text:
+            custom_text = case_data.other_symptom_text
+            
         case_symptom = CaseSymptom(
             case_id=case.id,
             symptom_id=symptom_data["symptom_id"],
             severity=symptom_data["severity"],
-            duration_days=symptom_data["duration_days"]
+            duration_days=symptom_data["duration_days"],
+            custom_text=custom_text
         )
         db.add(case_symptom)
     

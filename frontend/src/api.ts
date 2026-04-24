@@ -5,6 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000
 export const GOOGLE_OAUTH_CALLBACK_URL = `${API_BASE_URL}/auth/google/callback`;
 export const GOOGLE_COMPLETE_PROFILE_URL = `${API_BASE_URL}/auth/google/complete-profile`;
 export const ADMIN_LOGIN_URL = `${API_BASE_URL}/auth/admin/login`;
+export const USER_LOGIN_URL = `${API_BASE_URL}/auth/login`;
 export const REFRESH_TOKEN_URL = `${API_BASE_URL}/auth/refresh`;
 export const LOGOUT_URL = `${API_BASE_URL}/auth/logout`;
 export const CONSENT_URL = `${API_BASE_URL}/auth/consent`;  // ← NEW
@@ -224,6 +225,29 @@ export async function adminLogin(email: string, password: string) {
       errorMessage = err?.detail || err?.message || err?.error || "Invalid credentials";
     } catch {
       errorMessage = text || "Login failed";
+    }
+    throw new Error(errorMessage);
+  }
+
+  try { return JSON.parse(text); } catch { throw new Error("Invalid response from server"); }
+}
+
+export async function userLogin(email: string, password: string) {
+  const res = await fetch(USER_LOGIN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const text = await res.text();
+
+  if (!res.ok) {
+    let errorMessage = "Invalid email or password";
+    try {
+      const err = JSON.parse(text);
+      errorMessage = err?.detail || err?.message || err?.error || errorMessage;
+    } catch {
+      errorMessage = text || errorMessage;
     }
     throw new Error(errorMessage);
   }

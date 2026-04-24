@@ -1,7 +1,7 @@
 """
 Case symptom model.
 """
-from sqlalchemy import Column, DateTime, ForeignKey, Integer
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.sessions.db import Base
@@ -17,6 +17,7 @@ class CaseSymptom(Base):
     
     severity = Column(Integer, nullable=False)  # 1-5
     duration_days = Column(Integer, nullable=False)
+    custom_text = Column(Text, nullable=True)  # For "Other" symptom descriptions
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

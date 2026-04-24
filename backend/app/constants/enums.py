@@ -36,6 +36,7 @@ class RespiratoryHistory(str, Enum):
     CF = "CF"
     SMOKER = "SMOKER"
     WORK_EXPOSURE = "WORK_EXPOSURE"
+    OTHER = "OTHER"
     NONE = "NONE"
 
 

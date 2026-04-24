@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",         // keep if you need to bind IPv6/0.0.0.0
     port: 8080,         // frontend dev port
+    allowedHosts: true,
     fs: {
       allow: ["."],
       // you can keep deny for sensitive files, but no need to deny "server/**" if removed

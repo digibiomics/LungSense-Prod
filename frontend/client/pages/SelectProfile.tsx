@@ -53,6 +53,8 @@ export default function SelectProfile() {
     historyCF: false,
     isSmoker: false,
     workExposure: false,
+    historyOther: false,
+    otherText: "",
   });
 
   /* ---------- FETCH USERS ---------- */
@@ -136,6 +138,7 @@ export default function SelectProfile() {
     if (form.historyCF) h.push("CF");
     if (form.isSmoker) h.push("SMOKER");
     if (form.workExposure) h.push("WORK_EXPOSURE");
+    if (form.historyOther && form.otherText.trim()) h.push("OTHER");
     return h.length ? h : ["NONE"];
   };
 
@@ -189,6 +192,8 @@ export default function SelectProfile() {
       province: form.province || "",
       respiratory_history: buildHistory(),
     };
+    
+    console.log('Sending payload:', payload);
 
     try {
       const response = await tokenManager.makeAuthenticatedRequest(
@@ -199,7 +204,8 @@ export default function SelectProfile() {
       if (!response.ok) {
         if (response.status === 401) { navigate("/select-role"); return; }
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData?.message || errorData?.detail || "Failed to create profile");
+        console.error('Error response:', errorData);
+        throw new Error(errorData?.message || errorData?.detail || `HTTP ${response.status}: Failed to create profile`);
       }
 
       const data = await response.json();
@@ -218,6 +224,7 @@ export default function SelectProfile() {
         firstName: "", lastName: "", age: "", sex: "", ethnicity: "",
         country: "", province: "", historyCOPD: false, historyAsthma: false,
         historyTB: false, historyCF: false, isSmoker: false, workExposure: false,
+        historyOther: false, otherText: "",
       });
       setIsAdding(false);
       setError(null);
@@ -555,7 +562,6 @@ export default function SelectProfile() {
                         ["historyCF",      "Cystic Fibrosis"],
                         ["isSmoker",       "Smoker"],
                         ["workExposure",   "Work Exposure"],
-                        ["none",           "None"],
                       ].map(([k, l]) => (
                         <label
                           key={k}
@@ -571,6 +577,27 @@ export default function SelectProfile() {
                           <span className="text-sm font-dm">{l}</span>
                         </label>
                       ))}
+                      {/* Other */}
+                      <label className="flex items-center gap-2 p-2.5 border rounded-xl cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          name="historyOther"
+                          checked={form.historyOther}
+                          onChange={handleChange}
+                          className="rounded"
+                        />
+                        <span className="text-sm font-dm">Other</span>
+                      </label>
+                      {form.historyOther && (
+                        <textarea
+                          name="otherText"
+                          value={form.otherText}
+                          onChange={handleChange}
+                          placeholder="Please describe..."
+                          rows={2}
+                          className="col-span-2 w-full border rounded-xl p-2.5 text-sm font-dm resize-none focus:outline-none focus:ring-2 focus:ring-lungsense-blue"
+                        />
+                      )}
                     </div>
                   </div>
 

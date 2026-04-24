@@ -22,6 +22,7 @@ SYMPTOMS = [
     "Known Exposure (TB/COVID/flu)",
     "Smoking habits",
     "None",
+    "Other",
 ]
 
 

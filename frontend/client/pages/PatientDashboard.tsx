@@ -27,6 +27,7 @@ const SYMPTOMS_LIST = [
   { id: 15, name: "Known Exposure (TB/COVID/flu)" },
   { id: 16, name: "Smoking habits" },
   { id: 17, name: "None" },
+  { id: 18, name: "Other" },
 ];
 
 
@@ -60,6 +61,7 @@ export default function PatientDashboard() {
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
   const [coughAudio, setCoughAudio] = useState<Blob | null>(null);
+  const [coughAudioMime, setCoughAudioMime] = useState<string>('audio/webm');
   const [audioType, setAudioType] = useState<"chest" | "cough">("cough");
   const [recordingTime, setRecordingTime] = useState(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
@@ -90,6 +92,7 @@ export default function PatientDashboard() {
   });
   const [isSavingDemographics, setIsSavingDemographics] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [otherSymptomText, setOtherSymptomText] = useState("");
 
   // Fetch demographics for selected user on mount and when selectedUserId changes
   useEffect(() => {
@@ -313,8 +316,10 @@ export default function PatientDashboard() {
     setPreviewUrl(null);
     setAudioType("cough");
     setSelectedSymptoms([]);
+    setOtherSymptomText("");
     setRecordedAudio(null);
     setCoughAudio(null);
+    setCoughAudioMime('audio/webm');
     setUploadedCoughAudio(null);
     setUploadedChestAudio(null);
     setAudioDuration(null);
@@ -337,13 +342,36 @@ export default function PatientDashboard() {
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
+      // Request raw audio — no processing so ML model gets clean cough signal.
+      // Falls back to basic { audio: true } if constraints are rejected by the browser.
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            sampleRate: 44100,
+            channelCount: 1
+          }
+        });
+      } catch {
+        // Fallback: some older Android browsers reject advanced constraints
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      // Pick a MIME type supported by the current browser (iOS needs mp4, Android/Chrome uses webm)
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/mp4')
+        ? 'audio/mp4'
+        : '';
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      const recordedMime = recorder.mimeType || 'audio/webm';
       const chunks: BlobPart[] = [];
 
       recorder.ondataavailable = (e) => chunks.push(e.data);
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const blob = new Blob(chunks, { type: recordedMime });
         const audioUrl = URL.createObjectURL(blob);
         const actualDuration = (Date.now() - recordingStartRef.current) / 1000;
         if (actualDuration < 8) {
@@ -361,6 +389,7 @@ export default function PatientDashboard() {
           setAudioUrls(prev => ({ ...prev, chest: audioUrl }));
         } else {
           setCoughAudio(blob);
+          setCoughAudioMime(recordedMime);
           setAudioUrls(prev => ({ ...prev, cough: audioUrl }));
         }
         stream.getTracks().forEach(track => track.stop());
@@ -477,6 +506,10 @@ export default function PatientDashboard() {
     const exists = withoutNone.find(s => s.id === symptomId);
     if (exists) {
       setSelectedSymptoms(withoutNone.filter((s) => s.id !== symptomId));
+      // Clear other symptom text if "Other" is deselected
+      if (symptomId === 18) {
+        setOtherSymptomText("");
+      }
     } else {
       setSelectedSymptoms([...withoutNone, { id: symptomId, severity: 3, duration_days: 3 }]);
     }
@@ -517,6 +550,7 @@ export default function PatientDashboard() {
           severity: s.severity,
           duration_days: s.duration_days,
         })),
+        other_symptom_text: otherSymptomText.trim() || undefined,
       };
 
       // Upload X-ray
@@ -532,9 +566,23 @@ export default function PatientDashboard() {
       if (coughFile) {
         setUploadProgress("Uploading cough audio...");
         const isBlob = !(coughFile instanceof File);
-        const ext = isBlob ? ".webm" : "." + (coughFile as File).name.split(".").pop()!.toLowerCase();
-        const ct = isBlob ? "audio/webm" : (coughFile as File).type || "audio/webm";
+        const ext = isBlob
+          ? (coughAudioMime.includes('mp4') ? '.mp4' : '.webm')
+          : "." + (coughFile as File).name.split(".").pop()!.toLowerCase();
+        const ct = isBlob ? coughAudioMime : (coughFile as File).type || coughAudioMime;
         payload.cough_audio_key = await presignAndUpload(coughFile, "cough_audio", ct, ext);
+      }
+
+      // Upload chest audio
+      const chestFile = recordedAudio || uploadedChestAudio;
+      if (chestFile) {
+        setUploadProgress("Uploading chest audio...");
+        const isBlob = !(chestFile instanceof File);
+        const ext = isBlob
+          ? (coughAudioMime.includes('mp4') ? '.mp4' : '.webm')
+          : "." + (chestFile as File).name.split(".").pop()!.toLowerCase();
+        const ct = isBlob ? coughAudioMime : (chestFile as File).type || coughAudioMime;
+        payload.breath_audio_key = await presignAndUpload(chestFile, "breath_audio", ct, ext);
       }
       setUploadProgress("Submitting case...");
       const response = await createCase(payload);
@@ -544,7 +592,7 @@ export default function PatientDashboard() {
           <div className="space-y-2 mt-2">
             <p className="text-sm">Your medical data has been uploaded and assigned to a practitioner.</p>
             <p className="text-sm font-semibold text-lungsense-blue">Case ID: {response?.data?.catalog_number || response?.catalog_number || "Pending"}</p>
-            <p className="text-xs text-gray-600 mt-2">You'll receive AI-generated analysis results shortly. Check your results page for updates.</p>
+ 
           </div>
         ),
         className: "border-l-4 border-green-500 bg-green-50",
@@ -716,7 +764,13 @@ export default function PatientDashboard() {
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-display">
              Clinical Information of {selectedUserName || "User"}
             </h1>
-            <div onClick={() => navigate('/patient/profile')} className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:opacity-80 transition-opacity">
+            <div onClick={() => {
+              // Clear patient data when navigating to profile
+              localStorage.removeItem('selectedPatientId');
+              localStorage.removeItem('selectedPatientType');
+              localStorage.removeItem('selectedPatientName');
+              navigate('/patient/profile');
+            }} className="w-10 h-10 bg-gradient-to-br from-lungsense-blue to-blue-600 rounded-full flex items-center justify-center shadow-lg cursor-pointer hover:opacity-80 transition-opacity">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -853,6 +907,19 @@ export default function PatientDashboard() {
                             );
                         })}
                     </div>
+                    {/* Other symptom text box */}
+                    {selectedSymptoms.some(s => s.id === 18) && (
+                        <div className="mt-3">
+                            <Label className="text-xs font-medium text-gray-600 mb-2 block">Please describe other symptoms:</Label>
+                            <textarea
+                                value={otherSymptomText}
+                                onChange={(e) => setOtherSymptomText(e.target.value)}
+                                placeholder="Describe your other symptoms..."
+                                rows={3}
+                                className="w-full border border-gray-200 rounded-lg p-3 text-sm font-dm resize-none focus:outline-none focus:ring-2 focus:ring-lungsense-blue focus:border-transparent"
+                            />
+                        </div>
+                    )}
                 </div>
               </div>
             </div>
@@ -872,20 +939,22 @@ export default function PatientDashboard() {
                     <div className="w-full">
                         <p className="text-sm font-semibold text-gray-700 font-display mb-2 ml-1">Choose Audio Type</p>
                         <div className="flex gap-3">
-                            <button disabled={isPractitioner} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${'bg-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed'}`}>Chest Sounds</button>
                             <button disabled={isPractitioner} onClick={() => setAudioType("cough")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : audioType === "cough" ? "bg-lungsense-blue-light text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>Cough Sounds</button>
+                            <button disabled={isPractitioner} onClick={() => setAudioType("chest")} className={`flex-1 py-2.5 rounded-lg font-display text-sm font-medium transition-all shadow-sm ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : audioType === "chest" ? "bg-orange-500 text-white" : "bg-orange-50 text-orange-600 border border-orange-200 hover:bg-orange-100"}`}>Chest Sounds</button>
                         </div>
                     </div>
 
-                    {/* Waveform */}
+                    {/* Waveform — cough only */}
+                    {audioType === "cough" && (
                     <div className="flex items-center justify-center gap-1 h-12 w-full max-w-md">
                       {[...Array(25)].map((_, i) => (
                         <div key={i} className="w-1.5 rounded-full bg-black transition-all duration-100" style={{ height: isRecording ? `${Math.random() * 40 + 8}px` : `${[10, 15, 25, 15, 10, 20, 15, 10, 10, 20, 30, 20, 10, 10, 15, 25, 15, 10, 25, 15, 10, 10, 20, 15, 10][i]}px`}} />
                       ))}
                     </div>
+                    )}
 
-                    {/* Recording Timer */}
-                    {isRecording && (
+                    {/* Recording Timer — cough only */}
+                    {audioType === "cough" && isRecording && (
                       <div className="text-red-500 font-bold text-lg">
                         Recording: {recordingTime}s / 8s
                       </div>
@@ -896,11 +965,24 @@ export default function PatientDashboard() {
                       <div className="bg-green-50 p-3 rounded-lg border border-green-200">
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-green-600 text-sm font-medium">✓ Cough audio recorded</span>
-                          <button onClick={() => deleteRecording("cough")} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
+                          <button onClick={() => deleteRecording("cough")} className="text-red-500 hover:text-red-700 text-xs">Remove</button>
                         </div>
                         {audioUrls.cough && (
                           <audio controls controlsList="nodownload" className="w-full h-8">
-                            <source src={audioUrls.cough} type="audio/webm" />
+                            <source src={audioUrls.cough} type={coughAudioMime} />
+                          </audio>
+                        )}
+                      </div>
+                    )}
+                    {audioType === "chest" && recordedAudio && (
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-green-600 text-sm font-medium">✓ Chest audio recorded</span>
+                          <button onClick={() => deleteRecording("chest")} className="text-red-500 hover:text-red-700 text-xs">Remove</button>
+                        </div>
+                        {audioUrls.chest && (
+                          <audio controls controlsList="nodownload" className="w-full h-8">
+                            <source src={audioUrls.chest} type={coughAudioMime} />
                           </audio>
                         )}
                       </div>
@@ -914,23 +996,36 @@ export default function PatientDashboard() {
                         {audioDuration && <div className="text-xs text-green-600 mt-1">Duration: {audioDuration.toFixed(1)} seconds ✓</div>}
                       </div>
                     )}
+                    {audioType === "chest" && uploadedChestAudio && (
+                      <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between">
+                          <span className="text-green-600 text-sm font-medium truncate">✓ {uploadedChestAudio.name}</span>
+                          <button onClick={() => { setUploadedChestAudio(null); setAudioDuration(null); }} className="text-red-500 hover:text-red-700 text-xs ml-2 flex-shrink-0">Remove</button>
+                        </div>
+                        {audioDuration && <div className="text-xs text-green-600 mt-1">Duration: {audioDuration.toFixed(1)} seconds ✓</div>}
+                      </div>
+                    )}
 
-                    {/* Recording Controls - disabled if uploaded */}
+                    {/* Record button — cough only */}
+                    {audioType === "cough" && (
                     <div className="flex items-center justify-center gap-6">
                         <button
-                          disabled={isPractitioner || uploadedCoughAudio !== null}
+                          disabled={isPractitioner || (audioType === "cough" ? uploadedCoughAudio !== null : uploadedChestAudio !== null)}
                           onClick={toggleRecording}
                           className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${
-                            isPractitioner || uploadedCoughAudio ? 'bg-gray-300 cursor-not-allowed' : isRecording ? "bg-red-500 hover:bg-red-600 scale-105" : "bg-red-500 hover:bg-red-600"
+                            isPractitioner || (audioType === "cough" ? uploadedCoughAudio : uploadedChestAudio) ? 'bg-gray-300 cursor-not-allowed' : isRecording ? "bg-red-500 hover:bg-red-600 scale-105" : "bg-red-500 hover:bg-red-600"
                           }`}
                         >
                           {isRecording ? <div className="w-5 h-5 bg-white rounded-sm" /> : <Mic className="w-6 h-6 text-white" />}
                         </button>
                     </div>
+                    )}
 
-                    {/* Upload Audio File - disabled if recorded */}
+                    {/* Upload Audio File */}
                     <div className="w-full border-t pt-4">
-                        <p className="text-sm font-semibold text-gray-700 font-display mb-1 text-center">Or Upload Audio File</p>
+                        <p className="text-sm font-semibold text-gray-700 font-display mb-1 text-center">
+                          {audioType === "cough" ? "Or Upload Audio File" : "Upload Chest Audio File"}
+                        </p>
                         <p className="text-xs text-gray-500 mb-3 text-center">Audio must be 8-12 seconds</p>
                         <input
                           ref={audioType === "cough" ? coughAudioInputRef : chestAudioInputRef}
@@ -940,11 +1035,11 @@ export default function PatientDashboard() {
                           className="hidden"
                         />
                         <Button
-                          disabled={isPractitioner || coughAudio !== null || isValidatingAudio}
+                          disabled={isPractitioner || (audioType === "cough" ? coughAudio !== null : recordedAudio !== null) || isValidatingAudio}
                           onClick={() => audioType === "cough" ? coughAudioInputRef.current?.click() : chestAudioInputRef.current?.click()}
-                          className={`w-full font-display ${isPractitioner || coughAudio || isValidatingAudio ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white'}`}
+                          className={`w-full font-display ${isPractitioner || (audioType === "cough" ? coughAudio : recordedAudio) || isValidatingAudio ? 'bg-gray-300 cursor-not-allowed text-gray-500' : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white'}`}
                         >
-                          {isValidatingAudio ? 'Validating...' : 'Upload Cough Audio'}
+                          {isValidatingAudio ? 'Validating...' : `Upload ${audioType === "cough" ? 'Cough' : 'Chest'} Audio`}
                         </Button>
                     </div>
                 </div>
@@ -1031,9 +1126,9 @@ export default function PatientDashboard() {
             <Button disabled={isPractitioner} onClick={handleClear} className={`font-display font-semibold px-6 sm:px-8 py-5 sm:py-6 rounded-lg text-sm sm:text-base ${isPractitioner ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400 text-gray-700'}`}>Clear</Button>
             <Button
               onClick={handleSubmit}
-              disabled={isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || uploadedFile))}
+              disabled={isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || recordedAudio || uploadedChestAudio || uploadedFile))}
               className={`flex-1 w-full font-display font-semibold py-5 sm:py-6 rounded-lg transition-all text-sm sm:text-base ${
-                isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || uploadedFile))
+                isPractitioner || isSubmitting || !(selectedSymptoms.length > 0 && (uploadedCoughAudio || coughAudio || recordedAudio || uploadedChestAudio || uploadedFile))
                   ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                   : 'bg-lungsense-blue-light hover:bg-lungsense-blue-light hover:opacity-90 text-white'
               }`}
