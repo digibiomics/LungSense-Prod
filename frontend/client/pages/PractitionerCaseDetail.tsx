@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
 import { Card } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Save, Send, Download, Play, User, Calendar, FileText, Stethoscope, Edit } from "lucide-react";
+import { ArrowLeft, Send, Download, Play, Pause, User, Calendar, FileText, Stethoscope, Edit } from "lucide-react";
 import { getCaseDetails, submitCaseReview, getUserById, getSubUserById } from "../../src/api";
 import { 
   getEthnicityName, 
@@ -204,6 +204,64 @@ export default function PractitionerCaseDetail() {
     }
   };
 
+  const AudioPlayer = ({ url }: { url: string }) => {
+    const audioRef = useRef<HTMLAudioElement>(null);
+    const [playing, setPlaying] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const [duration, setDuration] = useState(0);
+    const [canPlay, setCanPlay] = useState(true);
+
+    const fmt = (s: number) => {
+      if (!isFinite(s) || isNaN(s)) return '--:--';
+      return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    };
+
+    return (
+      <div className="mt-2 bg-blue-50 rounded-lg p-2 w-full">
+        <audio
+          ref={audioRef}
+          src={url}
+          playsInline
+          preload="metadata"
+          onCanPlay={() => setCanPlay(true)}
+          onError={() => setCanPlay(false)}
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); setProgress(0); }}
+          onTimeUpdate={() => setProgress(audioRef.current?.currentTime ?? 0)}
+          onLoadedMetadata={() => {
+            const d = audioRef.current?.duration ?? 0;
+            setDuration(isFinite(d) ? d : 0);
+          }}
+        />
+        {!canPlay ? (
+          <p className="text-xs text-red-500 text-center py-1">Audio format not supported on this device</p>
+        ) : (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => playing ? audioRef.current?.pause() : audioRef.current?.play()}
+              className="w-8 h-8 flex-shrink-0 rounded-full bg-lungsense-blue flex items-center justify-center text-white"
+            >
+              {playing ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+            </button>
+            <input
+              type="range" min={0} max={duration || 1} step={0.01} value={progress}
+              onChange={(e) => {
+                const t = parseFloat(e.target.value);
+                if (audioRef.current) audioRef.current.currentTime = t;
+                setProgress(t);
+              }}
+              className="flex-1 h-1 accent-lungsense-blue"
+            />
+            <span className="text-xs text-gray-500 flex-shrink-0">
+              {fmt(progress)}{duration ? ` / ${fmt(duration)}` : ''}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen bg-gray-50">
@@ -361,29 +419,37 @@ export default function PractitionerCaseDetail() {
                 
                 <div className="grid gap-3">
                   {caseDetail.files.length > 0 ? (
-                    caseDetail.files.map((file) => (
-                      <div key={file.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          {getFileIcon(file.modality)}
-                          <div>
-                            <p className="font-semibold text-gray-900 font-display capitalize">
-                              {file.modality.replace('_', ' ')}
-                            </p>
-                            <p className="text-sm text-gray-600 font-dm">
-                              {file.file_type.toUpperCase()} • {(file.file_size / 1024 / 1024).toFixed(1)} MB
-                            </p>
+                    caseDetail.files.map((file) => {
+                      const isAudio = file.modality === 'cough_audio' || file.modality === 'breath_audio';
+                      return (
+                        <div key={file.id} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {getFileIcon(file.modality)}
+                              <div>
+                                <p className="font-semibold text-gray-900 font-display capitalize">
+                                  {file.modality.replace('_', ' ')}
+                                </p>
+                                <p className="text-sm text-gray-600 font-dm">
+                                  {file.file_type.toUpperCase()} • {(file.file_size / 1024 / 1024).toFixed(1)} MB
+                                </p>
+                              </div>
+                            </div>
+                            {!isAudio && (
+                              <Button
+                                onClick={() => window.open(file.presigned_url, '_blank')}
+                                variant="outline"
+                                size="sm"
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                View
+                              </Button>
+                            )}
                           </div>
+                          {isAudio && <AudioPlayer url={file.presigned_url} />}
                         </div>
-                        <Button
-                          onClick={() => window.open(file.presigned_url, '_blank')}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          View
-                        </Button>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="p-4 bg-gray-50 rounded-lg text-center">
                       <p className="text-gray-600 font-dm">No files uploaded for this case</p>

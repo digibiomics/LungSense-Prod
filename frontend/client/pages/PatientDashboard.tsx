@@ -515,6 +515,46 @@ export default function PatientDashboard() {
     }
   };
 
+  const convertToWav = (blob: Blob | File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(blob);
+      reader.onload = async () => {
+        try {
+          const audioCtx = new AudioContext({ sampleRate: 44100 });
+          const decoded = await audioCtx.decodeAudioData(reader.result as ArrayBuffer);
+          const numChannels = 1; // mono
+          const sampleRate = decoded.sampleRate;
+          const samples = decoded.getChannelData(0);
+          const buffer = new ArrayBuffer(44 + samples.length * 2);
+          const view = new DataView(buffer);
+          const writeStr = (off: number, s: string) => { for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i)); };
+          writeStr(0, 'RIFF');
+          view.setUint32(4, 36 + samples.length * 2, true);
+          writeStr(8, 'WAVE');
+          writeStr(12, 'fmt ');
+          view.setUint32(16, 16, true);
+          view.setUint16(20, 1, true);
+          view.setUint16(22, numChannels, true);
+          view.setUint32(24, sampleRate, true);
+          view.setUint32(28, sampleRate * numChannels * 2, true);
+          view.setUint16(32, numChannels * 2, true);
+          view.setUint16(34, 16, true);
+          writeStr(36, 'data');
+          view.setUint32(40, samples.length * 2, true);
+          let off = 44;
+          for (let i = 0; i < samples.length; i++, off += 2) {
+            const s = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+          }
+          await audioCtx.close();
+          resolve(new Blob([buffer], { type: 'audio/wav' }));
+        } catch (e) { reject(e); }
+      };
+      reader.onerror = reject;
+    });
+  };
+
   const presignAndUpload = async (
     file: File | Blob,
     fileType: FileType,
@@ -564,25 +604,19 @@ export default function PatientDashboard() {
       // Upload cough audio
       const coughFile = coughAudio || uploadedCoughAudio;
       if (coughFile) {
+        setUploadProgress("Converting cough audio...");
+        const wavBlob = await convertToWav(coughFile);
         setUploadProgress("Uploading cough audio...");
-        const isBlob = !(coughFile instanceof File);
-        const ext = isBlob
-          ? (coughAudioMime.includes('mp4') ? '.mp4' : '.webm')
-          : "." + (coughFile as File).name.split(".").pop()!.toLowerCase();
-        const ct = isBlob ? coughAudioMime : (coughFile as File).type || coughAudioMime;
-        payload.cough_audio_key = await presignAndUpload(coughFile, "cough_audio", ct, ext);
+        payload.cough_audio_key = await presignAndUpload(wavBlob, "cough_audio", "audio/wav", ".wav");
       }
 
       // Upload chest audio
       const chestFile = recordedAudio || uploadedChestAudio;
       if (chestFile) {
+        setUploadProgress("Converting chest audio...");
+        const wavBlob = await convertToWav(chestFile);
         setUploadProgress("Uploading chest audio...");
-        const isBlob = !(chestFile instanceof File);
-        const ext = isBlob
-          ? (coughAudioMime.includes('mp4') ? '.mp4' : '.webm')
-          : "." + (chestFile as File).name.split(".").pop()!.toLowerCase();
-        const ct = isBlob ? coughAudioMime : (chestFile as File).type || coughAudioMime;
-        payload.breath_audio_key = await presignAndUpload(chestFile, "breath_audio", ct, ext);
+        payload.breath_audio_key = await presignAndUpload(wavBlob, "breath_audio", "audio/wav", ".wav");
       }
       setUploadProgress("Submitting case...");
       const response = await createCase(payload);
