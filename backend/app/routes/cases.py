@@ -68,7 +68,6 @@ async def get_presigned_url(
                 'Bucket': AWS_S3_BUCKET,
                 'Key': s3_key,
                 'ContentType': request.content_type,
-                'ContentDisposition': 'inline'
             },
             ExpiresIn=3600  # 1 hour
         )
