@@ -4,7 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from datetime import datetime, timedelta, timezone
 
-MAX_REQUESTS = 10000
+MAX_REQUESTS = 100
 TIME_WINDOW = 60  # seconds
 
 
