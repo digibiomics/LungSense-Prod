@@ -40,6 +40,7 @@ def create_patient():
         ethnicity  = input("Ethnicity (AFR/ASN/CAU/HIS/MDE/MIX/UND): ").strip().upper()
         country    = input("Country: ").strip()
         province   = input("Province/State (leave blank if N/A): ").strip()
+        institution = input("Institution/Hospital (leave blank for individual): ").strip() or None
 
         if not all([first_name, last_name, age, sex, country]):
             print("First name, last name, age, sex and country are required.")
@@ -80,6 +81,7 @@ def create_patient():
             ethnicity=ethnicity,
             country=country,
             province=province or "N/A",
+            institution=institution,
             profile_completed=True,
         )
 
@@ -93,6 +95,7 @@ def create_patient():
         print(f"  Email     : {email}")
         print(f"  Password  : {plain_password}")
         print(f"  Patient ID: {user.id}")
+        print(f"  Institution: {institution or 'Individual (no institution)'}")
         print(f"  Login URL : /auth/login?role=patient")
         print("=" * 40)
         print("⚠️  Share these credentials securely.")

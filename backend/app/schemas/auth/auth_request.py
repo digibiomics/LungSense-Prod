@@ -8,6 +8,7 @@ from app.constants.enums import Ethnicity, RespiratoryHistory, Sex
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    institution: Optional[str] = None
 
 
 class GoogleCallbackRequest(BaseModel):

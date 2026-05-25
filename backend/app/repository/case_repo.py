@@ -1,6 +1,7 @@
 """
 Case repository for case management.
 """
+import os
 from typing import Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -12,19 +13,31 @@ from app.constants.enums import UserRole
 
 class CaseRepository:
     """Repository for case operations."""
-    
+
     @staticmethod
-    def get_available_practitioner(db: Session) -> Optional[User]:
-        """Get practitioner with least assigned cases (round-robin)."""
-        practitioner = (
-            db.query(User)
-            .filter(User.role == UserRole.PRACTITIONER, User.deleted_at.is_(None))
-            .outerjoin(Case, User.id == Case.practitioner_id)
-            .group_by(User.id)
-            .order_by(func.count(Case.id).asc())
-            .first()
-        )
-        return practitioner
+    def get_available_practitioner(db: Session, institution: Optional[str] = None) -> Optional[User]:
+        """Get practitioner by institution match, or fall back to default practitioner."""
+        if institution:
+            practitioner = (
+                db.query(User)
+                .filter(
+                    User.role == UserRole.PRACTITIONER,
+                    User.deleted_at.is_(None),
+                    User.institution == institution
+                )
+                .first()
+            )
+            if practitioner:
+                return practitioner
+
+        # Fallback: default practitioner for Gmail/individual/no-institution users
+        default_email = os.getenv("DEFAULT_PRACTITIONER_EMAIL")
+        if default_email:
+            return db.query(User).filter(
+                User.email == default_email,
+                User.deleted_at.is_(None)
+            ).first()
+        return None
     
     @staticmethod
     def create_case(

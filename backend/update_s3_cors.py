@@ -10,7 +10,7 @@ from pathlib import Path
 
 # Load environment variables
 env_path = Path(__file__).parent / '.env'
-load_dotenv(dotenv_path=env_path)
+load_dotenv(dotenv_path=env_path, override=True)
 
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET")
 AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
@@ -30,7 +30,7 @@ def update_s3_cors():
         'CORSRules': [
             {
                 'AllowedHeaders': ['*'],
-                'AllowedMethods': ['GET', 'HEAD', 'PUT'],  # Added PUT for uploads
+                'AllowedMethods': ['GET', 'HEAD', 'PUT'],
                 'AllowedOrigins': [
                     'http://localhost:3000',
                     'http://localhost:5173',
@@ -38,9 +38,9 @@ def update_s3_cors():
                     'http://localhost:8080',
                     'https://lungsense.ai',
                     'https://www.lungsense.ai',
-                    'https://utopia-confusion-gating.ngrok-free.dev'  # Your ngrok domain
+                    'https://utopia-confusion-gating.ngrok-free.dev'
                 ],
-                'ExposeHeaders': ['ETag'],
+                'ExposeHeaders': ['ETag', 'Content-Type'],
                 'MaxAgeSeconds': 3000
             }
         ]

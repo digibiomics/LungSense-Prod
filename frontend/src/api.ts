@@ -232,11 +232,11 @@ export async function adminLogin(email: string, password: string) {
   try { return JSON.parse(text); } catch { throw new Error("Invalid response from server"); }
 }
 
-export async function userLogin(email: string, password: string) {
+export async function userLogin(email: string, password: string, institution?: string) {
   const res = await fetch(USER_LOGIN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, ...(institution ? { institution } : {}) }),
   });
 
   const text = await res.text();

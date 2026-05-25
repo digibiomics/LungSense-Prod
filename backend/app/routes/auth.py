@@ -315,6 +315,12 @@ async def user_login(
     if user.role not in [UserRole.PATIENT, UserRole.PRACTITIONER]:
         raise_unauthorized("Use the admin login page")
 
+    # If institution provided and user has none yet, update it now
+    if request.institution and not user.institution:
+        user.institution = request.institution
+        db.commit()
+        db.refresh(user)
+
     access_token = create_access_token({
         "user_id": user.id,
         "email": user.email,

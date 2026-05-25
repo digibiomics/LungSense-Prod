@@ -23,6 +23,7 @@ export default function Login() {
   const [loginMode, setLoginMode] = useState<'google' | 'password'>('google');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [institution, setInstitution] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -88,7 +89,7 @@ export default function Login() {
     if (!email || !password) { toast.error('Email and password are required'); return; }
     try {
       setIsLoggingIn(true);
-      const data = await userLogin(email, password);
+      const data = await userLogin(email, password, institution);
       if (!data?.access_token) throw new Error('Invalid response from server');
       storeAuthAndNavigate(data);
     } catch (err: any) {
@@ -311,6 +312,14 @@ export default function Login() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  <input
+                    type="text"
+                    placeholder="Institution name"
+                    value={institution}
+                    onChange={e => setInstitution(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-lungsense-blue"
+                    autoComplete="organization"
+                  />
                   <Button
                     type="submit"
                     disabled={!consentChecked || isLoggingIn}

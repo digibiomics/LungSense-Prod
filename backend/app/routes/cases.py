@@ -18,6 +18,7 @@ from app.utils.exception_handler import raise_bad_request
 from app.repository.case_repo import CaseRepository
 from app.models.case_symptom import CaseSymptom
 from app.models.case_file import CaseFile
+from app.models.user import User
 from app.utils.s3_utils import AWS_S3_BUCKET, AWS_REGION, s3_client
 import json
 
@@ -61,13 +62,13 @@ async def get_presigned_url(
         folder = folder_mapping.get(request.file_type, "raw/other")
         s3_key = f"{folder}/{current_user.user_id}/{filename}"
         
-        # Generate presigned URL
+        # Generate presigned URL without locking ContentType in signature
+        # ContentType in signature causes 400 if browser sends slightly different type
         presigned_url = s3_client.generate_presigned_url(
             'put_object',
             Params={
                 'Bucket': AWS_S3_BUCKET,
                 'Key': s3_key,
-                'ContentType': request.content_type,
             },
             ExpiresIn=3600  # 1 hour
         )
@@ -109,8 +110,10 @@ async def create_case(
     user_id = current_user.user_id
     sub_user_id = case_data.profile_id if case_data.profile_type == "sub_user" else None
     
-    # Auto-assign practitioner
-    practitioner = CaseRepository.get_available_practitioner(db)
+    # Auto-assign practitioner based on patient institution
+    patient = db.query(User).filter(User.id == user_id).first()
+    patient_institution = patient.institution if patient else None
+    practitioner = CaseRepository.get_available_practitioner(db, institution=patient_institution)
     practitioner_id = practitioner.id if practitioner else None
     
     # Create case
@@ -164,7 +167,7 @@ async def create_case(
         "sub_user_id": case.sub_user_id,
         "practitioner_id": case.practitioner_id,
         "status": case.status,
-        "catalog_number": case.catalog_number,  # Include catalog_number
+        "catalog_number": case.catalog_number,
         "created_at": case.created_at.isoformat()
     }
     
