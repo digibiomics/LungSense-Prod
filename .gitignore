@@ -24,15 +24,9 @@ backend/.env
 frontend/.env
 
 # AWS Configuration (CRITICAL - Never commit)
-cloudfront-config.json
-!cloudfront-config.json.example
 *.pem
 *.key
 aws-config.json
-
-# Database Configuration (CRITICAL)
-alembic.ini
-!alembic.ini.example
 
 # Test files (don't deploy these)
 backend/recreate_admin.py
