@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class UserResponse(BaseModel):
     id: int
-    email: EmailStr
+    email: str
     first_name: str | None = None
     last_name: str | None = None
     created_at: datetime

@@ -6,14 +6,14 @@ from __future__ import annotations
 import re
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, Field, validator
 
 from  app.constants.enums import Ethnicity, RespiratoryHistory, Sex, UserRole
 
 
 class BaseUserSchema(BaseModel):
     """Base user schema with common fields."""
-    email: EmailStr = Field(..., description="User email address")
+    email: str = Field(..., description="User email address")
     first_name: str = Field(..., min_length=2, max_length=50, description="First name")
     last_name: str = Field(..., min_length=2, max_length=50, description="Last name")
 
@@ -35,8 +35,8 @@ class PractitionerSignupRequest(BaseUserSchema):
     """Practitioner signup request schema."""
     password: str = Field(..., min_length=8, max_length=64, description="Password")
     practitioner_id: str = Field(
-        ..., min_length=6, max_length=20,
-        description="Unique practitioner identifier (6-20 alphanumeric)"
+        ..., min_length=3, max_length=20,
+        description="Unique practitioner identifier (3-20 alphanumeric)"
     )
     institution: str = Field(..., min_length=3, max_length=100, description="Institution name")
     institution_location_country: str = Field(
@@ -50,8 +50,8 @@ class PractitionerSignupRequest(BaseUserSchema):
     @validator('practitioner_id')
     def validate_practitioner_id(cls, v):
         """Validate practitioner ID format."""
-        if not re.match(r'^[A-Za-z0-9]{6,20}$', v):
-            raise ValueError('Practitioner ID must be 6-20 alphanumeric characters')
+        if not re.match(r'^[A-Za-z0-9]{3,20}$', v):
+            raise ValueError('Practitioner ID must be 3-20 alphanumeric characters')
         return v
 
 

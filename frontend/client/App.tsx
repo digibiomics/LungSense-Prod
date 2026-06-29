@@ -29,6 +29,7 @@ import AdminSignup from "./pages/AdminSignup";
 import NotFound from "./pages/NotFound";
 import ScheduleAppointment from "./pages/scheduleAppointment";
 import SelectProfile from "./pages/SelectProfile";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/select-role" element={<SelectRole />} />
          <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/complete-profile" element={<CompleteProfile />} />

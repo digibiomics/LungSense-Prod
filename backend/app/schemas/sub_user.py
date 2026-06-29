@@ -6,14 +6,14 @@ from __future__ import annotations
 import re
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, Field, validator
 
 from  app.constants.enums import Ethnicity, RespiratoryHistory, Sex
 
 
 class SubUserBase(BaseModel):
     """Base sub-user schema."""
-    email: EmailStr = Field(..., description="Sub-user email address")
+    email: str = Field(..., description="Sub-user email address")
     first_name: str = Field(..., min_length=2, max_length=50, description="First name")
     last_name: str = Field(..., min_length=2, max_length=50, description="Last name")
     age: int = Field(..., gt=0, description="Age")

@@ -13,7 +13,7 @@ import {
   UserPlus,
   Clock,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 export default function Recommendations() {
   const navigate = useNavigate();
@@ -292,8 +292,26 @@ export default function Recommendations() {
           </div>
 
           {/* Footer */}
-          <footer className="mt-12 pt-8 border-t border-gray-800 text-center text-gray-500 text-sm">
-            <p>© 2025 Lung Sense. All rights reserved. DigiRomics.</p>
+          <footer className="mt-16 pt-8 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-slate-500 font-semibold tracking-wider text-[11px] sm:text-xs uppercase text-center sm:text-left leading-relaxed">
+                © 2025 LUNGSENSE &amp; DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+              </p>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/privacy"
+                  className="
+                    inline-flex items-center gap-2 px-4 py-2 rounded-full
+                    bg-lungsense-blue-light/10 text-lungsense-blue-light hover:bg-lungsense-blue-light/20
+                    font-bold text-xs sm:text-sm transition-all duration-300 shadow-sm
+                    border border-lungsense-blue-light/25 hover:scale-105 active:scale-95
+                  "
+                >
+                  <span className="w-2 h-2 rounded-full bg-lungsense-blue-light animate-pulse" />
+                  Privacy Policy
+                </Link>
+              </div>
+            </div>
           </footer>
         </div>
       </main>

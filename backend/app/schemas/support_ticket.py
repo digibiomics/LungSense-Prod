@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 from enum import Enum
@@ -19,7 +19,7 @@ class SupportTicketCreate(BaseModel):
     title: str = Field(..., min_length=5, max_length=255)
     description: str = Field(..., min_length=10)
     category: str
-    email: EmailStr
+    email: str
     priority: TicketPriority = TicketPriority.MEDIUM
 
 class SupportTicketResponse(BaseModel):

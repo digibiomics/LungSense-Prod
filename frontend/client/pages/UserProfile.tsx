@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Sidebar from '@/components/Sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -817,15 +817,22 @@ export default function UserProfile() {
             )}
 
             {/* Bottom privacy note — small legal reminder, visible on all roles */}
-            <div className="text-center pb-2 safe-bottom">
-              <p className="text-[10px] sm:text-xs text-gray-400">
+            <div className="text-center pb-2 mt-4 safe-bottom">
+              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
                 Your data is processed in accordance with our{' '}
                 <button
                   onClick={() => setShowPrivacy(true)}
-                  className="text-lungsense-blue hover:underline active:opacity-60"
+                  className="text-lungsense-blue hover:underline font-semibold active:opacity-60 transition-opacity"
                 >
                   Terms of Use &amp; Medical Disclaimer
-                </button>
+                </button>{' '}
+                and our{' '}
+                <Link
+                  to="/privacy"
+                  className="text-lungsense-blue hover:underline font-bold active:opacity-60 transition-opacity"
+                >
+                  Privacy Policy
+                </Link>
                 .
               </p>
             </div>

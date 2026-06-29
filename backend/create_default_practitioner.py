@@ -14,18 +14,46 @@ from app.models.user import User
 from app.constants.enums import UserRole
 from app.constants.jwt_utils import hash_password
 
-EMAIL = "mohammadafroze26@gmail.com"
-PASSWORD = "Afroze@2025"  # Change this after first login
-FIRST_NAME = "Mohammad"
-LAST_NAME = "Afroze"
-PRACTITIONER_ID = "AFROZE001"
+EMAIL = "admin.lungsense@practitioner@gamil.com"
+PASSWORD = "casetest"  # Change this after first login
+FIRST_NAME = "Default"
+LAST_NAME = "Practitioner"
+PRACTITIONER_ID = "111"
 
 db = SessionLocal()
 
 try:
-    existing = db.query(User).filter(User.email == EMAIL).first()
-    if existing:
-        print(f"User already exists: {EMAIL} (id={existing.id}, role={existing.role})")
+    existing_by_email = db.query(User).filter(User.email == EMAIL).first()
+    existing_by_id = db.query(User).filter(User.practitioner_id == PRACTITIONER_ID).first()
+    
+    if existing_by_email:
+        print(f"User with email {EMAIL} already exists (id={existing_by_email.id}). Updating credentials...")
+        existing_by_email.practitioner_id = PRACTITIONER_ID
+        existing_by_email.hashed_password = hash_password(PASSWORD)
+        existing_by_email.role = UserRole.PRACTITIONER
+        existing_by_email.profile_completed = True
+        
+        # If another user had this ID, set their ID to None or a random one to avoid conflict
+        if existing_by_id and existing_by_id.id != existing_by_email.id:
+            print(f"Removing duplicate practitioner ID {PRACTITIONER_ID} from user {existing_by_id.email}")
+            existing_by_id.practitioner_id = None
+            
+        db.commit()
+        db.refresh(existing_by_email)
+        print(f"Successfully updated default practitioner: {EMAIL} (id={existing_by_email.id})")
+        print(f"Password: {PASSWORD}")
+        
+    elif existing_by_id:
+        print(f"User with practitioner ID {PRACTITIONER_ID} exists under email {existing_by_id.email}. Updating email...")
+        existing_by_id.email = EMAIL
+        existing_by_id.hashed_password = hash_password(PASSWORD)
+        existing_by_id.role = UserRole.PRACTITIONER
+        existing_by_id.profile_completed = True
+        db.commit()
+        db.refresh(existing_by_id)
+        print(f"Successfully updated default practitioner: {EMAIL} (id={existing_by_id.id})")
+        print(f"Password: {PASSWORD}")
+        
     else:
         user = User(
             email=EMAIL,

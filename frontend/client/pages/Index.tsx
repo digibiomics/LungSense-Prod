@@ -191,19 +191,35 @@ const Index: React.FC = () => {
         {/* FOOTER — flex-none means it always stays at the bottom */}
         <footer
           className="
-            w-full flex-none text-center py-3 sm:py-4
-            border-t border-white/20 bg-white/10 backdrop-blur-sm z-20
-            safe-bottom
+            w-full flex-none py-5 sm:py-6
+            border-t border-white/30 bg-white/20 backdrop-blur-md z-20
+            safe-bottom shadow-inner
           "
         >
-          <p className="text-slate-500 font-medium tracking-wide px-4 text-[9px] sm:text-[10px]">
-            <span className="sm:hidden">
-              © 2025 LUNGSENSE & DIGIBIOMICS.<br />MEDICAL ADVICE DISCLAIMER APPLIES.
-            </span>
-            <span className="hidden sm:inline">
-              © 2025 LUNGSENSE & DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
-            </span>
-          </p>
+          <div className="container mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl">
+            <p className="text-slate-600 font-semibold tracking-wider text-[11px] sm:text-xs uppercase text-center sm:text-left leading-relaxed">
+              <span className="sm:hidden">
+                © 2025 LUNGSENSE &amp; DIGIBIOMICS.<br />MEDICAL ADVICE DISCLAIMER APPLIES.
+              </span>
+              <span className="hidden sm:inline">
+                © 2025 LUNGSENSE &amp; DIGIBIOMICS. MEDICAL ADVICE DISCLAIMER APPLIES.
+              </span>
+            </p>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/privacy"
+                className="
+                  inline-flex items-center gap-2 px-4 py-2 rounded-full
+                  bg-lungsense-blue-light/10 text-lungsense-blue-light hover:bg-lungsense-blue-light/20
+                  font-bold text-xs sm:text-sm transition-all duration-300 shadow-sm
+                  border border-lungsense-blue-light/25 hover:scale-105 active:scale-95
+                "
+              >
+                <span className="w-2 h-2 rounded-full bg-lungsense-blue-light animate-pulse" />
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
         </footer>
       </div>
     </>

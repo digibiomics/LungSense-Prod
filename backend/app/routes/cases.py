@@ -113,7 +113,11 @@ async def create_case(
     # Auto-assign practitioner based on patient institution
     patient = db.query(User).filter(User.id == user_id).first()
     patient_institution = patient.institution if patient else None
+
+    # Any patient without an institution (Gmail/individual signups) is always
+    # assigned to the default practitioner (DEFAULT_PRACTITIONER_EMAIL in .env).
     practitioner = CaseRepository.get_available_practitioner(db, institution=patient_institution)
+    
     practitioner_id = practitioner.id if practitioner else None
     
     # Create case

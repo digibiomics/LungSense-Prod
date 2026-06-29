@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field
 from typing import List, Optional
 from app.constants.enums import Ethnicity, RespiratoryHistory, Sex
 
 
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
     institution: Optional[str] = None
 
@@ -39,7 +39,7 @@ class CompleteProfileRequest(BaseModel):
     respiratory_history: List[RespiratoryHistory]
     
     # Practitioner-specific (optional)
-    practitioner_id: Optional[str] = Field(None, min_length=6, max_length=20)
+    practitioner_id: Optional[str] = Field(None, min_length=3, max_length=20)
     institution: Optional[str] = Field(None, min_length=3, max_length=100)
     institution_location_country: Optional[str] = Field(None, min_length=2, description="Country name")
     institution_location_province: Optional[str] = None

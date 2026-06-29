@@ -40,19 +40,34 @@ async def get_dashboard_summary(
 ):
     """Get top-level dashboard summary for training readiness."""
     
-    # Total cases
-    total_cases = db.query(Case).count()
+    # Subquery of distinct case IDs that have files (media)
+    cases_with_files_ids = (
+        db.query(CaseFile.case_id)
+        .distinct()
+        .subquery()
+    )
+
+    # Total cases that actually have files (media)
+    total_cases = db.query(Case).filter(Case.id.in_(cases_with_files_ids)).count()
     
-    # ML-ready cases (final reviews with files)
-    ml_ready_cases = db.query(Case).join(CaseReview).join(CaseFile).filter(
-        and_(CaseReview.is_final == True, CaseReview.primary_diagnosis.isnot(None))
-    ).count()
+    # ML-ready cases — distinct case IDs that have a final review with diagnosis AND at least one file
+    final_reviewed_case_ids = (
+        db.query(CaseReview.case_id)
+        .filter(and_(CaseReview.is_final == True, CaseReview.primary_diagnosis.isnot(None)))
+        .subquery()
+    )
+    ml_ready_cases = (
+        db.query(func.count(distinct(Case.id)))
+        .filter(Case.id.in_(final_reviewed_case_ids))
+        .filter(Case.id.in_(cases_with_files_ids))
+        .scalar() or 0
+    )
     
-    # Draft vs Final labels
-    draft_labels = db.query(CaseReview).filter(CaseReview.is_final == False).count()
-    final_labels = db.query(CaseReview).filter(CaseReview.is_final == True).count()
+    # Draft vs Final labels (only for cases with files/media)
+    draft_labels = db.query(CaseReview).filter(CaseReview.is_final == False).filter(CaseReview.case_id.in_(cases_with_files_ids)).count()
+    final_labels = db.query(CaseReview).filter(CaseReview.is_final == True).filter(CaseReview.case_id.in_(cases_with_files_ids)).count()
     
-    # Cases per modality
+    # Cases per modality — distinct case IDs per modality
     modality_stats = db.query(
         CaseFile.modality,
         func.count(distinct(CaseFile.case_id)).label('case_count')
@@ -60,11 +75,115 @@ async def get_dashboard_summary(
     
     modality_counts = {stat.modality: stat.case_count for stat in modality_stats}
     
-    # Multi-modal cases (cases with multiple file types)
-    multi_modal = db.query(Case.id).join(CaseFile).group_by(Case.id).having(
-        func.count(distinct(CaseFile.modality)) > 1
-    ).count()
-    
+    # Multi-modal cases — distinct case IDs that have files in more than one distinct modality
+    multi_modal_subq = (
+        db.query(CaseFile.case_id)
+        .group_by(CaseFile.case_id)
+        .having(func.count(distinct(CaseFile.modality)) > 1)
+        .subquery()
+    )
+    multi_modal = db.query(func.count()).select_from(multi_modal_subq).scalar() or 0
+
+    # Institution breakdown — cases per practitioner institution (top 15, excluding cases without files)
+    institution_stats = (
+        db.query(
+            User.institution,
+            func.count(distinct(Case.id)).label('case_count')
+        )
+        .join(Case, Case.practitioner_id == User.id)
+        .filter(User.institution.isnot(None))
+        .filter(Case.id.in_(cases_with_files_ids))
+        .group_by(User.institution)
+        .order_by(func.count(distinct(Case.id)).desc())
+        .limit(15)
+        .all()
+    )
+    institution_breakdown = [
+        {"institution": row.institution, "case_count": row.case_count}
+        for row in institution_stats
+    ]
+
+    # Practitioner × Modality breakdown
+    # Step 1 — get all distinct practitioner IDs that appear in cases
+    practitioner_ids_with_cases = (
+        db.query(distinct(Case.practitioner_id))
+        .filter(Case.practitioner_id.isnot(None))
+        .all()
+    )
+    prac_ids = [row[0] for row in practitioner_ids_with_cases]
+
+    # Query submitted and reviewed case count per practitioner (only for cases with files)
+    prac_status_stats = (
+        db.query(
+            Case.practitioner_id,
+            Case.status,
+            func.count(distinct(Case.id)).label('case_count')
+        )
+        .filter(Case.practitioner_id.in_(prac_ids))
+        .filter(Case.id.in_(cases_with_files_ids))
+        .group_by(Case.practitioner_id, Case.status)
+        .all()
+    )
+
+    prac_status_map: dict = {}
+    for row in prac_status_stats:
+        pid = row.practitioner_id
+        if pid not in prac_status_map:
+            prac_status_map[pid] = {"submitted": 0, "reviewed": 0}
+        if row.status == "submitted":
+            prac_status_map[pid]["submitted"] += row.case_count
+        elif row.status in ("reviewed", "finalized"):
+            prac_status_map[pid]["reviewed"] += row.case_count
+
+    # Step 2 — for each practitioner, count files per modality
+    prac_modality_stats = (
+        db.query(
+            User.id.label("practitioner_id"),
+            func.concat(User.first_name, " ", User.last_name).label("practitioner_name"),
+            User.institution,
+            CaseFile.modality,
+            func.count(CaseFile.id).label("file_count")
+        )
+        .join(Case, Case.practitioner_id == User.id)
+        .outerjoin(CaseFile, CaseFile.case_id == Case.id)
+        .filter(User.id.in_(prac_ids))
+        .group_by(User.id, User.first_name, User.last_name, User.institution, CaseFile.modality)
+        .order_by(User.id, CaseFile.modality)
+        .all()
+    )
+
+    # Step 3 — pivot into per-practitioner dict
+    prac_map: dict = {}
+    for row in prac_modality_stats:
+        pid = row.practitioner_id
+        if pid not in prac_map:
+            status_info = prac_status_map.get(pid, {"submitted": 0, "reviewed": 0})
+            prac_map[pid] = {
+                "practitioner_id": pid,
+                "practitioner_name": row.practitioner_name,
+                "institution": row.institution or "—",
+                "xray": 0,
+                "cough_audio": 0,
+                "breath_audio": 0,
+                "submitted": status_info["submitted"],
+                "reviewed": status_info["reviewed"]
+            }
+        if row.modality and row.modality in ("xray", "cough_audio", "breath_audio"):
+            prac_map[pid][row.modality] = row.file_count or 0
+
+    # Step 4 — build final list, sorted by total files desc
+    institution_modality_breakdown = sorted(
+        [
+            {
+                **entry,
+                "total": entry["xray"] + entry["cough_audio"] + entry["breath_audio"]
+            }
+            for entry in prac_map.values()
+        ],
+        key=lambda x: x["total"],
+        reverse=True
+    )
+
     summary = {
         "total_cases": total_cases,
         "ml_ready_cases": ml_ready_cases,
@@ -78,7 +197,9 @@ async def get_dashboard_summary(
             "breath_audio": modality_counts.get("breath_audio", 0),
             "xray": modality_counts.get("xray", 0),
             "multi_modal": multi_modal
-        }
+        },
+        "institution_breakdown": institution_breakdown,
+        "institution_modality_breakdown": institution_modality_breakdown
     }
     
     return APIResponse(
@@ -96,7 +217,8 @@ async def get_dataset_explorer(
     severity: Optional[str] = Query(None, description="Filter by severity: mild, moderate, severe"),
     confidence_min: Optional[float] = Query(None, description="Minimum confidence score"),
     training_ready_only: bool = Query(False, description="Show only training-ready samples"),
-    practitioner_id: Optional[int] = Query(None, description="Filter by practitioner"),
+    practitioner_id: Optional[int] = Query(None, description="Filter by practitioner DB ID"),
+    institution: Optional[str] = Query(None, description="Filter by institution name (partial match)"),
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=500),
     current_user: AuthenticatedUser = Depends(require_admin_role([UserRole.DATA_ADMIN, UserRole.SUPER_ADMIN])),
@@ -160,6 +282,16 @@ async def get_dataset_explorer(
             query = query.join(CaseReview)
             joins_made.add('case_review')
         query = query.filter(CaseReview.practitioner_id == practitioner_id)
+
+    if institution:
+        # Join to the assigned practitioner via Case.practitioner_id to filter by institution
+        if 'practitioner_user' not in joins_made:
+            PractitionerUser = db.query(User).subquery()
+            query = query.join(
+                User, Case.practitioner_id == User.id, isouter=True
+            )
+            joins_made.add('practitioner_user')
+        query = query.filter(User.institution.ilike(f"%{institution}%"))
     
     # Get total count
     total_count = query.distinct().count()
@@ -266,9 +398,33 @@ async def get_dataset_explorer(
                 "severity": severity,
                 "confidence_min": confidence_min,
                 "training_ready_only": training_ready_only,
-                "practitioner_id": practitioner_id
+                "practitioner_id": practitioner_id,
+                "institution": institution
             }
         }
+    )
+
+
+# INSTITUTION LIST — for dropdown population
+@router.get("/admin/dashboard/institutions", response_model=APIResponse)
+async def get_institutions_list(
+    current_user: AuthenticatedUser = Depends(require_admin_role([UserRole.DATA_ADMIN, UserRole.SUPER_ADMIN])),
+    db: Session = Depends(create_local_session)
+):
+    """Get distinct institution names from practitioners who have cases — used to populate the institution filter dropdown."""
+    rows = (
+        db.query(User.institution)
+        .join(Case, Case.practitioner_id == User.id)
+        .filter(User.institution.isnot(None))
+        .distinct()
+        .order_by(User.institution)
+        .all()
+    )
+    institutions = [row.institution for row in rows if row.institution]
+    return APIResponse(
+        status=ResponseStatus.SUCCESS,
+        message=f"{len(institutions)} institutions found",
+        data={"institutions": institutions}
     )
 
 
